@@ -51,7 +51,7 @@
         </fa:SettingsExpander>
         <!-- 悬浮窗缩放系数 -->
         <fa:SettingsExpander
-        IconSource="{ci:FluentIconSource &#xE10F;}"
+        IconSource="{ci:FluentIconSource &#xEE83;}"
         Header="悬浮窗缩放系数"
         Description="调整悬浮窗大小，以适配不同的屏幕">
             <fa:SettingsExpander.Footer>

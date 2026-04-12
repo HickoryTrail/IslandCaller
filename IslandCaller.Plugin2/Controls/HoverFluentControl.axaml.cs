@@ -23,6 +23,7 @@ public partial class HoverFluentControl : UserControl
     private IPointer? _dragPointer;
     private PixelPoint _dragStartWindowPosition;
     private Point _dragStartPointerPosition;
+    private PixelPoint _dragStartPointerScreenPosition;
     private DragClickAction _pendingClickAction = DragClickAction.None;
     public HoverFluentControl()
     {
@@ -67,7 +68,7 @@ public partial class HoverFluentControl : UserControl
         await windowDragHelper.DragMoveAsync(parentwindow, e.Pointer.Type);
         logger.LogDebug("Button1_PointerPressed: 窗口拖动结束");
         hoverWindow?.EndDragAndClamp();
-        if(parentwindow.Position == lastWindowPosition)
+        if(parentwindow.Position == lastWindowPosition || (Math.Abs(parentwindow.Position.X - lastWindowPosition.X) < 4 && Math.Abs(parentwindow.Position.Y - lastWindowPosition.Y) < 4))
         {
             logger.LogDebug("Button1_PointerPressed: 窗口位置未变化，触发点击事件");
             IslandCallerService.ShowRandomStudent(1);
@@ -101,10 +102,10 @@ public partial class HoverFluentControl : UserControl
         await windowDragHelper.DragMoveAsync(parentwindow, e.Pointer.Type);
         logger.LogDebug("Button2_PointerPressed: 窗口拖动结束");
         hoverWindow?.EndDragAndClamp();
-        if (parentwindow.Position == lastWindowPosition)
+        if (parentwindow.Position == lastWindowPosition || (Math.Abs(parentwindow.Position.X - lastWindowPosition.X) < 4 && Math.Abs(parentwindow.Position.Y - lastWindowPosition.Y) < 4))
         {
             logger.LogDebug("Button2_PointerPressed: 窗口位置未变化，触发点击事件");
-            await new PersonalCall().ShowDialog(parentwindow);
+            await new PersonalCall().ShowOwnedNoActivateAsync(parentwindow);
         }
     }
 
@@ -118,6 +119,7 @@ public partial class HoverFluentControl : UserControl
         _isManualDragging = true;
         _dragPointer = e.Pointer;
         _dragStartPointerPosition = e.GetPosition(window);
+        _dragStartPointerScreenPosition = window.PointToScreen(_dragStartPointerPosition);
         _dragStartWindowPosition = window.Position;
         _pendingClickAction = clickAction;
 
@@ -139,16 +141,16 @@ public partial class HoverFluentControl : UserControl
         }
 
         var current = e.GetPosition(parentwindow);
-        var scaling = parentwindow.RenderScaling;
-        var deltaX = (current.X - _dragStartPointerPosition.X) * scaling;
-        var deltaY = (current.Y - _dragStartPointerPosition.Y) * scaling;
+        var currentScreen = parentwindow.PointToScreen(current);
+        var deltaX = currentScreen.X - _dragStartPointerScreenPosition.X;
+        var deltaY = currentScreen.Y - _dragStartPointerScreenPosition.Y;
         var newPosition = new PixelPoint(
-            _dragStartWindowPosition.X + (int)Math.Round(deltaX),
-            _dragStartWindowPosition.Y + (int)Math.Round(deltaY));
+            _dragStartWindowPosition.X + deltaX,
+            _dragStartWindowPosition.Y + deltaY);
 
         if (parentwindow.Position != newPosition)
         {
-            parentwindow.Position = newPosition;
+            windowDragHelper.SetWindowPosition(parentwindow, newPosition);
         }
     }
 
@@ -178,7 +180,7 @@ public partial class HoverFluentControl : UserControl
             hoverWindow.EndDragAndClamp();
         }
 
-        if (parentwindow != null && parentwindow.Position == lastWindowPosition)
+        if (parentwindow != null && parentwindow.Position == lastWindowPosition || (Math.Abs(parentwindow.Position.X - lastWindowPosition.X) < 4 && Math.Abs(parentwindow.Position.Y - lastWindowPosition.Y) < 4))
         {
             logger.LogDebug("手动拖动未改变窗口位置，触发点击事件");
             if (_pendingClickAction == DragClickAction.Button1)
@@ -187,7 +189,7 @@ public partial class HoverFluentControl : UserControl
             }
             else if (_pendingClickAction == DragClickAction.Button2)
             {
-                await new PersonalCall().ShowDialog(parentwindow);
+                await new PersonalCall().ShowOwnedNoActivateAsync(parentwindow);
             }
         }
 
@@ -201,3 +203,6 @@ public partial class HoverFluentControl : UserControl
         Button2
     }
 }
+
+
+

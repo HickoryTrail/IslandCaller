@@ -1,4 +1,5 @@
-﻿using Avalonia.Controls;
+using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Input;
 using ClassIsland.Shared;
 using Microsoft.Extensions.Logging;
@@ -20,10 +21,23 @@ namespace IslandCaller.Helpers
         [DllImport("user32.dll", SetLastError = true)]
         private static extern bool UnregisterTouchWindow(IntPtr hWnd);
 
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool SetWindowPos(
+            IntPtr hWnd,
+            IntPtr hWndInsertAfter,
+            int X,
+            int Y,
+            int cx,
+            int cy,
+            uint uFlags);
+
         private const int WM_SYSCOMMAND = 0x0112;
         private const int SC_MOVE = 0xF010;
         private const int HTCAPTION = 0x0002;
         private const int ERROR_INVALID_PARAMETER = 87;
+        private const uint SWP_NOSIZE = 0x0001;
+        private const uint SWP_NOZORDER = 0x0004;
+        private const uint SWP_NOACTIVATE = 0x0010;
         private static readonly object TouchDisableLock = new();
         private static readonly HashSet<IntPtr> TouchDisabledWindows = new();
 
@@ -65,6 +79,33 @@ namespace IslandCaller.Helpers
             });
 
             logger.LogDebug("窗口拖动结束，SendMessage 已返回。");
+        }
+
+        public bool SetWindowPosition(Window window, PixelPoint position)
+        {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                window.Position = position;
+                return true;
+            }
+
+            var platformHandle = window.TryGetPlatformHandle();
+            if (platformHandle == null)
+            {
+                logger.LogWarning("无法获取窗口句柄，SetWindowPos 设置位置失败。");
+                return false;
+            }
+
+            var hwnd = platformHandle.Handle;
+            var success = SetWindowPos(hwnd, IntPtr.Zero, position.X, position.Y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+            if (!success)
+            {
+                var errorCode = Marshal.GetLastWin32Error();
+                logger.LogWarning("SetWindowPos 设置窗口位置失败，错误码: {ErrorCode}", errorCode);
+                return false;
+            }
+
+            return true;
         }
 
         public void EnsureTouchInputDisabled(IntPtr hwnd)

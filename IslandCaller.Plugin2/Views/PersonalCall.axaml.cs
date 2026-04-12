@@ -1,6 +1,7 @@
-using Avalonia.Controls;
 using Avalonia;
+using Avalonia.Controls;
 using ClassIsland.Shared;
+using IslandCaller.Helpers;
 using IslandCaller.Services.IslandCallerService;
 using System.ComponentModel;
 
@@ -11,6 +12,9 @@ public partial class PersonalCall : Window,INotifyPropertyChanged
     public double Num { get; set; }
     private IslandCallerService IslandCallerService { get; }
     private const int OwnerGapPx = 12;
+    private readonly WindowTopmostHelper windowTopmostHelper = IAppHost.GetService<WindowTopmostHelper>();
+    private bool _isClosingWithoutActivation;
+    private bool _positionInitializedBeforeShow;
     public PersonalCall()
     {
         IslandCallerService = IAppHost.GetService<IslandCallerService>();   
@@ -24,19 +28,63 @@ public partial class PersonalCall : Window,INotifyPropertyChanged
 
         if (Owner == null)
         {
+            var screen = Screens.Primary; // 主屏幕
+            if (screen is null) return;
+
+            var workArea = screen.WorkingArea;
+
+            Position = new PixelPoint(
+                (int)(workArea.X + (workArea.Width - Width) / 2),
+                (int)(workArea.Y + (workArea.Height - Height) / 2));
             return;
         }
 
-        PositionNearOwner(Owner);
+        windowTopmostHelper.EnsureNoActivate(this);
+        if (!_positionInitializedBeforeShow)
+        {
+            PositionNearOwner(Owner);
+        }
     }
     private void CancelButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        this.Close();
+        CloseWithoutActivation();
     }
     private void SureButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         IslandCallerService.ShowRandomStudent((int)Num);
-        this.Close();
+        CloseWithoutActivation();
+    }
+
+    protected override void OnClosing(WindowClosingEventArgs e)
+    {
+        if (!_isClosingWithoutActivation)
+        {
+            windowTopmostHelper.EnsureNoActivate(this);
+        }
+        base.OnClosing(e);
+    }
+
+    private void CloseWithoutActivation()
+    {
+        _isClosingWithoutActivation = true;
+        windowTopmostHelper.EnsureNoActivate(this);
+        Close();
+    }
+
+    public Task ShowOwnedNoActivateAsync(Window owner)
+    {
+        var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        void ClosedHandler(object? sender, EventArgs args)
+        {
+            Closed -= ClosedHandler;
+            tcs.TrySetResult();
+        }
+
+        Closed += ClosedHandler;
+        PositionNearOwner(owner);
+        _positionInitializedBeforeShow = true;
+        Show(owner);
+        return tcs.Task;
     }
 
     private void PositionNearOwner(WindowBase owner)

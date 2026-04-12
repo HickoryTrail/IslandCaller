@@ -15,9 +15,7 @@ public partial class HoverFluent : Window
     private long _lastPositionLogTime;
     private const int PositionLogIntervalMs = 200;
     private readonly ILogger<HoverFluent> logger = ClassIsland.Shared.IAppHost.GetService<ILogger<HoverFluent>>();
-    private readonly IslandCallerService IslandCallerService = ClassIsland.Shared.IAppHost.GetService<IslandCallerService>();
     private readonly WindowTopmostHelper windowTopmostHelper = ClassIsland.Shared.IAppHost.GetService<WindowTopmostHelper>();
-    private readonly WindowDragHelper windowDragHelper = ClassIsland.Shared.IAppHost.GetService<WindowDragHelper>();
     private CancellationTokenSource? topmostCts;
 
     public HoverFluent()
@@ -36,16 +34,6 @@ public partial class HoverFluent : Window
         Deactivated += OnWindowLayerChanged;
         logger.LogDebug($"HoverFluent 坐标: PositionX={(int)Math.Round(vm.PositionX * scaling)}, PositionY={(int)Math.Round(vm.PositionY * scaling)}");
         logger.LogInformation("HoverFluent 悬浮窗初始化成功");
-
-        var platformHandle = TryGetPlatformHandle();
-        if (platformHandle == null)
-        {
-            logger.LogWarning("无法获取窗口句柄，取消触控输入注册失败。");
-        }
-        else
-        {
-            windowDragHelper.EnsureTouchInputDisabled(platformHandle.Handle);
-        }
 
         StartTopmostLoop();
         windowTopmostHelper.EnsureNoActivate(this);
@@ -135,7 +123,7 @@ public partial class HoverFluent : Window
 
     private void ApplyPositionClampIfNeeded()
     {
-        var clamped = ClampPositionToWorkingArea(Position);
+        var clamped = ClampPositionToScreenBounds(Position);
         if (clamped != Position)
         {
             Position = clamped;
@@ -143,9 +131,9 @@ public partial class HoverFluent : Window
         UpdateViewModelPosition(clamped.X, clamped.Y);
     }
 
-    private PixelPoint ClampPositionToWorkingArea(PixelPoint current)
+    private PixelPoint ClampPositionToScreenBounds(PixelPoint current)
     {
-        var screen = Screens.ScreenFromWindow(this)?.WorkingArea ?? Screens.Primary.WorkingArea;
+        var screen = Screens.ScreenFromWindow(this)?.Bounds ?? Screens.Primary.Bounds;
         scaling = RenderScaling;
 
         int x = current.X;
@@ -175,3 +163,4 @@ public partial class HoverFluent : Window
         vm.PositionY = y / scaling;
     }
 }
+
