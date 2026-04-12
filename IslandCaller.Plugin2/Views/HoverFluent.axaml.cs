@@ -135,7 +135,7 @@ public partial class HoverFluent : Window
 
     private void ApplyPositionClampIfNeeded()
     {
-        var clamped = ClampPositionToWorkingArea(Position);
+        var clamped = ClampPositionToScreenBounds(Position);
         if (clamped != Position)
         {
             Position = clamped;
@@ -143,9 +143,9 @@ public partial class HoverFluent : Window
         UpdateViewModelPosition(clamped.X, clamped.Y);
     }
 
-    private PixelPoint ClampPositionToWorkingArea(PixelPoint current)
+    private PixelPoint ClampPositionToScreenBounds(PixelPoint current)
     {
-        var screen = Screens.ScreenFromWindow(this)?.WorkingArea ?? Screens.Primary.WorkingArea;
+        var screen = Screens.ScreenFromWindow(this)?.Bounds ?? Screens.Primary.Bounds;
         scaling = RenderScaling;
 
         int x = current.X;
@@ -175,3 +175,4 @@ public partial class HoverFluent : Window
         vm.PositionY = y / scaling;
     }
 }
+

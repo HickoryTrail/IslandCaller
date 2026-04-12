@@ -23,6 +23,7 @@ public partial class HoverFluentControl : UserControl
     private IPointer? _dragPointer;
     private PixelPoint _dragStartWindowPosition;
     private Point _dragStartPointerPosition;
+    private PixelPoint _dragStartPointerScreenPosition;
     private DragClickAction _pendingClickAction = DragClickAction.None;
     public HoverFluentControl()
     {
@@ -118,6 +119,7 @@ public partial class HoverFluentControl : UserControl
         _isManualDragging = true;
         _dragPointer = e.Pointer;
         _dragStartPointerPosition = e.GetPosition(window);
+        _dragStartPointerScreenPosition = window.PointToScreen(_dragStartPointerPosition);
         _dragStartWindowPosition = window.Position;
         _pendingClickAction = clickAction;
 
@@ -139,16 +141,16 @@ public partial class HoverFluentControl : UserControl
         }
 
         var current = e.GetPosition(parentwindow);
-        var scaling = parentwindow.RenderScaling;
-        var deltaX = (current.X - _dragStartPointerPosition.X) * scaling;
-        var deltaY = (current.Y - _dragStartPointerPosition.Y) * scaling;
+        var currentScreen = parentwindow.PointToScreen(current);
+        var deltaX = currentScreen.X - _dragStartPointerScreenPosition.X;
+        var deltaY = currentScreen.Y - _dragStartPointerScreenPosition.Y;
         var newPosition = new PixelPoint(
-            _dragStartWindowPosition.X + (int)Math.Round(deltaX),
-            _dragStartWindowPosition.Y + (int)Math.Round(deltaY));
+            _dragStartWindowPosition.X + deltaX,
+            _dragStartWindowPosition.Y + deltaY);
 
         if (parentwindow.Position != newPosition)
         {
-            parentwindow.Position = newPosition;
+            windowDragHelper.SetWindowPosition(parentwindow, newPosition);
         }
     }
 
@@ -201,3 +203,6 @@ public partial class HoverFluentControl : UserControl
         Button2
     }
 }
+
+
+
