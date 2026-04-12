@@ -15,9 +15,7 @@ public partial class HoverFluent : Window
     private long _lastPositionLogTime;
     private const int PositionLogIntervalMs = 200;
     private readonly ILogger<HoverFluent> logger = ClassIsland.Shared.IAppHost.GetService<ILogger<HoverFluent>>();
-    private readonly IslandCallerService IslandCallerService = ClassIsland.Shared.IAppHost.GetService<IslandCallerService>();
     private readonly WindowTopmostHelper windowTopmostHelper = ClassIsland.Shared.IAppHost.GetService<WindowTopmostHelper>();
-    private readonly WindowDragHelper windowDragHelper = ClassIsland.Shared.IAppHost.GetService<WindowDragHelper>();
     private CancellationTokenSource? topmostCts;
 
     public HoverFluent()
