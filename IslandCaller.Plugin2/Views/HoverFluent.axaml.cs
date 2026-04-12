@@ -37,16 +37,6 @@ public partial class HoverFluent : Window
         logger.LogDebug($"HoverFluent 坐标: PositionX={(int)Math.Round(vm.PositionX * scaling)}, PositionY={(int)Math.Round(vm.PositionY * scaling)}");
         logger.LogInformation("HoverFluent 悬浮窗初始化成功");
 
-        var platformHandle = TryGetPlatformHandle();
-        if (platformHandle == null)
-        {
-            logger.LogWarning("无法获取窗口句柄，取消触控输入注册失败。");
-        }
-        else
-        {
-            windowDragHelper.EnsureTouchInputDisabled(platformHandle.Handle);
-        }
-
         StartTopmostLoop();
         windowTopmostHelper.EnsureNoActivate(this);
         ApplyTopmost("窗口打开");
