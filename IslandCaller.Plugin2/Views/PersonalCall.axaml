@@ -79,6 +79,7 @@
       Grid.Column="0"
       Grid.Row="4"
       Width="230"
+      Focusable="False"
       Click="CancelButton_Click">
           <Grid>
 			  <Grid.ColumnDefinitions>
@@ -98,6 +99,7 @@
       Classes="accent"
       Grid.Column="1"
       Grid.Row="4"
+      Focusable="False"
       Click="SureButton_Click">
           <Grid
           HorizontalAlignment="Center"

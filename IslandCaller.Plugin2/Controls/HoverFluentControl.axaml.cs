@@ -68,7 +68,7 @@ public partial class HoverFluentControl : UserControl
         await windowDragHelper.DragMoveAsync(parentwindow, e.Pointer.Type);
         logger.LogDebug("Button1_PointerPressed: 窗口拖动结束");
         hoverWindow?.EndDragAndClamp();
-        if(parentwindow.Position == lastWindowPosition)
+        if(parentwindow.Position == lastWindowPosition || (Math.Abs(parentwindow.Position.X - lastWindowPosition.X) < 4 && Math.Abs(parentwindow.Position.Y - lastWindowPosition.Y) < 4))
         {
             logger.LogDebug("Button1_PointerPressed: 窗口位置未变化，触发点击事件");
             IslandCallerService.ShowRandomStudent(1);
@@ -102,10 +102,10 @@ public partial class HoverFluentControl : UserControl
         await windowDragHelper.DragMoveAsync(parentwindow, e.Pointer.Type);
         logger.LogDebug("Button2_PointerPressed: 窗口拖动结束");
         hoverWindow?.EndDragAndClamp();
-        if (parentwindow.Position == lastWindowPosition)
+        if (parentwindow.Position == lastWindowPosition || (Math.Abs(parentwindow.Position.X - lastWindowPosition.X) < 4 && Math.Abs(parentwindow.Position.Y - lastWindowPosition.Y) < 4))
         {
             logger.LogDebug("Button2_PointerPressed: 窗口位置未变化，触发点击事件");
-            await new PersonalCall().ShowDialog(parentwindow);
+            await new PersonalCall().ShowOwnedNoActivateAsync(parentwindow);
         }
     }
 
@@ -180,7 +180,7 @@ public partial class HoverFluentControl : UserControl
             hoverWindow.EndDragAndClamp();
         }
 
-        if (parentwindow != null && parentwindow.Position == lastWindowPosition)
+        if (parentwindow != null && parentwindow.Position == lastWindowPosition || (Math.Abs(parentwindow.Position.X - lastWindowPosition.X) < 4 && Math.Abs(parentwindow.Position.Y - lastWindowPosition.Y) < 4))
         {
             logger.LogDebug("手动拖动未改变窗口位置，触发点击事件");
             if (_pendingClickAction == DragClickAction.Button1)
@@ -189,7 +189,7 @@ public partial class HoverFluentControl : UserControl
             }
             else if (_pendingClickAction == DragClickAction.Button2)
             {
-                await new PersonalCall().ShowDialog(parentwindow);
+                await new PersonalCall().ShowOwnedNoActivateAsync(parentwindow);
             }
         }
 
