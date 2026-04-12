@@ -14,6 +14,7 @@ public partial class PersonalCall : Window,INotifyPropertyChanged
     private const int OwnerGapPx = 12;
     private readonly WindowTopmostHelper windowTopmostHelper = IAppHost.GetService<WindowTopmostHelper>();
     private bool _isClosingWithoutActivation;
+    private bool _positionInitializedBeforeShow;
     public PersonalCall()
     {
         IslandCallerService = IAppHost.GetService<IslandCallerService>();   
@@ -37,8 +38,12 @@ public partial class PersonalCall : Window,INotifyPropertyChanged
                 (int)(workArea.Y + (workArea.Height - Height) / 2));
             return;
         }
+
         windowTopmostHelper.EnsureNoActivate(this);
-        PositionNearOwner(Owner);
+        if (!_positionInitializedBeforeShow)
+        {
+            PositionNearOwner(Owner);
+        }
     }
     private void CancelButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
@@ -76,6 +81,8 @@ public partial class PersonalCall : Window,INotifyPropertyChanged
         }
 
         Closed += ClosedHandler;
+        PositionNearOwner(owner);
+        _positionInitializedBeforeShow = true;
         Show(owner);
         return tcs.Task;
     }
