@@ -24,6 +24,14 @@ public partial class PersonalCall : Window,INotifyPropertyChanged
 
         if (Owner == null)
         {
+            var screen = Screens.Primary; // 主屏幕
+            if (screen is null) return;
+
+            var workArea = screen.WorkingArea;
+
+            Position = new PixelPoint(
+                (int)(workArea.X + (workArea.Width - Width) / 2),
+                (int)(workArea.Y + (workArea.Height - Height) / 2));
             return;
         }
 

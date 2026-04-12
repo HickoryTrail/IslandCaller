@@ -15,9 +15,10 @@
         ShowInTaskbar="False"
         Topmost="True"
         CanResize="False"
+        ShowActivated="False"
+        Focusable="False"
         Height="200"
-        Width="500"
-        WindowStartupLocation="CenterScreen">
+        Width="500">
   <Grid
     HorizontalAlignment="Center"
     VerticalAlignment="Stretch">
