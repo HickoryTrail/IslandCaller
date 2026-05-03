@@ -14,7 +14,7 @@ namespace IslandCaller.Models
     {
         public GeneralSetting()
         {
-            _version = new Version(2, 0, 0, 0);
+            _version = new Version(2, 0, 1, 2);
             _breakdisable = true;
         }
 
@@ -29,6 +29,12 @@ namespace IslandCaller.Models
         {
             get => _breakdisable;
             set { if (_breakdisable != value) { _breakdisable = value; OnPropertyChanged(nameof(BreakDisable)); } }
+        }
+
+        private bool _interruptable;
+        public bool Interruptable { 
+            get => _interruptable;
+            set { if (_interruptable != value) { _interruptable = value; OnPropertyChanged(nameof(Interruptable)); } }
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

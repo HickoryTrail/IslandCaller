@@ -45,6 +45,7 @@ namespace IslandCaller.Models
             RegistryKey IsC_HoverKey_Position = IsC_HoverKey?.CreateSubKey("Position", writable: true);
 
             IsC_GeneralKey?.SetValue("BreakDisable", Instance.General.BreakDisable);
+            IsC_GeneralKey?.SetValue("Interruptable", Instance.General.Interruptable);
             IsC_ProfileKey?.SetValue("ProfileNum", Instance.Profile.ProfileNum);
             IsC_ProfileKey?.SetValue("DefaultProfileName", Instance.Profile.DefaultProfile.ToString());
             IsC_ProfileKey?.SetValue("IsPreferProfile", Instance.Profile.IsPreferProfile);
@@ -87,6 +88,7 @@ namespace IslandCaller.Models
                 IsC_HoverKey_Position = IsC_HoverKey?.OpenSubKey("Position", writable: true);
 
                 Instance.General.BreakDisable = Convert.ToBoolean(IsC_GeneralKey?.GetValue("BreakDisable") ?? true);
+                Instance.General.Interruptable = Convert.ToBoolean(IsC_GeneralKey?.GetValue("Interruptable") ?? false);
                 Instance.Profile.ProfileNum = Convert.ToInt32(IsC_ProfileKey?.GetValue("ProfileNum"));
                 Instance.Profile.DefaultProfile = Guid.Parse(IsC_ProfileKey?.GetValue("DefaultProfileName") as string);
                 Instance.Profile.IsPreferProfile = Convert.ToBoolean(IsC_ProfileKey?.GetValue("IsPreferProfile") ?? false);
@@ -111,6 +113,7 @@ namespace IslandCaller.Models
             RegistryKey IsC_HoverKey_Position = IsC_HoverKey?.OpenSubKey("Position", writable: true);
 
             IsC_GeneralKey?.SetValue("BreakDisable", Instance.General.BreakDisable);
+            IsC_GeneralKey?.SetValue("Interruptable", Instance.General.Interruptable);
             IsC_ProfileKey?.SetValue("ProfileNum", Instance.Profile.ProfileNum);
             IsC_ProfileKey?.SetValue("DefaultProfileName", Instance.Profile.DefaultProfile.ToString());
             IsC_ProfileKey?.SetValue("IsPreferProfile", Instance.Profile.IsPreferProfile);
