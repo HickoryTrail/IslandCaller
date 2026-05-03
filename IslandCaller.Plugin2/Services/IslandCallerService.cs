@@ -41,10 +41,7 @@ namespace IslandCaller.Services.IslandCallerService
             };
             uriNavigationService.HandlePluginsNavigation(
                 "IslandCaller/Simple",
-                args =>
-                {
-                    new IslandCallerNotificationProviderNew(lessonsService,coreService).RandomCall(1);
-                }
+                args => ShowRandomStudent(1)
             );
             uriNavigationService.HandlePluginsNavigation(
                 "IslandCaller/Advanced/GUI",
