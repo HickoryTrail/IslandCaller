@@ -127,12 +127,6 @@ namespace IslandCaller.ViewModels
                 else if (args.PropertyName == nameof(IsHoverEnable))
                 {
                     Settings.Instance.Hover.IsEnable = IsHoverEnable;
-                    if (IsHoverEnable)
-                    {
-                        plugin.HoverWindow = new HoverFluent();
-                        plugin.HoverWindow.Show();
-                    }
-                    else plugin.HoverWindow.Close();
                 }
                 else if (args.PropertyName == nameof(HoverScalingFactor))
                 {

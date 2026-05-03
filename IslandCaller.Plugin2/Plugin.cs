@@ -4,6 +4,7 @@ using ClassIsland.Core.Abstractions;
 using ClassIsland.Core.Attributes;
 using ClassIsland.Core.Extensions.Registry;
 using ClassIsland.Shared;
+using IslandCaller.Actions;
 using IslandCaller.Helpers;
 using IslandCaller.Models;
 using IslandCaller.Services;
@@ -34,6 +35,9 @@ namespace IslandCaller
             services.AddSingleton<WindowDragHelper>();
             services.AddSingleton<WindowTopmostHelper>();
             services.AddSettingsPage<SettingPage>();
+            services.AddAction<DisableHoverAction>();
+            services.AddAction<EnableHoverAction>();
+            services.AddAction<CallAction>();
             AppBase.Current.AppStarted += async (_, _) =>
             {
                 try

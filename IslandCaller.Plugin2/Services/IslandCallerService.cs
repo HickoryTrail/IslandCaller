@@ -49,6 +49,18 @@ namespace IslandCaller.Services.IslandCallerService
                     Status.InterruptionEnable = Settings.Instance.General.Interruptable;
                 }
             };
+            Settings.Instance.Hover.PropertyChanged += (s,e) =>
+            {
+                if(e.PropertyName == nameof(Settings.Instance.Hover.IsEnable))
+                {
+                    if (Settings.Instance.Hover.IsEnable)
+                    {
+                        plugin.HoverWindow = new HoverFluent();
+                        plugin.HoverWindow.Show();
+                    }
+                    else plugin.HoverWindow.Close();
+                }
+            };
             uriNavigationService.HandlePluginsNavigation(
                 "IslandCaller/Simple",
                 args => ShowRandomStudent(1)
