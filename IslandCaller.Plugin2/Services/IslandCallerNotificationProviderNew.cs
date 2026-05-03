@@ -16,6 +16,7 @@ namespace IslandCaller.Services.NotificationProvidersNew;
 public class IslandCallerNotificationProviderNew(ILessonsService lessonsService,CoreService coreService) : NotificationProviderBase
 {
     private readonly ILessonsService lessonsService = lessonsService;
+    public NotificationRequest Request { get; set; }
 
     public async void RandomCall(int stunum)
     {
@@ -31,7 +32,7 @@ public class IslandCallerNotificationProviderNew(ILessonsService lessonsService,
         }
         string output = sb.ToString();
         int maskduration = stunum * 2 + 1; // 计算持续时间
-        ShowNotification(new NotificationRequest()
+        Request = new NotificationRequest()
         {
             MaskContent = NotificationContent.CreateTwoIconsMask(output, factory: x =>
             {
@@ -39,6 +40,7 @@ public class IslandCallerNotificationProviderNew(ILessonsService lessonsService,
                 x.IsSpeechEnabled = true;
                 x.SpeechContent = output;
             })
-        });
+        };
+        ShowNotification(Request);
     }
 }

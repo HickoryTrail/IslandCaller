@@ -46,6 +46,13 @@ namespace IslandCaller.Services
             set => this.RaiseAndSetIfChanged(ref _occupationDisable, value);
         }
 
+        private bool _interruptionEnable;
+        public bool InterruptionEnable
+        {
+            get => _interruptionEnable;
+            set => this.RaiseAndSetIfChanged(ref _interruptionEnable, value);
+        }
+
         private bool _isPluginReady;
         public bool IsPluginReady
         {
@@ -59,6 +66,7 @@ namespace IslandCaller.Services
             HistoryServiceInitialized = false;
             CoreServiceInitialized = false;
             IslandCallerServiceInitialized = false;
+            InterruptionEnable = false;
             IsTimeStatusAvailable = false;
             OccupationDisable = true;
 
@@ -67,9 +75,10 @@ namespace IslandCaller.Services
                 x => x.HistoryServiceInitialized,
                 x => x.CoreServiceInitialized,
                 x => x.IslandCallerServiceInitialized,
+                x => x.InterruptionEnable,
                 x => x.IsTimeStatusAvailable,
                 x => x.OccupationDisable,
-                (a, b, c, d, e, f) => a && b && c && d && e && f
+                (a, b, c, d, e, f,g) => a && b && c && d && f && (g || e)
             )
             .BindTo(this, x => x.IsPluginReady);
         }

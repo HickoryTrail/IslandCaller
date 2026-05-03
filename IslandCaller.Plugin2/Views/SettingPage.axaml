@@ -35,6 +35,16 @@
                 IsChecked="{Binding IsBreakDisable, Mode=TwoWay}"/>
             </fa:SettingsExpander.Footer>
         </fa:SettingsExpander>
+        <!-- 打断点名-->
+        <fa:SettingsExpander
+        IconSource="{ci:FluentIconSource &#xEE67;}"
+        Header="打断点名"
+        Description="打断上一次点名，并触发新的点名">
+		    <fa:SettingsExpander.Footer>
+			    <ToggleSwitch
+                IsChecked="{Binding Interruptable, Mode=TwoWay}"/>
+            </fa:SettingsExpander.Footer>
+        </fa:SettingsExpander>
 
         <!-- 悬浮窗设置 -->
         <Separator Margin="0 12 0 4" />

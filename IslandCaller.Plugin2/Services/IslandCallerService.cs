@@ -3,30 +3,36 @@ using ClassIsland.Core.Abstractions.Services;
 using IslandCaller.Views;
 using ClassIsland.Shared.Enums;
 using IslandCaller.Models;
+using Microsoft.Extensions.Logging;
 
 namespace IslandCaller.Services.IslandCallerService
 {
     public class IslandCallerService
     {
         private ILessonsService LessonsService { get; }
+        private ILogger<IslandCallerService> Logger { get; }
         private CoreService CoreService {  get; }
-        private Plugin Plugin { get; }
+        private Plugin Plugin { get; set; }
+        private IslandCallerNotificationProviderNew LastRequest { get; set; }
         public Status Status { get; set; }
         public IslandCallerService(Plugin plugin, 
                                     IUriNavigationService uriNavigationService, 
                                     ILessonsService lessonsService,
                                     HistoryService historyService,
                                     CoreService coreService,
-                                    Status status
+                                    Status status,
+                                    ILogger<IslandCallerService> logger
             )
         {
             
             LessonsService = lessonsService;
             CoreService = coreService;
+            Logger = logger;
             Plugin = plugin;
             Status = status;
             status.IslandCallerServiceInitialized = false;
             Status.IsTimeStatusAvailable = !(Settings.Instance.General.BreakDisable & lessonsService.CurrentState == TimeState.Breaking);
+            Status.InterruptionEnable = Settings.Instance.General.Interruptable;
             lessonsService.CurrentTimeStateChanged += (s, e) =>
             {
                 historyService.ClearThisLessonHistory();
@@ -37,6 +43,10 @@ namespace IslandCaller.Services.IslandCallerService
                 if (e.PropertyName == nameof(Settings.Instance.General.BreakDisable))
                 {
                     Status.IsTimeStatusAvailable = !(Settings.Instance.General.BreakDisable & lessonsService.CurrentState == TimeState.Breaking);
+                }
+                if(e.PropertyName == nameof(Settings.Instance.General.Interruptable))
+                {
+                    Status.InterruptionEnable = Settings.Instance.General.Interruptable;
                 }
             };
             uriNavigationService.HandlePluginsNavigation(
@@ -57,9 +67,16 @@ namespace IslandCaller.Services.IslandCallerService
         {
             if(Status.IsPluginReady == false) return;
             Status.OccupationDisable = false;
-            new IslandCallerNotificationProviderNew(LessonsService, CoreService).RandomCall(stunum);
+            if (Status.InterruptionEnable == true && LastRequest != null)
+            {
+                LastRequest.Request.Cancel();
+                Logger.LogWarning("上一个点名请求已被取消");
+            }
+            LastRequest = new IslandCallerNotificationProviderNew(LessonsService, CoreService);
+            LastRequest.RandomCall(stunum);
             await Task.Delay(stunum * 2000 + 1000);
             Status.OccupationDisable = true;
+            LastRequest = null;
         }
     }
 }

@@ -21,6 +21,13 @@ namespace IslandCaller.ViewModels
             set => this.RaiseAndSetIfChanged(ref _isBreakDisable, value);
         }
 
+        private bool _interruptable;
+        public bool Interruptable
+        {
+            get => _interruptable;
+            set => this.RaiseAndSetIfChanged(ref _interruptable, value);
+        }
+
         //悬浮窗设置
         private bool _isHoverEnable;
         public bool IsHoverEnable
@@ -93,6 +100,7 @@ namespace IslandCaller.ViewModels
 
             // 初始化默认值
             IsBreakDisable = Settings.Instance.General.BreakDisable;
+            Interruptable = Settings.Instance.General.Interruptable;
             IsHoverEnable = Settings.Instance.Hover.IsEnable;
             HoverScalingFactor = Settings.Instance.Hover.ScalingFactor;
             var profile = profileService.GetMembers(CurrentProfile)
@@ -111,6 +119,10 @@ namespace IslandCaller.ViewModels
                 if (args.PropertyName == nameof(IsBreakDisable))
                 {
                     Settings.Instance.General.BreakDisable = IsBreakDisable;
+                }
+                else if (args.PropertyName == nameof(Interruptable))
+                {
+                    Settings.Instance.General.Interruptable = Interruptable;
                 }
                 else if (args.PropertyName == nameof(IsHoverEnable))
                 {
