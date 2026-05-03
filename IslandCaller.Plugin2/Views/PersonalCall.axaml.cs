@@ -13,7 +13,9 @@ public partial class PersonalCall : Window,INotifyPropertyChanged
     private IslandCallerService IslandCallerService { get; }
     private const int OwnerGapPx = 12;
     private readonly WindowTopmostHelper windowTopmostHelper = IAppHost.GetService<WindowTopmostHelper>();
+    private WindowOutsideClickCloseHelper? outsideClickCloseHelper;
     private bool _isClosingWithoutActivation;
+    private bool _isCloseRequested;
     private bool _positionInitializedBeforeShow;
     public PersonalCall()
     {
@@ -25,6 +27,8 @@ public partial class PersonalCall : Window,INotifyPropertyChanged
     protected override void OnOpened(EventArgs e)
     {
         base.OnOpened(e);
+        windowTopmostHelper.EnsureNoActivate(this);
+        StartOutsideClickCloseMonitor();
 
         if (Owner == null)
         {
@@ -39,7 +43,6 @@ public partial class PersonalCall : Window,INotifyPropertyChanged
             return;
         }
 
-        windowTopmostHelper.EnsureNoActivate(this);
         if (!_positionInitializedBeforeShow)
         {
             PositionNearOwner(Owner);
@@ -61,12 +64,27 @@ public partial class PersonalCall : Window,INotifyPropertyChanged
         {
             windowTopmostHelper.EnsureNoActivate(this);
         }
+
+        StopOutsideClickCloseMonitor();
         base.OnClosing(e);
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        StopOutsideClickCloseMonitor();
+        base.OnClosed(e);
     }
 
     private void CloseWithoutActivation()
     {
+        if (_isCloseRequested)
+        {
+            return;
+        }
+
+        _isCloseRequested = true;
         _isClosingWithoutActivation = true;
+        StopOutsideClickCloseMonitor();
         windowTopmostHelper.EnsureNoActivate(this);
         Close();
     }
@@ -145,5 +163,18 @@ public partial class PersonalCall : Window,INotifyPropertyChanged
         if (value < min) return min;
         if (value > max) return max;
         return value;
+    }
+
+    private void StartOutsideClickCloseMonitor()
+    {
+        outsideClickCloseHelper?.Dispose();
+        outsideClickCloseHelper = new WindowOutsideClickCloseHelper(this, CloseWithoutActivation);
+        outsideClickCloseHelper.Start();
+    }
+
+    private void StopOutsideClickCloseMonitor()
+    {
+        outsideClickCloseHelper?.Dispose();
+        outsideClickCloseHelper = null;
     }
 }
