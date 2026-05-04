@@ -12,8 +12,10 @@ public partial class PersonalCall : Window,INotifyPropertyChanged
     public double Num { get; set; }
     private IslandCallerService IslandCallerService { get; }
     private const int OwnerGapPx = 12;
+    private const int OutsideClickMonitorStartDelayMs = 200;
     private readonly WindowTopmostHelper windowTopmostHelper = IAppHost.GetService<WindowTopmostHelper>();
     private WindowOutsideClickCloseHelper? outsideClickCloseHelper;
+    private CancellationTokenSource? outsideClickMonitorStartCts;
     private bool _isClosingWithoutActivation;
     private bool _isCloseRequested;
     private bool _positionInitializedBeforeShow;
@@ -28,7 +30,7 @@ public partial class PersonalCall : Window,INotifyPropertyChanged
     {
         base.OnOpened(e);
         windowTopmostHelper.EnsureNoActivate(this);
-        StartOutsideClickCloseMonitor();
+        ScheduleOutsideClickCloseMonitor();
 
         if (Owner == null)
         {
@@ -172,8 +174,35 @@ public partial class PersonalCall : Window,INotifyPropertyChanged
         outsideClickCloseHelper.Start();
     }
 
+    private async void ScheduleOutsideClickCloseMonitor()
+    {
+        outsideClickMonitorStartCts?.Cancel();
+        outsideClickMonitorStartCts?.Dispose();
+        outsideClickMonitorStartCts = new CancellationTokenSource();
+        var token = outsideClickMonitorStartCts.Token;
+
+        try
+        {
+            await Task.Delay(OutsideClickMonitorStartDelayMs, token);
+        }
+        catch (TaskCanceledException)
+        {
+            return;
+        }
+
+        if (token.IsCancellationRequested || _isCloseRequested || !IsVisible)
+        {
+            return;
+        }
+
+        StartOutsideClickCloseMonitor();
+    }
+
     private void StopOutsideClickCloseMonitor()
     {
+        outsideClickMonitorStartCts?.Cancel();
+        outsideClickMonitorStartCts?.Dispose();
+        outsideClickMonitorStartCts = null;
         outsideClickCloseHelper?.Dispose();
         outsideClickCloseHelper = null;
     }

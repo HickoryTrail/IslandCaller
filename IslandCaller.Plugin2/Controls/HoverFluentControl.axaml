@@ -15,8 +15,10 @@
         <vm:HoverFluentViewModel />
     </Design.DataContext>
     <Grid
+    x:Name="DragSurface"
     HorizontalAlignment="Center"
     VerticalAlignment="Center"
+    Background="Transparent"
     Focusable="False">
       <Button
         x:Name="Button1"
