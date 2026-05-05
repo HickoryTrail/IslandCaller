@@ -14,7 +14,7 @@ namespace IslandCaller.Models
     {
         public GeneralSetting()
         {
-            _version = new Version(2, 0, 1, 2);
+            _version = new Version(2, 0, 1, 3);
             _breakdisable = true;
         }
 
