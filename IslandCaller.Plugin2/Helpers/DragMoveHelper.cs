@@ -14,6 +14,7 @@ namespace IslandCaller.Helpers
         private Point _dragStartPoint;
         private PixelPoint _windowStartPosition;
 
+        // --- Win32 API 导入 ---
         [DllImport("user32.dll")]
         private static extern bool ReleaseCapture();
 
@@ -38,6 +39,7 @@ namespace IslandCaller.Helpers
 
         public async Task DragMoveAsync(Window window, PointerType pointerType)
         {
+            // 检查是否为 Windows 系统
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 await DragMoveWindowsAsync(window, pointerType);
