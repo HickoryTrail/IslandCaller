@@ -41,7 +41,7 @@ public partial class PersonalCall : Window,INotifyPropertyChanged
 
         if (Owner == null)
         {
-            var screen = Screens.Primary; // 涓诲睆骞?
+            var screen = Screens.Primary; // 主屏幕
             if (screen is null) return;
 
             var workArea = screen.WorkingArea;
