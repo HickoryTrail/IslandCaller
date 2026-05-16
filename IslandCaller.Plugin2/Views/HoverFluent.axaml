@@ -12,33 +12,20 @@
         ExtendClientAreaToDecorationsHint="True"
         ExtendClientAreaTitleBarHeightHint="-1"
         TransparencyLevelHint="AcrylicBlur"
-        Background = "Transparent"
-        SystemDecorations="Full"
+        Background="Transparent"
+        SystemDecorations="None"
         Height="{Binding Height}"
         Width="{Binding Width}"
         ShowInTaskbar="False"
         Topmost="True"
         CanResize="False"
-        Focusable="False">
-    <!-- 设置窗口数据上下文 -->
-    <Window.DataContext>
+        Focusable="False"><Window.DataContext>
         <vm:HoverFluentViewModel />
     </Window.DataContext>
     <Design.DataContext>
         <vm:HoverFluentViewModel />
-    </Design.DataContext>
-
-    <LayoutTransformControl
-        HorizontalAlignment="Center"
-        VerticalAlignment="Center"
-        Focusable="False">
-        <LayoutTransformControl.LayoutTransform>
+    </Design.DataContext><LayoutTransformControl HorizontalAlignment="Center" VerticalAlignment="Center" Focusable="False"><LayoutTransformControl.LayoutTransform>
             <ScaleTransform ScaleX="{Binding WindowScalingFactor}" ScaleY="{Binding WindowScalingFactor}"/>
-        </LayoutTransformControl.LayoutTransform>
-		<controls:HoverFluentControl 
-            x:Name="HoverControl"
-            VerticalAlignment="Center"
-            HorizontalAlignment="Center"
-            Focusable="False"/>
+        </LayoutTransformControl.LayoutTransform><controls:HoverFluentControl x:Name="HoverControl" VerticalAlignment="Center" HorizontalAlignment="Center" Focusable="False"/>
     </LayoutTransformControl>
 </Window>

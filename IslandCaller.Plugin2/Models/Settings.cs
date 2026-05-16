@@ -1,4 +1,3 @@
-﻿using Microsoft.Win32;
 using System.Text.Json;
 using IslandCaller.Services;
 
@@ -9,133 +8,115 @@ namespace IslandCaller.Models
         public static SettingsModel Instance { get; } = new SettingsModel();
         public ProfileService ProfileService { get; } = profileService;
 
-        private static string GetAppDataRootPath()
+        private static string GetSettingsDir()
         {
-            return Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "IslandCaller"
-            );
+            string dir;
+            if (OperatingSystem.IsWindows())dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "IslandCaller");
+            else
+                dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config", "IslandCaller");
+            if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+            return dir;
         }
+
+        private static string GetSettingsFilePath() => Path.Combine(GetSettingsDir(), "settings.json");
 
         private static bool HasLegacyDefaultProfileFile()
         {
-            string profilePath = Path.Combine(GetAppDataRootPath(), "Profile");
-            return File.Exists(Path.Combine(profilePath, "Default.csv")) ||
-                   File.Exists(Path.Combine(profilePath, "default.csv"));
+            string profilePath = Path.Combine(GetSettingsDir(), "Profile");
+            return File.Exists(Path.Combine(profilePath, "Default.csv")) || File.Exists(Path.Combine(profilePath, "default.csv"));
         }
 
         private static void CleanupLegacyInstall()
         {
-            string appDataRootPath = GetAppDataRootPath();
-
-            if (Directory.Exists(appDataRootPath))
-            {
-                Directory.Delete(appDataRootPath, recursive: true);
-            }
-
-            Registry.CurrentUser.DeleteSubKeyTree(@"Software\IslandCaller", throwOnMissingSubKey: false);
+            string dir = GetSettingsDir();
+            if (Directory.Exists(dir)) Directory.Delete(dir, recursive: true);
         }
 
         private void InitializeNewInstall()
         {
-            RegistryKey IsC_RootKey = Registry.CurrentUser.CreateSubKey(@"Software\IslandCaller", writable: true);
-            RegistryKey IsC_GeneralKey = IsC_RootKey?.CreateSubKey("General", writable: true);
-            RegistryKey IsC_ProfileKey = IsC_RootKey?.CreateSubKey("Profile", writable: true);
-            RegistryKey IsC_HoverKey = IsC_RootKey?.CreateSubKey("Hover", writable: true);
-            RegistryKey IsC_HoverKey_Position = IsC_HoverKey?.CreateSubKey("Position", writable: true);
-
-            IsC_GeneralKey?.SetValue("BreakDisable", Instance.General.BreakDisable);
-            IsC_GeneralKey?.SetValue("Interruptable", Instance.General.Interruptable);
-            IsC_ProfileKey?.SetValue("ProfileNum", Instance.Profile.ProfileNum);
-            IsC_ProfileKey?.SetValue("DefaultProfileName", Instance.Profile.DefaultProfile.ToString());
-            IsC_ProfileKey?.SetValue("IsPreferProfile", Instance.Profile.IsPreferProfile);
-            IsC_ProfileKey?.SetValue("ProfileList", JsonSerializer.Serialize(Instance.Profile.ProfileList));
-            IsC_ProfileKey?.SetValue("PreferProfile", JsonSerializer.Serialize(Instance.Profile.ProfilePrefer));
-            IsC_HoverKey?.SetValue("IsEnable", Instance.Hover.IsEnable);
-            IsC_HoverKey?.SetValue("ScalingFactor", Instance.Hover.ScalingFactor);
-            IsC_HoverKey_Position?.SetValue("X", Instance.Hover.Position.X);
-            IsC_HoverKey_Position?.SetValue("Y", Instance.Hover.Position.Y);
-
             ProfileService.CreateDemoProfile(Instance.Profile.DefaultProfile);
-            ClassIsland.Core.Controls.CommonTaskDialogs.ShowDialog("Welcome", "欢迎使用IslandCaller2.0");
+            Save();
+            ClassIsland.Core.Controls.CommonTaskDialogs.ShowDialog("Welcome", "Welcome to IslandCaller 2.0");
         }
 
         public void Load()
         {
-            RegistryKey IsC_RootKey = Registry.CurrentUser.OpenSubKey(@"Software\IslandCaller", writable: true);
-            RegistryKey IsC_GeneralKey;
-            RegistryKey IsC_ProfileKey;
-            RegistryKey IsC_HoverKey;
-            RegistryKey IsC_HoverKey_Position;
-
-            if (IsC_RootKey == null)
+            string settingsFile = GetSettingsFilePath();
+            if (File.Exists(settingsFile))
             {
-                InitializeNewInstall();
+                try
+                {
+                    string json = File.ReadAllText(settingsFile);
+                    var data = JsonSerializer.Deserialize<SettingsData>(json);
+                    if (data != null)
+                    {
+                        Instance.General.BreakDisable = data.BreakDisable;
+                        Instance.General.Interruptable = data.Interruptable;
+                        Instance.Profile.ProfileNum = data.ProfileNum;
+                        Instance.Profile.DefaultProfile = data.DefaultProfile;
+                        Instance.Profile.IsPreferProfile = data.IsPreferProfile;
+                        Instance.Profile.ProfileList = data.ProfileList ?? new Dictionary<Guid, string>();
+                        Instance.Profile.ProfilePrefer = data.ProfilePrefer ?? new Dictionary<Guid, string>();
+                        Instance.Hover.IsEnable = data.HoverIsEnable;
+                        Instance.Hover.ScalingFactor = data.HoverScalingFactor;
+                        Instance.Hover.Position.X = data.HoverPositionX;
+                        Instance.Hover.Position.Y = data.HoverPositionY;}
+                }
+                catch { InitializeNewInstall(); }
             }
             else
             {
-                if (HasLegacyDefaultProfileFile())
-                {
-                    CleanupLegacyInstall();
-                    InitializeNewInstall();
-                    SettingsBinder.Bind(Instance, Save);
-                    return;
-                }
-
-                IsC_GeneralKey = IsC_RootKey?.OpenSubKey("General", writable: true);
-                IsC_ProfileKey = IsC_RootKey?.OpenSubKey("Profile", writable: true);
-                IsC_HoverKey = IsC_RootKey?.OpenSubKey("Hover", writable: true);
-                IsC_HoverKey_Position = IsC_HoverKey?.OpenSubKey("Position", writable: true);
-
-                Instance.General.BreakDisable = Convert.ToBoolean(IsC_GeneralKey?.GetValue("BreakDisable") ?? true);
-                Instance.General.Interruptable = Convert.ToBoolean(IsC_GeneralKey?.GetValue("Interruptable") ?? false);
-                Instance.Profile.ProfileNum = Convert.ToInt32(IsC_ProfileKey?.GetValue("ProfileNum"));
-                Instance.Profile.DefaultProfile = Guid.Parse(IsC_ProfileKey?.GetValue("DefaultProfileName") as string);
-                Instance.Profile.IsPreferProfile = Convert.ToBoolean(IsC_ProfileKey?.GetValue("IsPreferProfile") ?? false);
-                Instance.Profile.ProfileList = JsonSerializer.Deserialize<Dictionary<Guid, string>>((IsC_ProfileKey?.GetValue("ProfileList") ?? "{}") as string);
-                Instance.Profile.ProfilePrefer = JsonSerializer.Deserialize<Dictionary<Guid, string>>((IsC_ProfileKey?.GetValue("PreferProfile") ?? "{}") as string);
-                Instance.Hover.IsEnable = Convert.ToBoolean(IsC_HoverKey?.GetValue("IsEnable") ?? true);
-                Instance.Hover.ScalingFactor = Convert.ToDouble(IsC_HoverKey?.GetValue("ScalingFactor") ?? 1.0);
-                Instance.Hover.Position.X = Convert.ToDouble(IsC_HoverKey_Position?.GetValue("X") ?? 200.0);
-                Instance.Hover.Position.Y = Convert.ToDouble(IsC_HoverKey_Position?.GetValue("Y") ?? 200.0);
-                Save();
+                if (HasLegacyDefaultProfileFile()) CleanupLegacyInstall();
+                InitializeNewInstall();
             }
-
             SettingsBinder.Bind(Instance, Save);
         }
 
         public void Save()
         {
-            RegistryKey IsC_RootKey = Registry.CurrentUser.OpenSubKey(@"Software\IslandCaller", writable: true);
-            RegistryKey IsC_GeneralKey = IsC_RootKey?.OpenSubKey("General", writable: true);
-            RegistryKey IsC_ProfileKey = IsC_RootKey?.OpenSubKey("Profile", writable: true);
-            RegistryKey IsC_HoverKey = IsC_RootKey?.OpenSubKey("Hover", writable: true);
-            RegistryKey IsC_HoverKey_Position = IsC_HoverKey?.OpenSubKey("Position", writable: true);
+            var data = new SettingsData
+            {
+                BreakDisable = Instance.General.BreakDisable,
+                Interruptable = Instance.General.Interruptable,
+                ProfileNum = Instance.Profile.ProfileNum,
+                DefaultProfile = Instance.Profile.DefaultProfile,
+                IsPreferProfile = Instance.Profile.IsPreferProfile,
+                ProfileList = Instance.Profile.ProfileList,
+                ProfilePrefer = Instance.Profile.ProfilePrefer,
+                HoverIsEnable = Instance.Hover.IsEnable,
+                HoverScalingFactor = Instance.Hover.ScalingFactor,
+                HoverPositionX = Instance.Hover.Position.X,
+                HoverPositionY = Instance.Hover.Position.Y
+            };
+            string json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
+            string dir = Path.GetDirectoryName(GetSettingsFilePath())!;
+            if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+            File.WriteAllText(GetSettingsFilePath(), json);
+        }
 
-            IsC_GeneralKey?.SetValue("BreakDisable", Instance.General.BreakDisable);
-            IsC_GeneralKey?.SetValue("Interruptable", Instance.General.Interruptable);
-            IsC_ProfileKey?.SetValue("ProfileNum", Instance.Profile.ProfileNum);
-            IsC_ProfileKey?.SetValue("DefaultProfileName", Instance.Profile.DefaultProfile.ToString());
-            IsC_ProfileKey?.SetValue("IsPreferProfile", Instance.Profile.IsPreferProfile);
-            IsC_ProfileKey?.SetValue("ProfileList", JsonSerializer.Serialize(Instance.Profile.ProfileList));
-            IsC_ProfileKey?.SetValue("PreferProfile", JsonSerializer.Serialize(Instance.Profile.ProfilePrefer));
-            IsC_HoverKey?.SetValue("IsEnable", Instance.Hover.IsEnable);
-            IsC_HoverKey?.SetValue("ScalingFactor", Instance.Hover.ScalingFactor);
-            IsC_HoverKey_Position?.SetValue("X", Instance.Hover.Position.X);
-            IsC_HoverKey_Position?.SetValue("Y", Instance.Hover.Position.Y);
+        private class SettingsData
+        {
+            public bool BreakDisable { get; set; } = true;
+            public bool Interruptable { get; set; }
+            public int ProfileNum { get; set; } = 1;
+            public Guid DefaultProfile { get; set; }
+            public bool IsPreferProfile { get; set; }
+            public Dictionary<Guid, string> ProfileList { get; set; } = new();
+            public Dictionary<Guid, string> ProfilePrefer { get; set; } = new();
+            public bool HoverIsEnable { get; set; } = true;
+            public double HoverScalingFactor { get; set; } = 1.0;
+            public double HoverPositionX { get; set; } = 200.0;
+            public double HoverPositionY { get; set; } = 200.0;
         }
     }
+
     public static class SettingsBinder
     {
         public static void Bind(SettingsModel model, Action onChange)
         {
-            // General
             model.General.PropertyChanged += (_, _) => onChange();
-
-            // Hover
             model.Hover.PropertyChanged += (_, _) => onChange();
             model.Hover.Position.PropertyChanged += (_, _) => onChange();
         }
     }
-
 }

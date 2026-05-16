@@ -29,12 +29,19 @@ public partial class PersonalCall : Window,INotifyPropertyChanged
     protected override void OnOpened(EventArgs e)
     {
         base.OnOpened(e);
-        windowTopmostHelper.EnsureNoActivate(this);
+        this.Topmost = true;
+        this.Activate();
+        // Delay topmost to ensure window is fully mapped
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(200);
+            Avalonia.Threading.Dispatcher.UIThread.Post(() => { this.Topmost = true; this.Activate(); });
+        });
         ScheduleOutsideClickCloseMonitor();
 
         if (Owner == null)
         {
-            var screen = Screens.Primary; // 主屏幕
+            var screen = Screens.Primary; // 涓诲睆骞?
             if (screen is null) return;
 
             var workArea = screen.WorkingArea;

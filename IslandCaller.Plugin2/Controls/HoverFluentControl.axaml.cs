@@ -74,6 +74,34 @@ public partial class HoverFluentControl : UserControl
         }
 
         hoverWindow?.BeginDrag();
+        if (!System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+        {
+            // Linux: manual drag
+            var startPoint = e.GetPosition(parentwindow);
+            var startPos = parentwindow.Position;
+            void onMove(object? s, Avalonia.Input.PointerEventArgs me)
+            {
+                var cur = me.GetPosition(parentwindow);
+                var dx = cur.X - startPoint.X;
+                var dy = cur.Y - startPoint.Y;
+                parentwindow.Position = new Avalonia.PixelPoint(startPos.X + (int)dx, startPos.Y + (int)dy);
+            }
+            void onRelease(object? s, Avalonia.Input.PointerReleasedEventArgs re)
+            {
+                DragSurface.PointerMoved -= onMove;
+                DragSurface.PointerReleased -= onRelease;
+                logger.LogDebug("Linux drag ended");
+                hoverWindow?.EndDragAndClamp();
+                if (clickAction != DragClickAction.None && IsWithinClickThreshold(parentwindow.Position, lastWindowPosition))
+                {
+                    logger.LogDebug("Position unchanged, triggering click");
+                    _ = InvokeClickActionAsync(clickAction, parentwindow);
+                }
+            }
+            DragSurface.PointerMoved += onMove;
+DragSurface.PointerReleased += onRelease;
+            return;
+        }
         await windowDragHelper.DragMoveAsync(parentwindow, e.Pointer.Type);
         logger.LogDebug("DragSurface_PointerPressed: 窗口拖动结束");
         hoverWindow?.EndDragAndClamp();

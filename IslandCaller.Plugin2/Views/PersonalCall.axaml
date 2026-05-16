@@ -10,7 +10,7 @@
         ExtendClientAreaTitleBarHeightHint="-1"
         ExtendClientAreaToDecorationsHint="True"
         Background="Transparent"
-        SystemDecorations="Full"
+        SystemDecorations="None"
         TransparencyLevelHint="Mica"
         ShowInTaskbar="False"
         Topmost="True"
@@ -18,99 +18,51 @@
         ShowActivated="False"
         Focusable="False"
         Height="200"
-        Width="500">
-  <Grid
-    HorizontalAlignment="Center"
-    VerticalAlignment="Stretch">
-		<Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="5"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="10"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
-        <Grid
-        Margin="0,20,0,0"
-        Grid.Row="0"
-        Grid.Column="0">
-            <Grid.ColumnDefinitions>
-				<ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            <ci:FluentIcon Glyph="&#xED38;"
-                       FontSize="22"
-                       Grid.Column="0"/>
-        <TextBlock
-            Text="IslandCaller 自定义抽取"
-            FontFamily="HarmonyOS Sans SC"
-            FontSize="18"
-            Margin="5,0,0,0"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            Grid.Column="1"/>
-        </Grid>
-        <fa:SettingsExpander 
-        Grid.Row="2" 
-        Grid.Column="0" Grid.ColumnSpan="3"
-        IconSource="{ci:FluentIconSource &#xECB8;}"
-        Header="抽取人数"
-        Description="指定本次抽取的总人数">
-            <fa:SettingsExpander.Footer>
-                <Slider
-                Minimum="1"
-                Maximum="5"
-                TabIndex="1"
-                Width="250"
-                IsSnapToTickEnabled="True"
-                Classes="auto-tooltip"
-                TickFrequency="1"
-                Value="{Binding Num ,Mode=TwoWay}"
-                Ticks="1,2,3,4,5"
-                TickPlacement="Outside"/>
-            </fa:SettingsExpander.Footer>
-        </fa:SettingsExpander>
-      <Button
-      Margin="0,0,0,10"
-      Grid.Column="0"
-      Grid.Row="4"
-      Width="230"
-      Focusable="False"
-      Click="CancelButton_Click">
-          <Grid>
-			  <Grid.ColumnDefinitions>
-				  <ColumnDefinition Width="Auto"/>
-                  <ColumnDefinition Width="Auto"/>
-              </Grid.ColumnDefinitions>
-              <ci:FluentIcon Glyph="&#xE671;" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-              <TextBlock Text="取消" Grid.Column="1" Margin="3,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-          </Grid>
-      </Button>
-
-
-      <Button
-      VerticalAlignment="Bottom"
-      Margin="10,0,0,10"
-      Width="230"
-      Classes="accent"
-      Grid.Column="1"
-      Grid.Row="4"
-      Focusable="False"
-      Click="SureButton_Click">
-          <Grid
-          HorizontalAlignment="Center"
-          VerticalAlignment="Center">
-			  <Grid.ColumnDefinitions>
-				  <ColumnDefinition Width="Auto"/>
-                  <ColumnDefinition Width="Auto"/>
-              </Grid.ColumnDefinitions>
-              <ci:FluentIcon Glyph="&#xE423;" Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-              <TextBlock Text="点名" Grid.Column="1" VerticalAlignment="Stretch" HorizontalAlignment="Center" Margin="3,0,0,0"/>
-          </Grid>
-      </Button>
+        Width="500"><Grid HorizontalAlignment="Center" VerticalAlignment="Stretch">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="*"/>
+      <ColumnDefinition Width="5"/>
+      <ColumnDefinition Width="*"/>
+    </Grid.ColumnDefinitions>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="10"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+    <Grid Margin="0,20,0,0" Grid.Row="0" Grid.Column="0">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="Auto"/>
+      </Grid.ColumnDefinitions>
+      <ci:FluentIcon Glyph="&#xED38;" FontSize="22" Grid.Column="0"/>
+      <TextBlock Text="IslandCaller &#x81EA;&#x5B9A;&#x4E49;&#x62BD;&#x53D6;" FontFamily="HarmonyOS Sans SC" FontSize="18" Margin="5,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Column="1"/>
     </Grid>
+    <fa:SettingsExpander Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" IconSource="{ci:FluentIconSource &#xECB8;}" Header="&#x62BD;&#x53D6;&#x4EBA;&#x6570;" Description="&#x6307;&#x5B9A;&#x672C;&#x6B21;&#x62BD;&#x53D6;&#x7684;&#x603B;&#x4EBA;&#x6570;">
+      <fa:SettingsExpander.Footer>
+        <Slider Minimum="1" Maximum="5" TabIndex="1" Width="250" IsSnapToTickEnabled="True" Classes="auto-tooltip" TickFrequency="1" Value="{Binding Num ,Mode=TwoWay}" Ticks="1,2,3,4,5" TickPlacement="Outside"/>
+      </fa:SettingsExpander.Footer>
+    </fa:SettingsExpander>
+    <Button Margin="0,0,0,10" Grid.Column="0" Grid.Row="4" Width="230" Focusable="False" Click="CancelButton_Click">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <ci:FluentIcon Glyph="&#xE671;" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        <TextBlock Text="&#x53D6;&#x6D88;" Grid.Column="1" Margin="3,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+      </Grid>
+    </Button>
+    <Button VerticalAlignment="Bottom" Margin="10,0,0,10" Width="230" Classes="accent" Grid.Column="1" Grid.Row="4" Focusable="False" Click="SureButton_Click">
+      <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <ci:FluentIcon Glyph="&#xE423;" Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+        <TextBlock Text="&#x70B9;&#x540D;" Grid.Column="1" VerticalAlignment="Stretch" HorizontalAlignment="Center" Margin="3,0,0,0"/>
+      </Grid>
+    </Button>
+  </Grid>
 </Window>
