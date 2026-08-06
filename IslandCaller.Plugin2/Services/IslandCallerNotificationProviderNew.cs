@@ -4,7 +4,6 @@ using ClassIsland.Core.Attributes;
 using ClassIsland.Core.Models.Notification;
 using ClassIsland.Shared.Enums;
 using IslandCaller.Models;
-using System.Text;
 
 namespace IslandCaller.Services.NotificationProvidersNew;
 
@@ -20,17 +19,16 @@ public class IslandCallerNotificationProviderNew(ILessonsService lessonsService,
 
     public async void RandomCall(int stunum)
     {
-        var sb = new StringBuilder();
+        List<string> students = new();
         for (int i = 0; i < stunum; i++)
         {
-            sb.Append(coreService.GetRandomStudent());
-
-            if (i != stunum-1)
-            {
-                sb.Append("  ");
-            }
+            students.Add(coreService.GetRandomStudent());
         }
-        string output = sb.ToString();
+
+        string output = string.Join("  ", students);
+        string speechContent = string.Join(
+            "  ",
+            students.Select(student => $"{Settings.Instance.TTS.BeforeText}{student}{Settings.Instance.TTS.AfterText}"));
         int maskduration = stunum * 2 + 1; // 计算持续时间
         Request = new NotificationRequest()
         {
@@ -38,7 +36,7 @@ public class IslandCallerNotificationProviderNew(ILessonsService lessonsService,
             {
                 x.Duration = new TimeSpan(0, 0, maskduration);
                 x.IsSpeechEnabled = true;
-                x.SpeechContent = output;
+                x.SpeechContent = speechContent;
             })
         };
         ShowNotification(Request);
