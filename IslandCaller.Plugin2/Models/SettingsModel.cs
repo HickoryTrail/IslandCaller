@@ -8,6 +8,7 @@ namespace IslandCaller.Models
         public GeneralSetting General { get; set; } = new GeneralSetting();
         public ProfileSetting Profile { get; set; } = new ProfileSetting();
         public HoverSetting Hover { get; set; } = new HoverSetting();
+        public TTSSetting TTS { get; set; } = new TTSSetting();
     }
 
     public class GeneralSetting : INotifyPropertyChanged
@@ -85,6 +86,33 @@ namespace IslandCaller.Models
             get => _profileprefer;
             set { if (_profileprefer != value) { _profileprefer = value; OnPropertyChanged(nameof(ProfilePrefer)); } }
         }
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected void OnPropertyChanged(string name) =>
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+    }
+
+    public class TTSSetting : INotifyPropertyChanged
+    {
+        public TTSSetting()
+        {
+            _beforeText = string.Empty;
+            _afterText = string.Empty;
+        }
+
+        private string _beforeText;
+        public string BeforeText
+        {
+            get => _beforeText;
+            set { if (_beforeText != value) { _beforeText = value; OnPropertyChanged(nameof(BeforeText)); } }
+        }
+
+        private string _afterText;
+        public string AfterText
+        {
+            get => _afterText;
+            set { if (_afterText != value) { _afterText = value; OnPropertyChanged(nameof(AfterText)); } }
+        }
+
         public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged(string name) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));

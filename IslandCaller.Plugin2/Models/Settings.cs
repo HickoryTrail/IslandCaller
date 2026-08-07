@@ -43,6 +43,7 @@ namespace IslandCaller.Models
             RegistryKey IsC_ProfileKey = IsC_RootKey?.CreateSubKey("Profile", writable: true);
             RegistryKey IsC_HoverKey = IsC_RootKey?.CreateSubKey("Hover", writable: true);
             RegistryKey IsC_HoverKey_Position = IsC_HoverKey?.CreateSubKey("Position", writable: true);
+            RegistryKey IsC_TTSKey = IsC_RootKey?.CreateSubKey("TTS", writable: true);
 
             IsC_GeneralKey?.SetValue("BreakDisable", Instance.General.BreakDisable);
             IsC_GeneralKey?.SetValue("Interruptable", Instance.General.Interruptable);
@@ -55,6 +56,8 @@ namespace IslandCaller.Models
             IsC_HoverKey?.SetValue("ScalingFactor", Instance.Hover.ScalingFactor);
             IsC_HoverKey_Position?.SetValue("X", Instance.Hover.Position.X);
             IsC_HoverKey_Position?.SetValue("Y", Instance.Hover.Position.Y);
+            IsC_TTSKey?.SetValue("BeforeText", Instance.TTS.BeforeText);
+            IsC_TTSKey?.SetValue("AfterText", Instance.TTS.AfterText);
 
             ProfileService.CreateDemoProfile(Instance.Profile.DefaultProfile);
             ClassIsland.Core.Controls.CommonTaskDialogs.ShowDialog("Welcome", "欢迎使用IslandCaller2.0");
@@ -67,6 +70,7 @@ namespace IslandCaller.Models
             RegistryKey IsC_ProfileKey;
             RegistryKey IsC_HoverKey;
             RegistryKey IsC_HoverKey_Position;
+            RegistryKey IsC_TTSKey;
 
             if (IsC_RootKey == null)
             {
@@ -86,6 +90,7 @@ namespace IslandCaller.Models
                 IsC_ProfileKey = IsC_RootKey?.OpenSubKey("Profile", writable: true);
                 IsC_HoverKey = IsC_RootKey?.OpenSubKey("Hover", writable: true);
                 IsC_HoverKey_Position = IsC_HoverKey?.OpenSubKey("Position", writable: true);
+                IsC_TTSKey = IsC_RootKey?.OpenSubKey("TTS", writable: true) ?? IsC_RootKey?.CreateSubKey("TTS", writable: true);
 
                 Instance.General.BreakDisable = Convert.ToBoolean(IsC_GeneralKey?.GetValue("BreakDisable") ?? true);
                 Instance.General.Interruptable = Convert.ToBoolean(IsC_GeneralKey?.GetValue("Interruptable") ?? false);
@@ -98,6 +103,8 @@ namespace IslandCaller.Models
                 Instance.Hover.ScalingFactor = Convert.ToDouble(IsC_HoverKey?.GetValue("ScalingFactor") ?? 1.0);
                 Instance.Hover.Position.X = Convert.ToDouble(IsC_HoverKey_Position?.GetValue("X") ?? 200.0);
                 Instance.Hover.Position.Y = Convert.ToDouble(IsC_HoverKey_Position?.GetValue("Y") ?? 200.0);
+                Instance.TTS.BeforeText = IsC_TTSKey?.GetValue("BeforeText") as string ?? string.Empty;
+                Instance.TTS.AfterText = IsC_TTSKey?.GetValue("AfterText") as string ?? string.Empty;
                 Save();
             }
 
@@ -111,6 +118,7 @@ namespace IslandCaller.Models
             RegistryKey IsC_ProfileKey = IsC_RootKey?.OpenSubKey("Profile", writable: true);
             RegistryKey IsC_HoverKey = IsC_RootKey?.OpenSubKey("Hover", writable: true);
             RegistryKey IsC_HoverKey_Position = IsC_HoverKey?.OpenSubKey("Position", writable: true);
+            RegistryKey IsC_TTSKey = IsC_RootKey?.OpenSubKey("TTS", writable: true) ?? IsC_RootKey?.CreateSubKey("TTS", writable: true);
 
             IsC_GeneralKey?.SetValue("BreakDisable", Instance.General.BreakDisable);
             IsC_GeneralKey?.SetValue("Interruptable", Instance.General.Interruptable);
@@ -123,6 +131,8 @@ namespace IslandCaller.Models
             IsC_HoverKey?.SetValue("ScalingFactor", Instance.Hover.ScalingFactor);
             IsC_HoverKey_Position?.SetValue("X", Instance.Hover.Position.X);
             IsC_HoverKey_Position?.SetValue("Y", Instance.Hover.Position.Y);
+            IsC_TTSKey?.SetValue("BeforeText", Instance.TTS.BeforeText);
+            IsC_TTSKey?.SetValue("AfterText", Instance.TTS.AfterText);
         }
     }
     public static class SettingsBinder
@@ -135,6 +145,9 @@ namespace IslandCaller.Models
             // Hover
             model.Hover.PropertyChanged += (_, _) => onChange();
             model.Hover.Position.PropertyChanged += (_, _) => onChange();
+
+            // TTS
+            model.TTS.PropertyChanged += (_, _) => onChange();
         }
     }
 
