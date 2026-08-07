@@ -44,6 +44,7 @@ namespace IslandCaller.Models
             RegistryKey IsC_HoverKey = IsC_RootKey?.CreateSubKey("Hover", writable: true);
             RegistryKey IsC_HoverKey_Position = IsC_HoverKey?.CreateSubKey("Position", writable: true);
             RegistryKey IsC_TTSKey = IsC_RootKey?.CreateSubKey("TTS", writable: true);
+            RegistryKey IsC_CallKey = IsC_RootKey?.CreateSubKey("Call", writable: true);
 
             IsC_GeneralKey?.SetValue("BreakDisable", Instance.General.BreakDisable);
             IsC_GeneralKey?.SetValue("Interruptable", Instance.General.Interruptable);
@@ -58,6 +59,8 @@ namespace IslandCaller.Models
             IsC_HoverKey_Position?.SetValue("Y", Instance.Hover.Position.Y);
             IsC_TTSKey?.SetValue("BeforeText", Instance.TTS.BeforeText);
             IsC_TTSKey?.SetValue("AfterText", Instance.TTS.AfterText);
+            IsC_CallKey?.SetValue("BaseTime", Instance.Call.BaseTime);
+            IsC_CallKey?.SetValue("AdditionalTime", Instance.Call.AdditionalTime);
 
             ProfileService.CreateDemoProfile(Instance.Profile.DefaultProfile);
             ClassIsland.Core.Controls.CommonTaskDialogs.ShowDialog("Welcome", "欢迎使用IslandCaller2.0");
@@ -71,6 +74,7 @@ namespace IslandCaller.Models
             RegistryKey IsC_HoverKey;
             RegistryKey IsC_HoverKey_Position;
             RegistryKey IsC_TTSKey;
+            RegistryKey IsC_CallKey;
 
             if (IsC_RootKey == null)
             {
@@ -91,6 +95,7 @@ namespace IslandCaller.Models
                 IsC_HoverKey = IsC_RootKey?.OpenSubKey("Hover", writable: true);
                 IsC_HoverKey_Position = IsC_HoverKey?.OpenSubKey("Position", writable: true);
                 IsC_TTSKey = IsC_RootKey?.OpenSubKey("TTS", writable: true) ?? IsC_RootKey?.CreateSubKey("TTS", writable: true);
+                IsC_CallKey = IsC_RootKey?.OpenSubKey("Call", writable: true) ?? IsC_RootKey?.CreateSubKey("Call", writable: true);
 
                 Instance.General.BreakDisable = Convert.ToBoolean(IsC_GeneralKey?.GetValue("BreakDisable") ?? true);
                 Instance.General.Interruptable = Convert.ToBoolean(IsC_GeneralKey?.GetValue("Interruptable") ?? false);
@@ -105,6 +110,8 @@ namespace IslandCaller.Models
                 Instance.Hover.Position.Y = Convert.ToDouble(IsC_HoverKey_Position?.GetValue("Y") ?? 200.0);
                 Instance.TTS.BeforeText = IsC_TTSKey?.GetValue("BeforeText") as string ?? string.Empty;
                 Instance.TTS.AfterText = IsC_TTSKey?.GetValue("AfterText") as string ?? string.Empty;
+                Instance.Call.BaseTime = Convert.ToSingle(IsC_CallKey?.GetValue("BaseTime") ?? 1.0f);
+                Instance.Call.AdditionalTime = Convert.ToSingle(IsC_CallKey?.GetValue("AdditionalTime") ?? 2.0f);
                 Save();
             }
 
@@ -119,6 +126,7 @@ namespace IslandCaller.Models
             RegistryKey IsC_HoverKey = IsC_RootKey?.OpenSubKey("Hover", writable: true);
             RegistryKey IsC_HoverKey_Position = IsC_HoverKey?.OpenSubKey("Position", writable: true);
             RegistryKey IsC_TTSKey = IsC_RootKey?.OpenSubKey("TTS", writable: true) ?? IsC_RootKey?.CreateSubKey("TTS", writable: true);
+            RegistryKey IsC_CallKey = IsC_RootKey?.OpenSubKey("Call", writable: true) ?? IsC_RootKey?.CreateSubKey("Call", writable: true);
 
             IsC_GeneralKey?.SetValue("BreakDisable", Instance.General.BreakDisable);
             IsC_GeneralKey?.SetValue("Interruptable", Instance.General.Interruptable);
@@ -133,6 +141,8 @@ namespace IslandCaller.Models
             IsC_HoverKey_Position?.SetValue("Y", Instance.Hover.Position.Y);
             IsC_TTSKey?.SetValue("BeforeText", Instance.TTS.BeforeText);
             IsC_TTSKey?.SetValue("AfterText", Instance.TTS.AfterText);
+            IsC_CallKey?.SetValue("BaseTime", Instance.Call.BaseTime);
+            IsC_CallKey?.SetValue("AdditionalTime", Instance.Call.AdditionalTime);
         }
     }
     public static class SettingsBinder
@@ -148,6 +158,9 @@ namespace IslandCaller.Models
 
             // TTS
             model.TTS.PropertyChanged += (_, _) => onChange();
+
+            // Call
+            model.Call.PropertyChanged += (_, _) => onChange();
         }
     }
 

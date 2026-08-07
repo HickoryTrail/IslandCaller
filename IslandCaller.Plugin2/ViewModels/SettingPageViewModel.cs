@@ -42,6 +42,21 @@ namespace IslandCaller.ViewModels
             set => this.RaiseAndSetIfChanged(ref _hoverScalingFactor, value);
         }
 
+        // 点名设置
+        private float _baseTime = 2.0f;
+        public float BaseTime
+        {
+            get => _baseTime;
+            set => this.RaiseAndSetIfChanged(ref _baseTime, value);
+        }
+
+        private float _additionalTime = 1.0f;
+        public float AdditionalTime
+        {
+            get => _additionalTime;
+            set => this.RaiseAndSetIfChanged(ref _additionalTime, value);
+        }
+
         // TTS设置
         private string _beforeText = String.Empty;
         public string BeforeText
@@ -123,6 +138,8 @@ namespace IslandCaller.ViewModels
             Interruptable = Settings.Instance.General.Interruptable;
             IsHoverEnable = Settings.Instance.Hover.IsEnable;
             HoverScalingFactor = Settings.Instance.Hover.ScalingFactor;
+            BaseTime = Settings.Instance.Call.BaseTime;
+            AdditionalTime = Settings.Instance.Call.AdditionalTime;
             BeforeText = Settings.Instance.TTS.BeforeText;
             AfterText = Settings.Instance.TTS.AfterText;
             ExampleText = $"{BeforeText}{{学生姓名}}{AfterText}";
@@ -154,6 +171,14 @@ namespace IslandCaller.ViewModels
                 else if (args.PropertyName == nameof(HoverScalingFactor))
                 {
                     Settings.Instance.Hover.ScalingFactor = HoverScalingFactor;
+                }
+                else if (args.PropertyName == nameof(BaseTime))
+                {
+                    Settings.Instance.Call.BaseTime = BaseTime;
+                }
+                else if (args.PropertyName == nameof(AdditionalTime))
+                {
+                    Settings.Instance.Call.AdditionalTime = AdditionalTime;
                 }
                 else if (args.PropertyName == nameof(BeforeText))
                 {

@@ -9,6 +9,7 @@ namespace IslandCaller.Models
         public ProfileSetting Profile { get; set; } = new ProfileSetting();
         public HoverSetting Hover { get; set; } = new HoverSetting();
         public TTSSetting TTS { get; set; } = new TTSSetting();
+        public CallSettings Call { get; set; } = new CallSettings();
     }
 
     public class GeneralSetting : INotifyPropertyChanged
@@ -111,6 +112,27 @@ namespace IslandCaller.Models
         {
             get => _afterText;
             set { if (_afterText != value) { _afterText = value; OnPropertyChanged(nameof(AfterText)); } }
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected void OnPropertyChanged(string name) =>
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+    }
+
+    public class CallSettings : INotifyPropertyChanged
+    {
+        private float _baseTime = 1.0f;
+        public float BaseTime
+        {
+            get => _baseTime;
+            set { if (_baseTime != value) { _baseTime = value; OnPropertyChanged(nameof(BaseTime)); } }
+        }
+
+        private float _additionalTime = 2.0f;
+        public float AdditionalTime
+        {
+            get => _additionalTime;
+            set { if (_additionalTime != value) { _additionalTime = value; OnPropertyChanged(nameof(AdditionalTime)); } }
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

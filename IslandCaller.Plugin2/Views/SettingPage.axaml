@@ -14,24 +14,24 @@
         <vm:SettingPageViewModel />
     </ci2:SettingsPageBase.DataContext>
     <Design.DataContext>
-		<vm:SettingPageViewModel />
+        <vm:SettingPageViewModel />
     </Design.DataContext>
     <ci2:SettingsPageBase.Resources>
-		<cvt:IntToBoolConverter x:Key="IntToBoolConverter"/>
+        <cvt:IntToBoolConverter x:Key="IntToBoolConverter"/>
         <cvt:GenderConverter x:Key="GenderConverter"/>
     </ci2:SettingsPageBase.Resources>
 
     <ScrollViewer>
-		<StackPanel Classes="settings-container animated-intro">
+        <StackPanel Classes="settings-container animated-intro">
         <!-- 基本设置 -->
-	    <ci:IconText Glyph="&#xEF27;" Text="基本设置" Margin="0,0,0,4"/>
+        <ci:IconText Glyph="&#xEF27;" Text="基本设置" Margin="0,0,0,4"/>
         <!-- 下课禁用 -->
         <fa:FASettingsExpander
         IconSource="{ci:FluentIconSource &#xE4CE;}"
         Header="下课禁用"
         Description="在课间禁用所有点名功能">
-		    <fa:FASettingsExpander.Footer>
-			    <ToggleSwitch
+            <fa:FASettingsExpander.Footer>
+                <ToggleSwitch
                 IsChecked="{Binding IsBreakDisable, Mode=TwoWay}"/>
             </fa:FASettingsExpander.Footer>
         </fa:FASettingsExpander>
@@ -40,8 +40,8 @@
         IconSource="{ci:FluentIconSource &#xEE67;}"
         Header="打断点名"
         Description="打断上一次点名，并触发新的点名">
-		    <fa:FASettingsExpander.Footer>
-			    <ToggleSwitch
+            <fa:FASettingsExpander.Footer>
+                <ToggleSwitch
                 IsChecked="{Binding Interruptable, Mode=TwoWay}"/>
             </fa:FASettingsExpander.Footer>
         </fa:FASettingsExpander>
@@ -55,7 +55,7 @@
         Header="启用悬浮窗"
         Description="是否显示点名悬浮窗">
             <fa:FASettingsExpander.Footer>
-				<ToggleSwitch 
+                <ToggleSwitch 
                 IsChecked="{Binding IsHoverEnable, Mode=TwoWay}"/>
             </fa:FASettingsExpander.Footer>
         </fa:FASettingsExpander>
@@ -65,7 +65,7 @@
         Header="悬浮窗缩放系数"
         Description="调整悬浮窗大小，以适配不同的屏幕">
             <fa:FASettingsExpander.Footer>
-				<Slider Minimum="0.5" Maximum="2"
+                <Slider Minimum="0.5" Maximum="2"
                         VerticalAlignment="Center"
                         TickFrequency="0.05"
                         Width="180"
@@ -76,6 +76,43 @@
             </fa:FASettingsExpander.Footer>
         </fa:FASettingsExpander>
 
+        <!-- 点名设置 -->
+        <Separator Margin="0 12 0 4" />
+        <ci:IconText Glyph="&#xECF9;" Text="点名设置" Margin="0,0,0,4"/>
+        <fa:FASettingsExpander
+        IconSource="{ci:FluentIconSource &#xEE83;}"
+        Header="点名提醒时长"
+        Description="调整单次点名提醒的持续时间，总时长为 {人数 * 基础时间 + 附加时间}">
+            <fa:FASettingsExpanderItem IsClickEnabled="false" >
+                <ci:IconText Glyph="&#xF1C0;" Text="基础时间"/>
+                <fa:FASettingsExpanderItem.Footer>
+                    <StackPanel Orientation="Horizontal">
+						<TextBlock Text="{Binding BaseTime, StringFormat={}{0:F2}}" FontSize="15" VerticalAlignment="Center" Margin="8,0"/>
+                        <Slider Minimum="0" Maximum="5"
+                            VerticalAlignment="Center"
+                            TickFrequency="0.05"
+                            Width="180"
+                            IsSnapToTickEnabled="True"
+                            Value="{Binding BaseTime, Mode=TwoWay}"/>
+                    </StackPanel>
+                </fa:FASettingsExpanderItem.Footer>
+            </fa:FASettingsExpanderItem>
+            <fa:FASettingsExpanderItem IsClickEnabled="false" >
+                <ci:IconText Glyph="&#xF1C0;" Text="附加时间"/>
+                <fa:FASettingsExpanderItem.Footer>
+                    <StackPanel Orientation="Horizontal">
+						<TextBlock Text="{Binding AdditionalTime, StringFormat={}{0:F1}}" FontSize="15" VerticalAlignment="Center" Margin="8,0"/>
+                        <Slider Minimum="-5" Maximum="8"
+                                VerticalAlignment="Center"
+                                TickFrequency="0.1"
+                                Width="180"
+                                IsSnapToTickEnabled="True"
+                                Value="{Binding AdditionalTime, Mode=TwoWay}"/>
+                    </StackPanel>
+                </fa:FASettingsExpanderItem.Footer>
+            </fa:FASettingsExpanderItem>
+        </fa:FASettingsExpander>
+
         <!-- TTS 设置 -->
         <Separator Margin="0 12 0 4" />
         <ci:IconText Glyph="&#xED53;" Text="TTS 设置" Margin="0,0,0,4"/>
@@ -84,21 +121,21 @@
         Header="TTS 前后文"
         Description="在TTS播报前后添加自定义文本">
             <fa:FASettingsExpanderItem IsClickEnabled="false" >
-				<ci:IconText Glyph="&#xF1C0;" Text="播报前文本"/>
+                <ci:IconText Glyph="&#xF1C0;" Text="播报前文本"/>
                 <fa:FASettingsExpanderItem.Footer>
-					<TextBox Text="{Binding BeforeText}" Width="500"/>
+                    <TextBox Text="{Binding BeforeText}" Width="500"/>
                 </fa:FASettingsExpanderItem.Footer>
             </fa:FASettingsExpanderItem>
             <fa:FASettingsExpanderItem IsClickEnabled="false" >
-				<ci:IconText Glyph="&#xF1C2;" Text="播报后文本"/>
+                <ci:IconText Glyph="&#xF1C2;" Text="播报后文本"/>
                 <fa:FASettingsExpanderItem.Footer>
-					<TextBox Text="{Binding AfterText}" Width="500"/>
+                    <TextBox Text="{Binding AfterText}" Width="500"/>
                 </fa:FASettingsExpanderItem.Footer>
             </fa:FASettingsExpanderItem>
             <fa:FASettingsExpanderItem IsClickEnabled="false" >
-				<ci:IconText Glyph="&#xE55D;" Text="播报文本示例"/>
+                <ci:IconText Glyph="&#xE55D;" Text="播报文本示例"/>
                 <fa:FASettingsExpanderItem.Footer>
-					<TextBlock Text="{Binding ExampleText}" Width="500" TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding ExampleText}" Width="500" TextWrapping="Wrap"/>
                 </fa:FASettingsExpanderItem.Footer>
             </fa:FASettingsExpanderItem>
         </fa:FASettingsExpander>
@@ -110,12 +147,12 @@
             Header="档案编辑"
             Description="编辑点名时使用的名单">
             <fa:FASettingsExpanderItem>
-				<StackPanel>
-					<DataGrid
+                <StackPanel>
+                    <DataGrid
                         ItemsSource="{Binding ProfileList}"
                         RowHeight="45">
-						<DataGrid.Columns>
-							<DataGridTextColumn Header="序号" Binding="{Binding ID}" />
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="序号" Binding="{Binding ID}" />
                             <DataGridTextColumn Header="姓名" Binding="{Binding Name}" />
                             <DataGridTemplateColumn Header="性别">
                                 <DataGridTemplateColumn.CellTemplate>
@@ -132,7 +169,7 @@
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal">
-											<Slider Minimum="0" Maximum="2.0"
+                                            <Slider Minimum="0" Maximum="2.0"
                                                 VerticalAlignment="Center"
                                                 Width="160"
                                                 TickFrequency="0.05"
@@ -161,14 +198,14 @@
                         </DataGrid.Columns>
                     </DataGrid>
                     <StackPanel Orientation="Horizontal">
-						<Button Margin="5,10" Click="AddButton_OnClick">
-							<ci:IconText Glyph="&#xE00D;" Text="添加人员"/>
+                        <Button Margin="5,10" Click="AddButton_OnClick">
+                            <ci:IconText Glyph="&#xE00D;" Text="添加人员"/>
                         </Button>
                         <Button Margin="5,10" Click="ImportButton_OnClick">
-							<ci:IconText Glyph="&#xE58F;" Text="导入名单"/>
+                            <ci:IconText Glyph="&#xE58F;" Text="导入名单"/>
                         </Button>
                         <Button Margin="5,10" Click="ClearButton_OnClick">
-							<ci:IconText Glyph="&#xE2C2;" Text="清除历史记录"/>
+                            <ci:IconText Glyph="&#xE2C2;" Text="清除历史记录"/>
                         </Button>
                     </StackPanel>
                 </StackPanel>

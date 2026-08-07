@@ -24,7 +24,7 @@ public class IslandCallerNotificationProviderNew() : NotificationProviderBase
         {
             MaskContent = NotificationContent.CreateTwoIconsMask(name, factory: x =>
             {
-                x.Duration = new TimeSpan(0, 0, (int)second,0,(int)((second-(int)second)*1000));
+                x.Duration = new TimeSpan(0, 0, 0, (int)second, (int)((second - (int)second) * 1000));
                 x.IsSpeechEnabled = !string.IsNullOrWhiteSpace(speechtext);
                 x.SpeechContent = speechtext;
             })

@@ -95,11 +95,11 @@ namespace IslandCaller.Services.IslandCallerService
 
             string output = string.Join("  ", students);
             string speechContent = $"{Settings.Instance.TTS.BeforeText}{output}{Settings.Instance.TTS.AfterText}";
-            float maskduration = stunum * 2 + 1; // 计算持续时间
+            float duration = stunum * Settings.Instance.Call.BaseTime + Settings.Instance.Call.AdditionalTime; // 计算持续时间
 
             LastRequest = new IslandCallerNotificationProviderNew();
-            LastRequest.RandomCall(output, speechContent, maskduration);
-            await Task.Delay(stunum * 2000 + 1000);
+            LastRequest.RandomCall(output, speechContent, duration);
+            await Task.Delay((int)(duration * 1000));
             Status.OccupationDisable = true;
             LastRequest = null;
         }
