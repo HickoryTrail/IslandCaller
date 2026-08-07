@@ -1,4 +1,4 @@
-﻿using IslandCaller.Services.NotificationProvidersNew;
+using IslandCaller.Services.NotificationProvidersNew;
 using ClassIsland.Core.Abstractions.Services;
 using IslandCaller.Views;
 using ClassIsland.Shared.Enums;
@@ -77,6 +77,7 @@ namespace IslandCaller.Services.IslandCallerService
 
         public async void ShowRandomStudent(int stunum)
         {
+            // 准备点名
             if(Status.IsPluginReady == false) return;
             Status.OccupationDisable = false;
             if (Status.InterruptionEnable == true && LastRequest != null)
@@ -84,8 +85,20 @@ namespace IslandCaller.Services.IslandCallerService
                 LastRequest.Request.Cancel();
                 Logger.LogWarning("上一个点名请求已被取消");
             }
-            LastRequest = new IslandCallerNotificationProviderNew(LessonsService, CoreService);
-            LastRequest.RandomCall(stunum);
+
+            // 获取点名数据
+            List<string> students = new();
+            for (int i = 0; i < stunum; i++)
+            {
+                students.Add(CoreService.GetRandomStudent());
+            }
+
+            string output = string.Join("  ", students);
+            string speechContent = $"{Settings.Instance.TTS.BeforeText}{output}{Settings.Instance.TTS.AfterText}";
+            float maskduration = stunum * 2 + 1; // 计算持续时间
+
+            LastRequest = new IslandCallerNotificationProviderNew();
+            LastRequest.RandomCall(output, speechContent, maskduration);
             await Task.Delay(stunum * 2000 + 1000);
             Status.OccupationDisable = true;
             LastRequest = null;
