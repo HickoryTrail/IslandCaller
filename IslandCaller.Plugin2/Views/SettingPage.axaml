@@ -75,6 +75,33 @@
                         Value="{Binding HoverScalingFactor, Mode=TwoWay}"/>
             </fa:FASettingsExpander.Footer>
         </fa:FASettingsExpander>
+
+        <!-- TTS 设置 -->
+        <Separator Margin="0 12 0 4" />
+        <ci:IconText Glyph="&#xED53;" Text="TTS 设置" Margin="0,0,0,4"/>
+        <fa:FASettingsExpander
+        IconSource="{ci:FluentIconSource &#xE55F;}"
+        Header="TTS 前后文"
+        Description="在TTS播报前后添加自定义文本">
+            <fa:FASettingsExpanderItem IsClickEnabled="false" >
+				<ci:IconText Glyph="&#xF1C0;" Text="播报前文本"/>
+                <fa:FASettingsExpanderItem.Footer>
+					<TextBox Text="{Binding BeforeText}" Width="500"/>
+                </fa:FASettingsExpanderItem.Footer>
+            </fa:FASettingsExpanderItem>
+            <fa:FASettingsExpanderItem IsClickEnabled="false" >
+				<ci:IconText Glyph="&#xF1C2;" Text="播报后文本"/>
+                <fa:FASettingsExpanderItem.Footer>
+					<TextBox Text="{Binding AfterText}" Width="500"/>
+                </fa:FASettingsExpanderItem.Footer>
+            </fa:FASettingsExpanderItem>
+            <fa:FASettingsExpanderItem IsClickEnabled="false" >
+				<ci:IconText Glyph="&#xE55D;" Text="播报文本示例"/>
+                <fa:FASettingsExpanderItem.Footer>
+					<TextBlock Text="{Binding ExampleText}" Width="500" TextWrapping="Wrap"/>
+                </fa:FASettingsExpanderItem.Footer>
+            </fa:FASettingsExpanderItem>
+        </fa:FASettingsExpander>
         <!-- 档案设置 -->
         <Separator Margin="0 12 0 4" />
         <ci:IconText Glyph="&#xF1F4;" Text="档案设置" Margin="0,0,0,4"/>

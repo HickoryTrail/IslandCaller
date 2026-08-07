@@ -1,4 +1,4 @@
-﻿using ClassIsland.Shared;
+using ClassIsland.Shared;
 using CommunityToolkit.Mvvm.Input;
 using IslandCaller.Models;
 using IslandCaller.Services;
@@ -40,6 +40,26 @@ namespace IslandCaller.ViewModels
         {
             get => _hoverScalingFactor;
             set => this.RaiseAndSetIfChanged(ref _hoverScalingFactor, value);
+        }
+
+        // TTS设置
+        private string _beforeText = String.Empty;
+        public string BeforeText
+        {
+            get => _beforeText;
+            set => this.RaiseAndSetIfChanged(ref _beforeText, value);
+        }
+        private string _afterText = String.Empty;
+        public string AfterText
+        {
+            get => _afterText;
+            set => this.RaiseAndSetIfChanged(ref _afterText, value);
+        }
+        private string _exampleText = "{学生姓名}";
+        public string ExampleText
+        {
+            get => _exampleText;
+            set => this.RaiseAndSetIfChanged(ref _exampleText, value);
         }
 
         // 档案设置
@@ -103,6 +123,9 @@ namespace IslandCaller.ViewModels
             Interruptable = Settings.Instance.General.Interruptable;
             IsHoverEnable = Settings.Instance.Hover.IsEnable;
             HoverScalingFactor = Settings.Instance.Hover.ScalingFactor;
+            BeforeText = Settings.Instance.TTS.BeforeText;
+            AfterText = Settings.Instance.TTS.AfterText;
+            ExampleText = $"{BeforeText}{{学生姓名}}{AfterText}";
             var profile = profileService.GetMembers(CurrentProfile)
             .OrderBy(m => m.Id)
             .Select(m => new StudentModel
@@ -131,6 +154,16 @@ namespace IslandCaller.ViewModels
                 else if (args.PropertyName == nameof(HoverScalingFactor))
                 {
                     Settings.Instance.Hover.ScalingFactor = HoverScalingFactor;
+                }
+                else if (args.PropertyName == nameof(BeforeText))
+                {
+                    Settings.Instance.TTS.BeforeText = BeforeText;
+                    ExampleText = $"{BeforeText}{{学生姓名}}{AfterText}";
+                }
+                else if (args.PropertyName == nameof(AfterText))
+                {
+                    Settings.Instance.TTS.AfterText = AfterText;
+                    ExampleText = $"{BeforeText}{{学生姓名}}{AfterText}";
                 }
                 else if (args.PropertyName == nameof(ProfileList))
                 {
