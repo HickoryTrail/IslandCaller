@@ -102,12 +102,12 @@ public partial class SettingPage : SettingsPageBase
                     newlist = await new TextFilePraseHelper().ParseTextFileAsync(file);
                     break;
                 case ".json":
-                    var resultJson = await new SecRandomImport().ShowDialog<(bool isGender, string male, string female)>(this.GetVisualRoot() as Window);
+                    var resultJson = await new SecRandomImport().ShowDialog<(bool isGender, string male, string female)>(this.VisualRoot as Window);
                     logger.LogDebug("SecRandom 导入参数：isGender={IsGender}", resultJson.isGender);
                     newlist = await new SecRandomParseHelper().ParseSecRandomProfileAsync(file, resultJson.isGender, resultJson.male, resultJson.female);
                     break;
                 case ".csv":
-                    var resultCsv = await new CsvImport().ShowDialog<(int nameRow, int genderRow, bool isGender, string male, string female)>(this.GetVisualRoot() as Window);
+                    var resultCsv = await new CsvImport().ShowDialog<(int nameRow, int genderRow, bool isGender, string male, string female)>(this.VisualRoot as Window);
                     resultCsv.nameRow -= 1;
                     resultCsv.genderRow -= 1;
                     if (!resultCsv.isGender) resultCsv.genderRow = -1;

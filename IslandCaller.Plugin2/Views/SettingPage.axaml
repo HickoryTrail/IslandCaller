@@ -26,45 +26,45 @@
         <!-- 基本设置 -->
 	    <ci:IconText Glyph="&#xEF27;" Text="基本设置" Margin="0,0,0,4"/>
         <!-- 下课禁用 -->
-        <fa:SettingsExpander
+        <fa:FASettingsExpander
         IconSource="{ci:FluentIconSource &#xE4CE;}"
         Header="下课禁用"
         Description="在课间禁用所有点名功能">
-		    <fa:SettingsExpander.Footer>
+		    <fa:FASettingsExpander.Footer>
 			    <ToggleSwitch
                 IsChecked="{Binding IsBreakDisable, Mode=TwoWay}"/>
-            </fa:SettingsExpander.Footer>
-        </fa:SettingsExpander>
+            </fa:FASettingsExpander.Footer>
+        </fa:FASettingsExpander>
         <!-- 打断点名-->
-        <fa:SettingsExpander
+        <fa:FASettingsExpander
         IconSource="{ci:FluentIconSource &#xEE67;}"
         Header="打断点名"
         Description="打断上一次点名，并触发新的点名">
-		    <fa:SettingsExpander.Footer>
+		    <fa:FASettingsExpander.Footer>
 			    <ToggleSwitch
                 IsChecked="{Binding Interruptable, Mode=TwoWay}"/>
-            </fa:SettingsExpander.Footer>
-        </fa:SettingsExpander>
+            </fa:FASettingsExpander.Footer>
+        </fa:FASettingsExpander>
 
         <!-- 悬浮窗设置 -->
         <Separator Margin="0 12 0 4" />
         <ci:IconText Glyph="&#xF485;" Text="悬浮窗设置" Margin="0,0,0,4"/>
         <!-- 启用悬浮窗 -->
-        <fa:SettingsExpander
+        <fa:FASettingsExpander
         IconSource="{ci:FluentIconSource &#xF485;}"
         Header="启用悬浮窗"
         Description="是否显示点名悬浮窗">
-            <fa:SettingsExpander.Footer>
+            <fa:FASettingsExpander.Footer>
 				<ToggleSwitch 
                 IsChecked="{Binding IsHoverEnable, Mode=TwoWay}"/>
-            </fa:SettingsExpander.Footer>
-        </fa:SettingsExpander>
+            </fa:FASettingsExpander.Footer>
+        </fa:FASettingsExpander>
         <!-- 悬浮窗缩放系数 -->
-        <fa:SettingsExpander
+        <fa:FASettingsExpander
         IconSource="{ci:FluentIconSource &#xEE83;}"
         Header="悬浮窗缩放系数"
         Description="调整悬浮窗大小，以适配不同的屏幕">
-            <fa:SettingsExpander.Footer>
+            <fa:FASettingsExpander.Footer>
 				<Slider Minimum="0.5" Maximum="2"
                         VerticalAlignment="Center"
                         TickFrequency="0.05"
@@ -73,16 +73,16 @@
                         Classes="auto-tooltip"
                         ci3:SliderDragTooltipAssist.StringFormat="F2"
                         Value="{Binding HoverScalingFactor, Mode=TwoWay}"/>
-            </fa:SettingsExpander.Footer>
-        </fa:SettingsExpander>
+            </fa:FASettingsExpander.Footer>
+        </fa:FASettingsExpander>
         <!-- 档案设置 -->
         <Separator Margin="0 12 0 4" />
         <ci:IconText Glyph="&#xF1F4;" Text="档案设置" Margin="0,0,0,4"/>
-        <fa:SettingsExpander
+        <fa:FASettingsExpander
             IconSource="{ci:FluentIconSource &#xF20C;}"
             Header="档案编辑"
             Description="编辑点名时使用的名单">
-            <fa:SettingsExpanderItem>
+            <fa:FASettingsExpanderItem>
 				<StackPanel>
 					<DataGrid
                         ItemsSource="{Binding ProfileList}"
@@ -145,8 +145,8 @@
                         </Button>
                     </StackPanel>
                 </StackPanel>
-            </fa:SettingsExpanderItem>
-        </fa:SettingsExpander>
+            </fa:FASettingsExpanderItem>
+        </fa:FASettingsExpander>
   </StackPanel>
     </ScrollViewer>
 </ci2:SettingsPageBase>

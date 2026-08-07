@@ -15,6 +15,7 @@ public partial class HoverFluentControl : UserControl
 {
     private const int TouchDragIgnoreDurationMs = 75;
     private const int ClickMoveThresholdPx = 10;
+    private const int TouchMoveDeadZonePx = 2;
 
     private IslandCallerService IslandCallerService { get; }
     private Window parentwindow { get; set; }
@@ -27,6 +28,7 @@ public partial class HoverFluentControl : UserControl
     private PixelPoint _dragStartWindowPosition;
     private Point _dragStartPointerPosition;
     private PixelPoint _dragStartPointerScreenPosition;
+    private PixelPoint _lastAcceptedPointerScreenPosition;
     private DragClickAction _pendingClickAction = DragClickAction.None;
     private long _manualDragStartTime;
     private bool _touchDragDelayElapsed;
@@ -39,7 +41,8 @@ public partial class HoverFluentControl : UserControl
         windowDragHelper = IAppHost.GetService<WindowDragHelper>();
         InitializeComponent();
         DragSurface.AddHandler(InputElement.PointerPressedEvent, DragSurface_PointerPressed, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, true);
-        DragSurface.AddHandler(InputElement.PointerMovedEvent, DragPointerMoved, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, true);
+        // 移动事件只处理一次，避免窗口移动后同一触控采样在冒泡阶段再次计算而形成反馈抖动。
+        DragSurface.AddHandler(InputElement.PointerMovedEvent, DragPointerMoved, RoutingStrategies.Tunnel, true);
         DragSurface.AddHandler(InputElement.PointerReleasedEvent, DragPointerReleased, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, true);
         DragSurface.AddHandler(InputElement.PointerCaptureLostEvent, DragPointerCaptureLost, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, true);
     }
@@ -59,7 +62,7 @@ public partial class HoverFluentControl : UserControl
         _lastDragTime = Environment.TickCount64;
 
         // 触发窗口拖动
-        parentwindow = this.GetVisualRoot() as Window;
+        parentwindow = this.VisualRoot as Window;
         if (parentwindow == null)
         {
             logger.LogWarning("DragSurface_PointerPressed: 无法获取窗口句柄，跳过拖动。");
@@ -189,6 +192,11 @@ public partial class HoverFluentControl : UserControl
         }
 
         var currentScreen = parentwindow.PointToScreen(current);
+        if (IsWithinTouchMoveDeadZone(currentScreen, _lastAcceptedPointerScreenPosition))
+        {
+            return;
+        }
+
         var deltaX = currentScreen.X - _dragStartPointerScreenPosition.X;
         var deltaY = currentScreen.Y - _dragStartPointerScreenPosition.Y;
         var newPosition = new PixelPoint(
@@ -197,7 +205,10 @@ public partial class HoverFluentControl : UserControl
 
         if (parentwindow.Position != newPosition)
         {
-            windowDragHelper.SetWindowPosition(parentwindow, newPosition);
+            if (windowDragHelper.SetWindowPosition(parentwindow, newPosition))
+            {
+                _lastAcceptedPointerScreenPosition = currentScreen;
+            }
         }
     }
 
@@ -242,7 +253,15 @@ public partial class HoverFluentControl : UserControl
     {
         _dragStartPointerPosition = pointerPosition;
         _dragStartPointerScreenPosition = window.PointToScreen(pointerPosition);
+        _lastAcceptedPointerScreenPosition = _dragStartPointerScreenPosition;
         _dragStartWindowPosition = window.Position;
+    }
+
+    private static bool IsWithinTouchMoveDeadZone(PixelPoint currentPosition, PixelPoint acceptedPosition)
+    {
+        var deltaX = currentPosition.X - acceptedPosition.X;
+        var deltaY = currentPosition.Y - acceptedPosition.Y;
+        return deltaX * deltaX + deltaY * deltaY <= TouchMoveDeadZonePx * TouchMoveDeadZonePx;
     }
 
     private static bool IsWithinClickThreshold(PixelPoint currentPosition, PixelPoint originalPosition)
@@ -259,6 +278,4 @@ public partial class HoverFluentControl : UserControl
         Button2
     }
 }
-
-
 
