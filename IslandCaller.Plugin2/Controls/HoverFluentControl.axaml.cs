@@ -18,7 +18,7 @@ public partial class HoverFluentControl : UserControl
     private const int TouchMoveDeadZonePx = 2;
 
     private IslandCallerService IslandCallerService { get; }
-    private Window parentwindow { get; set; }
+    private Window? parentwindow { get; set; }
     private ILogger<HoverFluentControl> logger { get; set; }
     public PixelPoint lastWindowPosition { get; set; }
     private WindowDragHelper windowDragHelper { get; set; }
@@ -61,11 +61,15 @@ public partial class HoverFluentControl : UserControl
         logger.LogDebug("DragSurface_PointerPressed: 触发窗口拖动，点击动作: {ClickAction}", clickAction);
         _lastDragTime = Environment.TickCount64;
 
-        // 触发窗口拖动
-        parentwindow = this.VisualRoot as Window;
+        // 触发窗口拖动。Avalonia 12 中不要直接把 VisualRoot 强转为 Window：
+        // VisualRoot 是视觉树内部的根节点，宿主窗口应通过 TopLevel.GetTopLevel 获取。
+        parentwindow = TopLevel.GetTopLevel(this) as Window
+            ?? this.FindAncestorOfType<Window>();
         if (parentwindow == null)
         {
-            logger.LogWarning("DragSurface_PointerPressed: 无法获取窗口句柄，跳过拖动。");
+            logger.LogWarning(
+                "DragSurface_PointerPressed: 无法获取宿主窗口（TopLevel: {TopLevelType}），跳过拖动。",
+                TopLevel.GetTopLevel(this)?.GetType().FullName ?? "null");
             return;
         }
 
@@ -278,4 +282,3 @@ public partial class HoverFluentControl : UserControl
         Button2
     }
 }
-
