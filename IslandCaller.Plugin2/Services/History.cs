@@ -1,16 +1,28 @@
-﻿using IslandCaller.Models;
+using ClassIsland.Shared;
+using IslandCaller.Models;
+using Microsoft.Extensions.Logging;
 using System.Text;
 
 namespace IslandCaller.Services
 {
-    public class HistoryService(ProfileService profileService, Status status)
+    public class HistoryService()
     {
         private Dictionary<string, int> historyDict = new();
         private List<string> top20List = new();
-        private ProfileService profileService = profileService;
-        private Status Status = status;
+        private ILogger<HistoryService>? Logger { get; set; }
+        private ProfileService ProfileService {  get; set; }
+        private Status Status {  get; set; }
 
-        private string GetBasePath()
+        internal void Initialize()
+        {
+            Logger = IAppHost.TryGetService<ILogger<HistoryService>>();
+            ProfileService = IAppHost.GetService<ProfileService>();
+            Status = IAppHost.GetService<Status>();
+            Load(Settings.Instance.Profile.DefaultProfile);
+            Logger?.LogInformation("HistoryService initialized.");
+        }
+
+        private static string GetBasePath()
         {
             return Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
@@ -19,7 +31,7 @@ namespace IslandCaller.Services
             );
         }
 
-        private string GetFilePath(Guid guid)
+        private static string GetFilePath(Guid guid)
         {
             return Path.Combine(GetBasePath(), $"{guid}.txt");
         }
@@ -57,7 +69,7 @@ namespace IslandCaller.Services
             }
 
             // 以 Members 为基准加载
-            foreach (var person in profileService.Members)
+            foreach (var person in ProfileService.Members)
             {
                 string name = person.Name;
 
@@ -71,6 +83,7 @@ namespace IslandCaller.Services
                 }
             }
             Status.HistoryServiceInitialized = true;
+            Logger?.LogInformation("HistoryService loaded for profile {ProfileGuid}.", guid);
         }
 
         // 写入历史
@@ -113,6 +126,7 @@ namespace IslandCaller.Services
             }
 
             File.WriteAllText(filePath, sb.ToString(), Encoding.UTF8);
+            Logger?.LogInformation("HistoryService saved for profile {ProfileGuid}.", guid);
         }
 
         // 获取长期记录中某个名字的出现次数
@@ -145,12 +159,14 @@ namespace IslandCaller.Services
         {
             historyDict.Clear();
             Save(Settings.Instance.Profile.DefaultProfile);
+            Logger?.LogInformation("HistoryService long-term history cleared for profile {ProfileGuid}.", Settings.Instance.Profile.DefaultProfile);
         }
 
         // 清空短期记录
         public void ClearThisLessonHistory()
         {
             top20List.Clear();
+            Logger?.LogInformation("HistoryService short-term history cleared.");
         }
     }
 }

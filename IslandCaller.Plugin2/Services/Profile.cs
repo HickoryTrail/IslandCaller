@@ -1,4 +1,5 @@
-﻿using ClassIsland.Shared;
+using ClassIsland.Shared;
+using IslandCaller.Models;
 using Microsoft.Extensions.Logging;
 using System.Text;
 
@@ -6,6 +7,19 @@ namespace IslandCaller.Services
 {
     public class ProfileService
     {
+        private ILogger<ProfileService>? Logger { get; set; }
+        private Status Status { get; set; }
+        public ProfileService(ILogger<ProfileService> logger)
+        {
+            Logger = logger;
+            Logger.LogTrace("ProfileService created.");
+        }
+        internal void Initialize()
+        {
+            Status = IAppHost.GetService<Status>();
+            LoadSelectedProfile(Settings.Instance.Profile.DefaultProfile);
+            Logger?.LogInformation("ProfileService initialized.");
+        }
         public class Person
         {
             public int Id { get; set; }
@@ -16,7 +30,7 @@ namespace IslandCaller.Services
         // 名单存储
         public List<Person> Members { get; set; } = new List<Person>();
 
-        private string GetBasePath()
+        private static string GetBasePath()
         {
             return Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
@@ -25,7 +39,7 @@ namespace IslandCaller.Services
             );
         }
 
-        private string GetFilePath(Guid guid)
+        private static string GetFilePath(Guid guid)
         {
             return Path.Combine(GetBasePath(), $"{guid}.csv");
         }
@@ -33,9 +47,7 @@ namespace IslandCaller.Services
         // 读取名单
         public void LoadSelectedProfile(Guid guid)
         {
-            var logger = IAppHost.GetService<ILogger<ProfileService>>();
-            var status = IAppHost.GetService<Status>();
-            status.ProfileServiceInitialized = false;
+            Status.ProfileServiceInitialized = false;
             // 构建路径
 
             string filePath = Path.Combine(GetFilePath(guid));
@@ -43,7 +55,7 @@ namespace IslandCaller.Services
             // 如果文件不存在
             if (!File.Exists(filePath))
             {
-                logger.LogError($"找不到对应的名单文件: {filePath}");
+                Logger?.LogError($"找不到对应的名单文件: {filePath}");
                 throw new FileNotFoundException($"找不到对应的名单文件: {filePath}");
             }
 
@@ -51,7 +63,7 @@ namespace IslandCaller.Services
 
             if (lines.Length == 0)
             {
-                logger.LogError("CSV 文件为空");
+                Logger?.LogError("CSV 文件为空");
                 throw new Exception("CSV 文件为空");
             }
 
@@ -59,7 +71,7 @@ namespace IslandCaller.Services
             string header = lines[0].Trim();
             if (header != "id,name,gender,manualweight")
             {
-                logger.LogError("CSV 标题格式错误，必须为: id,name,gender,manualweight");
+                Logger?.LogError("CSV 标题格式错误，必须为: id,name,gender,manualweight");
                 throw new Exception("CSV 标题格式错误，必须为: id,name,gender,manualweight");
             }
 
@@ -76,7 +88,7 @@ namespace IslandCaller.Services
 
                 if (parts.Length != 4)
                 {
-                    logger.LogWarning($"第 {i + 1} 行格式错误: {line}");
+                    Logger?.LogWarning($"第 {i + 1} 行格式错误: {line}");
                     continue;
                 }
 
@@ -89,18 +101,17 @@ namespace IslandCaller.Services
                 });
             }
             Members = Members.OrderBy(x => x.Id).ToList();
-            status.ProfileServiceInitialized = true;
+            Status.ProfileServiceInitialized = true;
         }
 
         // 获取名单
         public List<Person> GetMembers(Guid guid)
         {
-            var logger = IAppHost.GetService<ILogger<ProfileService>>();
             string filePath = GetFilePath(guid);
 
             if (!File.Exists(filePath))
             {
-                logger.LogError($"找不到对应的名单文件: {filePath}");
+                Logger?.LogError($"找不到对应的名单文件: {filePath}");
                 throw new FileNotFoundException($"找不到对应的名单文件: {filePath}");
             }
 
@@ -108,13 +119,13 @@ namespace IslandCaller.Services
 
             if (lines.Length == 0)
             {
-                logger.LogError("CSV 文件为空");
+                Logger?.LogError("CSV 文件为空");
                 throw new Exception("CSV 文件为空");
             }
 
             if (lines[0].Trim() != "id,name,gender,manualweight")
             {
-                logger.LogError("CSV 标题格式错误，必须为: id,name,gender,manualweight");
+                Logger?.LogError("CSV 标题格式错误，必须为: id,name,gender,manualweight");
                 throw new Exception("CSV 标题格式错误，必须为: id,name,gender,manualweight");
             }
 
@@ -130,7 +141,7 @@ namespace IslandCaller.Services
 
                 if (parts.Length != 4)
                 {
-                    logger.LogWarning($"第 {i + 1} 行格式错误: {line}");
+                    Logger?.LogWarning($"第 {i + 1} 行格式错误: {line}");
                     continue;
                 }
 
@@ -149,7 +160,6 @@ namespace IslandCaller.Services
         // 写入名单（覆盖或创建）
         public void SaveProfile(Guid guid, List<Person> members)
         {
-            var logger = IAppHost.GetService<ILogger<ProfileService>>();
             members = members.OrderBy(x => x.Id).ToList();
             string basePath = GetBasePath();
 
@@ -178,7 +188,7 @@ namespace IslandCaller.Services
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"写入名单文件失败: {filePath}");
+                Logger?.LogError(ex, $"写入名单文件失败: {filePath}");
                 throw new Exception($"写入名单文件失败: {filePath}", ex);
             }
         }

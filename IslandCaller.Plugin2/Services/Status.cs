@@ -1,4 +1,4 @@
-﻿using ReactiveUI;
+using ReactiveUI;
 
 namespace IslandCaller.Services
 {
@@ -78,7 +78,7 @@ namespace IslandCaller.Services
                 x => x.InterruptionEnable,
                 x => x.IsTimeStatusAvailable,
                 x => x.OccupationDisable,
-                (a, b, c, d, e, f,g) => a && b && c && d && f && (g || e)
+                (a, b, c, d, e, f, g) => a && b && c && d && f && (g || e)
             )
             .BindTo(this, x => x.IsPluginReady);
         }

@@ -1,5 +1,6 @@
 ﻿using static System.Guid;
 using System.ComponentModel;
+using IslandCaller.Plugin2;
 
 namespace IslandCaller.Models
 {
@@ -98,6 +99,14 @@ namespace IslandCaller.Models
         {
             _beforeText = string.Empty;
             _afterText = string.Empty;
+            _provider = TtsProvider.None;
+        }
+
+        private TtsProvider _provider;
+        public TtsProvider Provider
+        {
+            get => _provider;
+            set { if (_provider != value) { _provider = value; OnPropertyChanged(nameof(Provider)); } }
         }
 
         private string _beforeText;

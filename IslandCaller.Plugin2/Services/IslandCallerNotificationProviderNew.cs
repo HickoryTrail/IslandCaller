@@ -17,7 +17,7 @@ public class IslandCallerNotificationProviderNew() : NotificationProviderBase
 {
     public NotificationRequest? Request { get; set; }
 
-    public async void RandomCall(string name,string? speechtext,float second)
+    public async void RandomCall(string name, float second)
     {
         
         Request = new NotificationRequest()
@@ -25,8 +25,7 @@ public class IslandCallerNotificationProviderNew() : NotificationProviderBase
             MaskContent = NotificationContent.CreateTwoIconsMask(name, factory: x =>
             {
                 x.Duration = new TimeSpan(0, 0, 0, (int)second, (int)((second - (int)second) * 1000));
-                x.IsSpeechEnabled = !string.IsNullOrWhiteSpace(speechtext);
-                x.SpeechContent = speechtext;
+                x.IsSpeechEnabled = false;
             })
         };
         ShowNotification(Request);

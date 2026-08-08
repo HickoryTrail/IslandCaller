@@ -1,5 +1,6 @@
 using ClassIsland.Shared;
 using CommunityToolkit.Mvvm.Input;
+using IslandCaller.Plugin2;
 using IslandCaller.Models;
 using IslandCaller.Services;
 using IslandCaller.Views;
@@ -58,6 +59,14 @@ namespace IslandCaller.ViewModels
         }
 
         // TTS设置
+        private TtsProvider _provider;
+        public TtsProvider Provider
+        {
+            get => _provider;
+            set => this.RaiseAndSetIfChanged(ref _provider, value);
+        }
+        public IReadOnlyList<TtsProvider> TtsProviders { get; } = Enum.GetValues<TtsProvider>();
+
         private string _beforeText = String.Empty;
         public string BeforeText
         {
@@ -140,6 +149,7 @@ namespace IslandCaller.ViewModels
             HoverScalingFactor = Settings.Instance.Hover.ScalingFactor;
             BaseTime = Settings.Instance.Call.BaseTime;
             AdditionalTime = Settings.Instance.Call.AdditionalTime;
+            Provider = Settings.Instance.TTS.Provider;
             BeforeText = Settings.Instance.TTS.BeforeText;
             AfterText = Settings.Instance.TTS.AfterText;
             ExampleText = $"{BeforeText}{{学生姓名}}{AfterText}";
@@ -185,6 +195,10 @@ namespace IslandCaller.ViewModels
                     Settings.Instance.TTS.BeforeText = BeforeText;
                     ExampleText = $"{BeforeText}{{学生姓名}}{AfterText}";
                 }
+                else if (args.PropertyName == nameof(Provider))
+                {
+                    Settings.Instance.TTS.Provider = Provider;
+                }
                 else if (args.PropertyName == nameof(AfterText))
                 {
                     Settings.Instance.TTS.AfterText = AfterText;
@@ -203,7 +217,7 @@ namespace IslandCaller.ViewModels
                     profileService.Members = list;
                     profileService.SaveProfile(CurrentProfile, list);
                     historyService.Load(CurrentProfile);
-                    coreService.InitializeCore();
+                    coreService.Initialize();
                 }
             };
             ProfileList.CollectionChanged += (s, e) =>
@@ -226,7 +240,7 @@ namespace IslandCaller.ViewModels
                             profileService.Members = list;
                             profileService.SaveProfile(CurrentProfile, list);
                             historyService.Load(CurrentProfile);
-                            coreService.InitializeCore();
+                            coreService.Initialize();
                         };
 
                         _handlers[student] = handler;
@@ -262,7 +276,7 @@ namespace IslandCaller.ViewModels
                     profileService.Members = list;
                     profileService.SaveProfile(CurrentProfile, list);
                     historyService.Load(CurrentProfile);
-                    coreService.InitializeCore();
+                    coreService.Initialize();
                 };
 
                 _handlers[student] = handler;
@@ -272,4 +286,3 @@ namespace IslandCaller.ViewModels
 
     }
 }
-

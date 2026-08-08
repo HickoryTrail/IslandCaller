@@ -8,6 +8,7 @@
         xmlns:cvt="using:IslandCaller.Converters"
         mc:Ignorable="d"
         x:Class="IslandCaller.Views.HoverFluent"
+        x:DataType="vm:HoverFluentViewModel"
         ExtendClientAreaToDecorationsHint="True"
         ExtendClientAreaTitleBarHeightHint="-1"
         TransparencyLevelHint="AcrylicBlur"

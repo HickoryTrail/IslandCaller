@@ -1,14 +1,20 @@
-﻿using Microsoft.Extensions.Logging;
+using ClassIsland.Shared;
+using Microsoft.Extensions.Logging;
 
 namespace IslandCaller.Services
 {
-    public class CoreService(ProfileService profileService, HistoryService historyService, ILogger<CoreService> logger, Status status)
+    public class CoreService
     {
-        private readonly ProfileService profileService = profileService;
-        private readonly HistoryService historyService = historyService;
-        private readonly ILogger<CoreService> logger = logger;
-        private readonly Status status = status;
-        Random rand = new Random();
+        private ProfileService ProfileService { get; set; }
+        private HistoryService HistoryService { get; set; }
+        private ILogger<CoreService>? Logger { get; set; }
+        private Status Status {  get; set; }
+        Random rand = new();
+        public CoreService()
+        {
+            Logger = IAppHost.TryGetService<ILogger<CoreService>>();
+            Logger?.LogTrace("CoreService created.");
+        }
         internal class Person
         {
             internal int Id { get; set; }
@@ -20,12 +26,14 @@ namespace IslandCaller.Services
         // 计算学生被点名的权重
         internal List<Person> Persons { get; set; } = new List<Person>();
 
-        internal void InitializeCore()
+        internal void Initialize()
         {
-            status.IsTimeStatusAvailable = false;
-            logger.LogInformation("初始化 Core 模块，加载学生信息...");
+            ProfileService = IAppHost.GetService<ProfileService>();
+            HistoryService = IAppHost.GetService<HistoryService>();
+            Status = IAppHost.GetService<Status>();
+            Status.IsTimeStatusAvailable = false;
             Persons.Clear();
-            foreach (var person in profileService.Members)
+            foreach (var person in ProfileService.Members)
             {
                 Persons.Add(new Person
                 {
@@ -37,7 +45,8 @@ namespace IslandCaller.Services
                 });
             }
             ComputeWeightsForAllStudents();
-            status.CoreServiceInitialized = true;
+            Status.CoreServiceInitialized = true;
+            Logger?.LogInformation($"CoreService initialized with {Persons.Count} students.");
         }
 
         private double ComputeSingleWeight(
@@ -80,19 +89,19 @@ namespace IslandCaller.Services
         private void ComputeWeightsForAllStudents()
         {
             // 计算全班历史平均被点次数
-            double avgHist = historyService.GetAverageLongTermCount();
-            logger.LogTrace($"计算全班历史平均被点次数: {avgHist}");
+            double avgHist = HistoryService.GetAverageLongTermCount();
+            Logger?.LogTrace($"计算全班历史平均被点次数: {avgHist}");
             foreach (var person in Persons)
             {
-                int nHist = historyService.GetLongTermCount(person.Name);
-                int lastHitStep = historyService.GetLastCallIndex(person.Name);
+                int nHist = HistoryService.GetLongTermCount(person.Name);
+                int lastHitStep = HistoryService.GetLastCallIndex(person.Name);
                 double weight = ComputeSingleWeight(
                                     person.ManualWeight,
                                     lastHitStep,
                                     nHist,
                                     avgHist);
                 person.Weight = weight;
-                logger.LogTrace($"计算权重 - 学生: {person.Name}, ManualWeight: {person.ManualWeight}, LastHitStep: {lastHitStep}, nHist: {nHist}, Weight: {weight}");
+                Logger?.LogTrace($"计算权重 - 学生: {person.Name}, ManualWeight: {person.ManualWeight}, LastHitStep: {lastHitStep}, nHist: {nHist}, Weight: {weight}");
             }
         }
 
@@ -100,11 +109,11 @@ namespace IslandCaller.Services
         {
             // 计算权重总和
             double totalWeight = Persons.Sum(p => p.Weight);
-            logger.LogTrace($"计算权重总和: {totalWeight}");
+            Logger?.LogTrace($"计算权重总和: {totalWeight}");
             if (totalWeight == 0) return "Error"; // 避免除以零
             // 生成一个 [0, totalWeight) 的随机数
             double r = rand.NextDouble() * totalWeight;
-            logger.LogTrace($"生成随机数: {r} (范围: [0, {totalWeight}))");
+            Logger?.LogTrace($"生成随机数: {r} (范围: [0, {totalWeight}))");
             // 根据权重选择学生
             double cumulative = 0;
             foreach (var person in Persons)
@@ -112,13 +121,13 @@ namespace IslandCaller.Services
                 cumulative += person.Weight;
                 if (r < cumulative)
                 {
-                    historyService.Add(person.Name);
-                    logger.LogTrace($"抽取到学生：{person.Name}");
+                    HistoryService.Add(person.Name);
+                    Logger?.LogTrace($"抽取到学生：{person.Name}");
                     ComputeWeightsForAllStudents();
                     return person.Name;
                 }
             }
-            logger.LogWarning($"随机选择学生时发生了意外情况，权重总和: {totalWeight}, 随机数: {r}");
+            Logger?.LogWarning($"随机选择学生时发生了意外情况，权重总和: {totalWeight}, 随机数: {r}");
             return "Error"; // 理论上不应该到达这里
         }
     }

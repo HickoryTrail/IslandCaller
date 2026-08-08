@@ -4,23 +4,38 @@
         <TargetFramework>net10.0-windows</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+        <AvaloniaUseCompiledBindingsByDefault>True</AvaloniaUseCompiledBindingsByDefault>
+        <!-- Plugin dependencies are supplied by ClassIsland; only OmniTTS.Shared is bundled below. -->
+        <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
     </PropertyGroup>
 
     <PropertyGroup>
         <ClassIslandPluginSdkVersion>1.7.106.2-dev-v2</ClassIslandPluginSdkVersion>
     </PropertyGroup>
 
+    <PropertyGroup Label="Avalonia">
+      <AvaloniaXamlCreateSourceInfo>True</AvaloniaXamlCreateSourceInfo>
+    </PropertyGroup>
+
     <ItemGroup>
         <PackageReference Include="ClassIsland.PluginSdk" Version="2.1.1">
             <ExcludeAssets>runtime; native</ExcludeAssets>
         </PackageReference>
+        <PackageReference Include="OmniTTS.Shared" Version="1.0.0" GeneratePathProperty="true" />
     </ItemGroup>
 
     <ItemGroup>
       <Compile Update="Views\CsvImport.axaml.cs">
         <DependentUpon>CsvImport.axaml</DependentUpon>
       </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="C:\Users\HUS\.nuget\packages\omnitts.shared\1.0.0\lib\net10.0\OmniTTS.Shared.dll" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="C:\Users\HUS\.nuget\packages\omnitts.shared\1.0.0\lib\net10.0\OmniTTS.Shared.dll" />
     </ItemGroup>
 
     <ItemGroup>
@@ -37,5 +52,10 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
     </ItemGroup>
-
+	<Target Name="CopyRuntimeDependencies" AfterTargets="Build">
+		<ItemGroup>
+			<RuntimeDependency Include="$(NuGetPackageRoot)omnitts.shared\1.0.0\lib\net10.0\OmniTTS.Shared.dll" />
+		</ItemGroup>
+		<Copy SourceFiles="@(RuntimeDependency);@(NugetRuntimeDependency)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
+	</Target>
 </Project>

@@ -1,4 +1,4 @@
-﻿using Avalonia.Controls;
+using Avalonia.Controls;
 using ClassIsland.Core;
 using ClassIsland.Core.Abstractions;
 using ClassIsland.Core.Attributes;
@@ -7,6 +7,7 @@ using ClassIsland.Shared;
 using IslandCaller.Actions;
 using IslandCaller.Helpers;
 using IslandCaller.Models;
+using IslandCaller.Plugin2.Services;
 using IslandCaller.Services;
 using IslandCaller.Services.IslandCallerService;
 using IslandCaller.Services.NotificationProvidersNew;
@@ -21,8 +22,6 @@ namespace IslandCaller
     [PluginEntrance]
     public class Plugin : PluginBase
     {
-        public Window HoverWindow { get; set; }
-
         public override void Initialize(HostBuilderContext context, IServiceCollection services)
         {
             var logger = IAppHost.TryGetService<ILogger<Plugin>>();
@@ -32,6 +31,7 @@ namespace IslandCaller
             services.AddSingleton<ProfileService>();
             services.AddSingleton<HistoryService>();
             services.AddSingleton<CoreService>();
+            services.AddSingleton<HoverService>();
             services.AddSingleton<WindowDragHelper>();
             services.AddSingleton<WindowTopmostHelper>();
             services.AddSettingsPage<SettingPage>();
@@ -42,23 +42,19 @@ namespace IslandCaller
             {
                 try
                 {
-                    logger = IAppHost.GetService<ILogger<Plugin>>();
+                    logger = IAppHost.TryGetService<ILogger<Plugin>>();
                     IAppHost.GetService<Status>();
-                    logger.LogInformation("插件状态初始化完成，正在加载设置...");
+                    logger?.LogInformation("插件状态初始化完成，正在加载设置...");
                     new Settings(IAppHost.GetService<ProfileService>()).Load();
-                    logger.LogDebug("设置加载完成，正在加载默认配置...");
-                    IAppHost.GetService<ProfileService>().LoadSelectedProfile(Settings.Instance.Profile.DefaultProfile);
-                    logger.LogDebug("默认配置加载完成，正在加载历史记录...");
-                    IAppHost.GetService<HistoryService>().Load(Settings.Instance.Profile.DefaultProfile);
-                    logger.LogDebug("历史记录加载完成，正在初始化核心服务...");
-                    IAppHost.GetService<CoreService>().InitializeCore();
-                    logger.LogDebug("核心服务初始化完成，正在启动 IslandCaller 服务...");
-                    IAppHost.GetService<IslandCallerService>();
-                    logger.LogInformation("IslandCaller 插件初始化完成");
+                    logger?.LogDebug("设置加载完成，正在加载默认配置...");
+                    IAppHost.GetService<ProfileService>().Initialize();
+                    IAppHost.GetService<HistoryService>().Initialize();
+                    IAppHost.GetService<CoreService>().Initialize();
+                    IAppHost.GetService<IslandCallerService>().Initialize();
                     if (Settings.Instance.Hover.IsEnable)
                     {
-                        HoverWindow = new HoverFluent();
-                        HoverWindow.Show();
+                        IAppHost.GetService<HoverService>().HoverWindow = new HoverFluent();
+                        IAppHost.GetService<HoverService>().HoverWindow?.Show();
                     }
                 }
                 catch (Exception ex)
