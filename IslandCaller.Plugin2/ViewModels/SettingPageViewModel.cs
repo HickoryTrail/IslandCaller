@@ -1,288 +1,213 @@
 using ClassIsland.Shared;
-using CommunityToolkit.Mvvm.Input;
-using IslandCaller.Plugin2;
 using IslandCaller.Models;
+using IslandCaller.Plugin2;
 using IslandCaller.Services;
-using IslandCaller.Views;
 using ReactiveUI;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Windows.Input;
-using static IslandCaller.Services.ProfileService;
 
-namespace IslandCaller.ViewModels
+namespace IslandCaller.ViewModels;
+
+public class SettingPageViewModel : ReactiveObject
 {
-    public class SettingPageViewModel : ReactiveObject
+    // 基本设置
+    private bool _isBreakDisable;
+    public bool IsBreakDisable
     {
-        // 基本设置
-        private bool _isBreakDisable;
-        public bool IsBreakDisable
-        {
-            get => _isBreakDisable;
-            set => this.RaiseAndSetIfChanged(ref _isBreakDisable, value);
-        }
+        get => _isBreakDisable;
+        set => this.RaiseAndSetIfChanged(ref _isBreakDisable, value);
+    }
 
-        private bool _interruptable;
-        public bool Interruptable
-        {
-            get => _interruptable;
-            set => this.RaiseAndSetIfChanged(ref _interruptable, value);
-        }
+    private bool _interruptable;
+    public bool Interruptable
+    {
+        get => _interruptable;
+        set => this.RaiseAndSetIfChanged(ref _interruptable, value);
+    }
 
-        //悬浮窗设置
-        private bool _isHoverEnable;
-        public bool IsHoverEnable
-        {
-            get => _isHoverEnable;
-            set => this.RaiseAndSetIfChanged(ref _isHoverEnable, value);
-        }
-        private double _hoverScalingFactor;
-        public double HoverScalingFactor
-        {
-            get => _hoverScalingFactor;
-            set => this.RaiseAndSetIfChanged(ref _hoverScalingFactor, value);
-        }
+    // 悬浮窗设置
+    private bool _isHoverEnable;
+    public bool IsHoverEnable
+    {
+        get => _isHoverEnable;
+        set => this.RaiseAndSetIfChanged(ref _isHoverEnable, value);
+    }
 
-        // 点名设置
-        private float _baseTime = 2.0f;
-        public float BaseTime
-        {
-            get => _baseTime;
-            set => this.RaiseAndSetIfChanged(ref _baseTime, value);
-        }
+    private double _hoverScalingFactor;
+    public double HoverScalingFactor
+    {
+        get => _hoverScalingFactor;
+        set => this.RaiseAndSetIfChanged(ref _hoverScalingFactor, value);
+    }
 
-        private float _additionalTime = 1.0f;
-        public float AdditionalTime
-        {
-            get => _additionalTime;
-            set => this.RaiseAndSetIfChanged(ref _additionalTime, value);
-        }
+    // 点名设置
+    private float _baseTime = 2.0f;
+    public float BaseTime
+    {
+        get => _baseTime;
+        set => this.RaiseAndSetIfChanged(ref _baseTime, value);
+    }
 
-        // TTS设置
-        private TtsProvider _provider;
-        public TtsProvider Provider
-        {
-            get => _provider;
-            set => this.RaiseAndSetIfChanged(ref _provider, value);
-        }
-        public IReadOnlyList<TtsProvider> TtsProviders { get; } = Enum.GetValues<TtsProvider>();
+    private float _additionalTime = 1.0f;
+    public float AdditionalTime
+    {
+        get => _additionalTime;
+        set => this.RaiseAndSetIfChanged(ref _additionalTime, value);
+    }
 
-        private string _beforeText = String.Empty;
-        public string BeforeText
-        {
-            get => _beforeText;
-            set => this.RaiseAndSetIfChanged(ref _beforeText, value);
-        }
-        private string _afterText = String.Empty;
-        public string AfterText
-        {
-            get => _afterText;
-            set => this.RaiseAndSetIfChanged(ref _afterText, value);
-        }
-        private string _exampleText = "{学生姓名}";
-        public string ExampleText
-        {
-            get => _exampleText;
-            set => this.RaiseAndSetIfChanged(ref _exampleText, value);
-        }
+    // TTS 设置
+    private TtsProvider _provider;
+    public TtsProvider Provider
+    {
+        get => _provider;
+        set => this.RaiseAndSetIfChanged(ref _provider, value);
+    }
 
-        // 档案设置
-        private Guid _currentProfile = Settings.Instance.Profile.DefaultProfile;
-        public Guid CurrentProfile { get => _currentProfile; }
-        public class StudentModel : ReactiveObject
+    public IReadOnlyList<TtsProvider> TtsProviders { get; } = Enum.GetValues<TtsProvider>();
+
+    private string _beforeText = string.Empty;
+    public string BeforeText
+    {
+        get => _beforeText;
+        set => this.RaiseAndSetIfChanged(ref _beforeText, value);
+    }
+
+    private string _afterText = string.Empty;
+    public string AfterText
+    {
+        get => _afterText;
+        set => this.RaiseAndSetIfChanged(ref _afterText, value);
+    }
+
+    private string _exampleText = "{学生姓名}";
+    public string ExampleText
+    {
+        get => _exampleText;
+        set => this.RaiseAndSetIfChanged(ref _exampleText, value);
+    }
+
+    // 档案设置
+    private ObservableCollection<ProfileItemViewModel> _profileItems = new();
+    public ObservableCollection<ProfileItemViewModel> ProfileItems
+    {
+        get => _profileItems;
+        private set => this.RaiseAndSetIfChanged(ref _profileItems, value);
+    }
+
+    private ProfileItemViewModel? _selectedProfile;
+    public ProfileItemViewModel? SelectedProfile
+    {
+        get => _selectedProfile;
+        set
         {
-            private int _id;
-            public int ID
+            this.RaiseAndSetIfChanged(ref _selectedProfile, value);
+            if (value is null || value.ProfileId == Settings.Instance.Profile.DefaultProfile)
             {
-                get => _id;
-                set => this.RaiseAndSetIfChanged(ref _id, value);
+                return;
             }
-            private string _name;
-            public string Name
+
+            var previousProfile = Settings.Instance.Profile.DefaultProfile;
+            try
             {
-                get => _name;
-                set => this.RaiseAndSetIfChanged(ref _name, value);
+                ProfileService.LoadSelectedProfile(value.ProfileId);
+                HistoryService.Load(value.ProfileId);
+                CoreService.Initialize();
+                Settings.Instance.Profile.DefaultProfile = value.ProfileId;
+                ReloadProfiles();
             }
-            private int _gender;
-            public int Gender
+            catch
             {
-                get => _gender;
-                set => this.RaiseAndSetIfChanged(ref _gender, value);
-            }
-            private double _manualWeight;
-            public double ManualWeight
-            {
-                get => _manualWeight;
-                set => this.RaiseAndSetIfChanged(ref _manualWeight, value);
-            }
-        }
-        private readonly Dictionary<StudentModel, PropertyChangedEventHandler> _handlers = new();
-        private ObservableCollection<StudentModel> _profileList;
-        public ObservableCollection<StudentModel> ProfileList
-        {
-            get => _profileList;
-            set => this.RaiseAndSetIfChanged(ref _profileList, value);
-        }
-        public ICommand RowCommand => new RelayCommand<StudentModel>(row =>
-        {
-            var firstColumnValue = row.ID;
-            var item = ProfileList.FirstOrDefault(p => p.ID == firstColumnValue);
-            if (item != null)
-            {
-                ProfileList.Remove(item);
-            }
-        });
-
-
-        // 构造函数
-        public SettingPageViewModel()
-        {
-            ProfileService profileService = IAppHost.GetService<ProfileService>();
-            HistoryService historyService = IAppHost.GetService<HistoryService>();
-            CoreService coreService = IAppHost.GetService<CoreService>();
-            Plugin plugin = IAppHost.GetService<Plugin>();
-
-            // 初始化默认值
-            IsBreakDisable = Settings.Instance.General.BreakDisable;
-            Interruptable = Settings.Instance.General.Interruptable;
-            IsHoverEnable = Settings.Instance.Hover.IsEnable;
-            HoverScalingFactor = Settings.Instance.Hover.ScalingFactor;
-            BaseTime = Settings.Instance.Call.BaseTime;
-            AdditionalTime = Settings.Instance.Call.AdditionalTime;
-            Provider = Settings.Instance.TTS.Provider;
-            BeforeText = Settings.Instance.TTS.BeforeText;
-            AfterText = Settings.Instance.TTS.AfterText;
-            ExampleText = $"{BeforeText}{{学生姓名}}{AfterText}";
-            var profile = profileService.GetMembers(CurrentProfile)
-            .OrderBy(m => m.Id)
-            .Select(m => new StudentModel
-            {
-                ID = m.Id,
-                Name = m.Name,
-                Gender = m.Gender,
-                ManualWeight = m.ManualWeight
-            });
-            ProfileList = new ObservableCollection<StudentModel>(profile);
-
-            this.PropertyChanged += (sender, args) =>
-            {
-                if (args.PropertyName == nameof(IsBreakDisable))
-                {
-                    Settings.Instance.General.BreakDisable = IsBreakDisable;
-                }
-                else if (args.PropertyName == nameof(Interruptable))
-                {
-                    Settings.Instance.General.Interruptable = Interruptable;
-                }
-                else if (args.PropertyName == nameof(IsHoverEnable))
-                {
-                    Settings.Instance.Hover.IsEnable = IsHoverEnable;
-                }
-                else if (args.PropertyName == nameof(HoverScalingFactor))
-                {
-                    Settings.Instance.Hover.ScalingFactor = HoverScalingFactor;
-                }
-                else if (args.PropertyName == nameof(BaseTime))
-                {
-                    Settings.Instance.Call.BaseTime = BaseTime;
-                }
-                else if (args.PropertyName == nameof(AdditionalTime))
-                {
-                    Settings.Instance.Call.AdditionalTime = AdditionalTime;
-                }
-                else if (args.PropertyName == nameof(BeforeText))
-                {
-                    Settings.Instance.TTS.BeforeText = BeforeText;
-                    ExampleText = $"{BeforeText}{{学生姓名}}{AfterText}";
-                }
-                else if (args.PropertyName == nameof(Provider))
-                {
-                    Settings.Instance.TTS.Provider = Provider;
-                }
-                else if (args.PropertyName == nameof(AfterText))
-                {
-                    Settings.Instance.TTS.AfterText = AfterText;
-                    ExampleText = $"{BeforeText}{{学生姓名}}{AfterText}";
-                }
-                else if (args.PropertyName == nameof(ProfileList))
-                {
-                    List<Person> list = ProfileList
-                        .Select(s => new Person
-                        {
-                            Id = s.ID,
-                            Name = s.Name,
-                            Gender = s.Gender,
-                            ManualWeight = s.ManualWeight
-                        }).ToList();
-                    profileService.Members = list;
-                    profileService.SaveProfile(CurrentProfile, list);
-                    historyService.Load(CurrentProfile);
-                    coreService.Initialize();
-                }
-            };
-            ProfileList.CollectionChanged += (s, e) =>
-            {
-                if (e.NewItems != null)
-                {
-                    foreach (StudentModel student in e.NewItems)
-                    {
-                        PropertyChangedEventHandler handler = (_, _) =>
-                        {
-                            List<Person> list = ProfileList
-                                .Select(s => new Person
-                                {
-                                    Id = s.ID,
-                                    Name = s.Name,
-                                    Gender = s.Gender,
-                                    ManualWeight = s.ManualWeight
-                                }).ToList();
-
-                            profileService.Members = list;
-                            profileService.SaveProfile(CurrentProfile, list);
-                            historyService.Load(CurrentProfile);
-                            coreService.Initialize();
-                        };
-
-                        _handlers[student] = handler;
-                        student.PropertyChanged += handler;
-                    }
-                }
-                if (e.OldItems != null)
-                {
-                    foreach (StudentModel student in e.OldItems)
-                    {
-                        if (_handlers.TryGetValue(student, out var handler))
-                        {
-                            student.PropertyChanged -= handler;
-                            _handlers.Remove(student);
-                        }
-                    }
-                }
-
-            };
-            foreach (var student in ProfileList)
-            {
-                PropertyChangedEventHandler handler = (_, _) =>
-                {
-                    List<Person> list = ProfileList
-                        .Select(s => new Person
-                        {
-                            Id = s.ID,
-                            Name = s.Name,
-                            Gender = s.Gender,
-                            ManualWeight = s.ManualWeight
-                        }).ToList();
-
-                    profileService.Members = list;
-                    profileService.SaveProfile(CurrentProfile, list);
-                    historyService.Load(CurrentProfile);
-                    coreService.Initialize();
-                };
-
-                _handlers[student] = handler;
-                student.PropertyChanged += handler;
+                Settings.Instance.Profile.DefaultProfile = previousProfile;
+                ReloadProfiles();
+                throw;
             }
         }
+    }
 
+    public ProfileService ProfileService { get; }
+    private HistoryService HistoryService { get; }
+    private CoreService CoreService { get; }
+
+    public SettingPageViewModel()
+    {
+        ProfileService = IAppHost.GetService<ProfileService>();
+        HistoryService = IAppHost.GetService<HistoryService>();
+        CoreService = IAppHost.GetService<CoreService>();
+
+        IsBreakDisable = Settings.Instance.General.BreakDisable;
+        Interruptable = Settings.Instance.General.Interruptable;
+        IsHoverEnable = Settings.Instance.Hover.IsEnable;
+        HoverScalingFactor = Settings.Instance.Hover.ScalingFactor;
+        BaseTime = Settings.Instance.Call.BaseTime;
+        AdditionalTime = Settings.Instance.Call.AdditionalTime;
+        Provider = Settings.Instance.TTS.Provider;
+        BeforeText = Settings.Instance.TTS.BeforeText;
+        AfterText = Settings.Instance.TTS.AfterText;
+        ExampleText = $"{BeforeText}{{学生姓名}}{AfterText}";
+        ReloadProfiles();
+
+        this.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(IsBreakDisable))
+            {
+                Settings.Instance.General.BreakDisable = IsBreakDisable;
+            }
+            else if (args.PropertyName == nameof(Interruptable))
+            {
+                Settings.Instance.General.Interruptable = Interruptable;
+            }
+            else if (args.PropertyName == nameof(IsHoverEnable))
+            {
+                Settings.Instance.Hover.IsEnable = IsHoverEnable;
+            }
+            else if (args.PropertyName == nameof(HoverScalingFactor))
+            {
+                Settings.Instance.Hover.ScalingFactor = HoverScalingFactor;
+            }
+            else if (args.PropertyName == nameof(BaseTime))
+            {
+                Settings.Instance.Call.BaseTime = BaseTime;
+            }
+            else if (args.PropertyName == nameof(AdditionalTime))
+            {
+                Settings.Instance.Call.AdditionalTime = AdditionalTime;
+            }
+            else if (args.PropertyName == nameof(BeforeText))
+            {
+                Settings.Instance.TTS.BeforeText = BeforeText;
+                ExampleText = $"{BeforeText}{{学生姓名}}{AfterText}";
+            }
+            else if (args.PropertyName == nameof(Provider))
+            {
+                Settings.Instance.TTS.Provider = Provider;
+            }
+            else if (args.PropertyName == nameof(AfterText))
+            {
+                Settings.Instance.TTS.AfterText = AfterText;
+                ExampleText = $"{BeforeText}{{学生姓名}}{AfterText}";
+            }
+        };
+    }
+
+    public void ReloadProfiles()
+    {
+        ProfileItems = new ObservableCollection<ProfileItemViewModel>(Settings.Instance.Profile.ProfileList
+            .OrderBy(profile => profile.Value)
+            .Select(profile => new ProfileItemViewModel(profile.Key, profile.Value,
+                profile.Key != Settings.Instance.Profile.DefaultProfile)));
+        SelectedProfile = ProfileItems.FirstOrDefault(profile => profile.ProfileId == Settings.Instance.Profile.DefaultProfile);
+    }
+
+    public sealed class ProfileItemViewModel
+    {
+        public Guid ProfileId { get; }
+        public string Name { get; }
+        public bool CanDelete { get; }
+
+        public ProfileItemViewModel(Guid profileId, string name, bool canDelete)
+        {
+            ProfileId = profileId;
+            Name = name;
+            CanDelete = canDelete;
+        }
     }
 }

@@ -1,0 +1,89 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ci="clr-namespace:ClassIsland.Core.Controls;assembly=ClassIsland.Core"
+        xmlns:cvt="using:IslandCaller.Converters"
+        xmlns:vm="using:IslandCaller.ViewModels"
+        mc:Ignorable="d"
+        x:Class="IslandCaller.Plugin2.ProfileEditor"
+        x:DataType="vm:ProfileEditorViewModel"
+        WindowStartupLocation="CenterOwner"
+        Background="Transparent"
+        Title=""
+        TransparencyLevelHint="Mica"
+        ExtendClientAreaToDecorationsHint="True"
+        Width="900"
+        Height="650"
+        Closing="ProfileEditor_OnClosing">
+    <Window.Resources>
+        <cvt:IntToBoolConverter x:Key="IntToBoolConverter"/>
+        <cvt:GenderConverter x:Key="GenderConverter"/>
+    </Window.Resources>
+
+    <StackPanel Margin="20" Spacing="12">
+        <StackPanel Orientation="Horizontal">
+            <ci:FluentIcon Glyph="&#xF20C;" FontSize="24" VerticalAlignment="Center"/>
+            <TextBlock Text="编辑档案" FontSize="22" Margin="8,0,0,0" VerticalAlignment="Center"/>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal">
+            <TextBlock Text="名单名称" VerticalAlignment="Center" Margin="0,0,12,0"/>
+            <TextBox Text="{Binding ProfileName, Mode=TwoWay}" Width="420"/>
+        </StackPanel>
+
+        <DataGrid ItemsSource="{Binding ProfileList}" RowHeight="45" Height="470">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="序号" Binding="{Binding ID}" />
+                <DataGridTextColumn Header="姓名" Binding="{Binding Name}" />
+                <DataGridTemplateColumn Header="性别">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <ToggleButton IsChecked="{Binding Gender, Mode=TwoWay, Converter={StaticResource IntToBoolConverter}}"
+                                          Content="{Binding Gender, Converter={StaticResource GenderConverter}}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="手动权重">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <Slider Minimum="0" Maximum="2.0"
+                                        VerticalAlignment="Center"
+                                        Width="160"
+                                        TickFrequency="0.05"
+                                        IsSnapToTickEnabled="True"
+                                        Value="{Binding ManualWeight, Mode=TwoWay}"/>
+                                <TextBlock Text="{Binding ManualWeight, StringFormat={}{0:F2}}" Margin="10,0" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn>
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate x:CompileBindings="False">
+                            <Button Command="{Binding DataContext.RowCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                    CommandParameter="{Binding}"
+                                    Background="Red"
+                                    Margin="6,0">
+                                <ci:FluentIcon Glyph="&#xE61D;"/>
+                            </Button>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Click="AddButton_OnClick" Margin="0,0,8,0">
+                <ci:IconText Glyph="&#xE00D;" Text="添加人员"/>
+            </Button>
+            <Button Click="ImportButton_OnClick" Margin="0,0,8,0">
+                <ci:IconText Glyph="&#xE58F;" Text="导入名单"/>
+            </Button>
+            <Button Classes="accent" Click="SaveButton_OnClick">
+                <ci:IconText Glyph="&#xE74E;" Text="保存"/>
+            </Button>
+        </StackPanel>
+    </StackPanel>
+</Window>

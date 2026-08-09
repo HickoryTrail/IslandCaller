@@ -1,0 +1,27 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ci="clr-namespace:ClassIsland.Core.Controls;assembly=ClassIsland.Core"
+        mc:Ignorable="d"
+        x:Class="IslandCaller.Views.ProfileNameDialog"
+        Title=""
+        WindowStartupLocation="CenterOwner"
+        Background="Transparent"
+        TransparencyLevelHint="Mica"
+        ExtendClientAreaToDecorationsHint="True"
+        CanResize="False"
+        Height="190"
+        Width="420">
+    <StackPanel Margin="20">
+        <StackPanel Orientation="Horizontal">
+            <ci:FluentIcon Glyph="&#xE58F;" FontSize="22" VerticalAlignment="Center"/>
+            <TextBlock Text="设置名单名称" FontSize="18" Margin="6,0,0,0" VerticalAlignment="Center"/>
+        </StackPanel>
+        <TextBox x:Name="NameInput" PlaceholderText="请输入名单名称" Margin="0,18,0,12"/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="取消" Click="CancelButton_OnClick" Margin="0,0,8,0"/>
+            <Button Content="确定" Classes="accent" Click="ConfirmButton_OnClick"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

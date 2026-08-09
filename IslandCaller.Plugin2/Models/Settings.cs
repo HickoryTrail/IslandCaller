@@ -1,4 +1,4 @@
-﻿using Microsoft.Win32;
+using Microsoft.Win32;
 using System.Text.Json;
 using IslandCaller.Services;
 using IslandCaller.Plugin2;
@@ -181,6 +181,9 @@ namespace IslandCaller.Models
 
             // Call
             model.Call.PropertyChanged += (_, _) => onChange();
+
+            // Profile
+            model.Profile.PropertyChanged += (_, _) => onChange();
         }
     }
 
