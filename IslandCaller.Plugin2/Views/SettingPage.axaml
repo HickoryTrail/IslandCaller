@@ -75,6 +75,19 @@
         <Separator Margin="0 12 0 4" />
         <ci:IconText Glyph="&#xECF9;" Text="点名设置" Margin="0,0,0,4"/>
         <fa:FASettingsExpander
+        IconSource="{ci:FluentIconSource &#xECEE;}"
+        Header="点名结果展示渠道"
+        Description="选择展示点名结果的提醒渠道，可多选">
+            <fa:FASettingsExpanderItem IsClickEnabled="false">
+                <StackPanel Orientation="Horizontal" Spacing="16">
+                    <CheckBox Content="ClassIsland 提醒"
+                              IsChecked="{Binding IsClassIslandNotificationEnabled, Mode=TwoWay}" />
+                    <CheckBox Content="IslandCaller 提醒"
+                              IsChecked="{Binding IsIslandCallerNotificationEnabled, Mode=TwoWay}" />
+                </StackPanel>
+            </fa:FASettingsExpanderItem>
+        </fa:FASettingsExpander>
+        <fa:FASettingsExpander
         IconSource="{ci:FluentIconSource &#xEE83;}"
         Header="点名提醒时长"
         Description="调整单次点名提醒的持续时间，总时长为 {人数 * 基础时间 + 附加时间}">

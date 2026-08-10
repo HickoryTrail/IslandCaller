@@ -130,6 +130,21 @@ namespace IslandCaller.Models
 
     public class CallSettings : INotifyPropertyChanged
     {
+        private int _notifyMethod = 1;
+        public int NotifyMethod
+        {
+            get => _notifyMethod;
+            set
+            {
+                int notifyMethod = value & 0b11;
+                if (_notifyMethod != notifyMethod)
+                {
+                    _notifyMethod = notifyMethod;
+                    OnPropertyChanged(nameof(NotifyMethod));
+                }
+            }
+        }
+
         private float _baseTime = 1.0f;
         public float BaseTime
         {

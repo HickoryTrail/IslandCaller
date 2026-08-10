@@ -17,9 +17,12 @@ public class IslandCallerNotificationProviderNew() : NotificationProviderBase
 {
     public NotificationRequest? Request { get; set; }
 
-    public async void RandomCall(string name, float second)
+    public async void RandomCall(string name, float second, CancellationToken token)
     {
-        
+        using var registration = token.Register(() =>
+        {
+            Request?.Cancel();
+        });
         Request = new NotificationRequest()
         {
             MaskContent = NotificationContent.CreateTwoIconsMask(name, factory: x =>

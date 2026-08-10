@@ -40,6 +40,36 @@ public class SettingPageViewModel : ReactiveObject
     }
 
     // 点名设置
+    private int _notifyMethod;
+    public int NotifyMethod
+    {
+        get => _notifyMethod;
+        set
+        {
+            int notifyMethod = value & 0b11;
+            if (_notifyMethod == notifyMethod)
+            {
+                return;
+            }
+
+            this.RaiseAndSetIfChanged(ref _notifyMethod, notifyMethod);
+            this.RaisePropertyChanged(nameof(IsClassIslandNotificationEnabled));
+            this.RaisePropertyChanged(nameof(IsIslandCallerNotificationEnabled));
+        }
+    }
+
+    public bool IsClassIslandNotificationEnabled
+    {
+        get => (NotifyMethod & 0b01) != 0;
+        set => NotifyMethod = value ? NotifyMethod | 0b01 : NotifyMethod & ~0b01;
+    }
+
+    public bool IsIslandCallerNotificationEnabled
+    {
+        get => (NotifyMethod & 0b10) != 0;
+        set => NotifyMethod = value ? NotifyMethod | 0b10 : NotifyMethod & ~0b10;
+    }
+
     private float _baseTime = 2.0f;
     public float BaseTime
     {
@@ -137,6 +167,7 @@ public class SettingPageViewModel : ReactiveObject
         Interruptable = Settings.Instance.General.Interruptable;
         IsHoverEnable = Settings.Instance.Hover.IsEnable;
         HoverScalingFactor = Settings.Instance.Hover.ScalingFactor;
+        NotifyMethod = Settings.Instance.Call.NotifyMethod;
         BaseTime = Settings.Instance.Call.BaseTime;
         AdditionalTime = Settings.Instance.Call.AdditionalTime;
         Provider = Settings.Instance.TTS.Provider;
@@ -162,6 +193,10 @@ public class SettingPageViewModel : ReactiveObject
             else if (args.PropertyName == nameof(HoverScalingFactor))
             {
                 Settings.Instance.Hover.ScalingFactor = HoverScalingFactor;
+            }
+            else if (args.PropertyName == nameof(NotifyMethod))
+            {
+                Settings.Instance.Call.NotifyMethod = NotifyMethod;
             }
             else if (args.PropertyName == nameof(BaseTime))
             {

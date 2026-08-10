@@ -7,6 +7,7 @@ using ClassIsland.Shared;
 using IslandCaller.Actions;
 using IslandCaller.Helpers;
 using IslandCaller.Models;
+using IslandCaller.Plugin2;
 using IslandCaller.Plugin2.Services;
 using IslandCaller.Services;
 using IslandCaller.Services.IslandCallerService;
@@ -31,7 +32,7 @@ namespace IslandCaller
             services.AddSingleton<ProfileService>();
             services.AddSingleton<HistoryService>();
             services.AddSingleton<CoreService>();
-            services.AddSingleton<HoverService>();
+            services.AddSingleton<WindowsManager>();
             services.AddSingleton<WindowDragHelper>();
             services.AddSingleton<WindowTopmostHelper>();
             services.AddSettingsPage<SettingPage>();
@@ -51,11 +52,9 @@ namespace IslandCaller
                     IAppHost.GetService<HistoryService>().Initialize();
                     IAppHost.GetService<CoreService>().Initialize();
                     IAppHost.GetService<IslandCallerService>().Initialize();
-                    if (Settings.Instance.Hover.IsEnable)
-                    {
-                        IAppHost.GetService<HoverService>().HoverWindow = new HoverFluent();
-                        IAppHost.GetService<HoverService>().HoverWindow?.Show();
-                    }
+                    IAppHost.GetService<WindowsManager>().Initialize();
+                    await IAppHost.GetService<WindowsManager>().ShowCallWindowAsync("李华", 12.5f, CancellationToken.None);
+                    await IAppHost.GetService<WindowsManager>().ShowCallWindowAsync("李华 小明 Mike", 12.5f, CancellationToken.None);
                 }
                 catch (Exception ex)
                 {

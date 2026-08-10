@@ -1,9 +1,7 @@
-using Avalonia.Logging;
 using ClassIsland.Core.Abstractions.Services;
 using ClassIsland.Core.Abstractions.Services.SpeechService;
 using ClassIsland.Shared;
 using ClassIsland.Shared.Enums;
-using Grpc.Core;
 using IslandCaller.Models;
 using IslandCaller.Plugin2.Helpers;
 using IslandCaller.Plugin2.Services;
@@ -19,13 +17,13 @@ namespace IslandCaller.Services.IslandCallerService
         private ILessonsService? LessonsService { get; set; }
         private IUriNavigationService? UriNavigationService { get; set; }
         private ILogger<IslandCallerService>? Logger { get; }
-        private IslandCallerNotificationProviderNew LastRequest { get; set; }
+        private CancellationTokenSource Cts {  get; set; }
 
         private CoreService CoreService { get; set; }
         private HistoryService HistoryService { get; set; }
         private IOmniTTS? OmniTTS { get; set; }
         private ISpeechService? ClassIslandTTS { get; set; }
-        private HoverService HoverService { get; set; }
+        private WindowsManager WindowsManager { get; set; }
         public Status Status { get; set; }
         public IslandCallerService(ILogger<IslandCallerService> logger)
         {
@@ -38,7 +36,7 @@ namespace IslandCaller.Services.IslandCallerService
             HistoryService = IAppHost.GetService<HistoryService>();
             CoreService = IAppHost.GetService<CoreService>();
             Status = IAppHost.GetService<Status>();
-            HoverService = IAppHost.GetService<HoverService>();
+            WindowsManager = IAppHost.GetService<WindowsManager>();
             // 获取服务
             LessonsService = IAppHost.TryGetService<ILessonsService>();
             UriNavigationService = IAppHost.TryGetService<IUriNavigationService>();
@@ -74,12 +72,8 @@ namespace IslandCaller.Services.IslandCallerService
             {
                 if (e.PropertyName == nameof(Settings.Instance.Hover.IsEnable))
                 {
-                    if (Settings.Instance.Hover.IsEnable)
-                    {
-                        HoverService.HoverWindow = new HoverFluent();
-                        HoverService.HoverWindow.Show();
-                    }
-                    else HoverService.HoverWindow?.Close();
+                    if (Settings.Instance.Hover.IsEnable) WindowsManager.ShowHoverWindow();
+                    else WindowsManager.CloseHoverWindow();
                 }
             };
             UriNavigationService?.HandlePluginsNavigation(
@@ -101,13 +95,14 @@ namespace IslandCaller.Services.IslandCallerService
         {
             // 准备点名
             if(Status.IsPluginReady == false) return;
-            Status.OccupationDisable = false;
-            if (Status.InterruptionEnable == true && LastRequest != null)
+
+            if (Status.InterruptionEnable && (Status.OccupationDisable == false))
             {
-                LastRequest.Request?.Cancel();
+                Cts?.Cancel();
+                Cts?.Dispose();
                 Logger?.LogWarning("上一个点名请求已被取消");
             }
-
+            Status.OccupationDisable = false;
             // 获取点名数据
             List<string> students = new();
             for (int i = 0; i < stunum; i++)
@@ -120,23 +115,15 @@ namespace IslandCaller.Services.IslandCallerService
             float duration = stunum * Settings.Instance.Call.BaseTime + Settings.Instance.Call.AdditionalTime; // 计算持续时间
 
             // 发送结果
-            CancellationTokenSource cts = null;
-            if (Settings.Instance.TTS.Provider == Plugin2.TtsProvider.OmniTTS)
-            {
-                cts = new CancellationTokenSource(new TimeSpan(0, 0, 0, (int)duration, (int)((duration - (int)duration) * 1000)));
-                OmniTTS?.PlayAudio(speechContent, cts.Token);
-            }
-            else if (Settings.Instance.TTS.Provider == Plugin2.TtsProvider.ClassIsland)
-            {
-                ClassIslandTTS?.EnqueueSpeechQueue(speechContent);
-            }
-            LastRequest = new IslandCallerNotificationProviderNew();
-            LastRequest.RandomCall(output, duration);
-            await Task.Delay((int)(duration * 1000));
-            cts?.Cancel();
-            cts?.Dispose();
+            Cts = new CancellationTokenSource(new TimeSpan(0, 0, 0, (int)duration, (int)((duration - (int)duration) * 1000)));
+            var thisCts = Cts;
+            if (Settings.Instance.TTS.Provider == Plugin2.TtsProvider.OmniTTS) OmniTTS?.PlayAudio(speechContent, Cts.Token);
+            else if (Settings.Instance.TTS.Provider == Plugin2.TtsProvider.ClassIsland) ClassIslandTTS?.EnqueueSpeechQueue(speechContent);
+            if ((Settings.Instance.Call.NotifyMethod & 0b01) == 1) new IslandCallerNotificationProviderNew().RandomCall(output, duration, Cts.Token);
+            if ((Settings.Instance.Call.NotifyMethod & 0b10) == 1) WindowsManager.ShowCallWindow(output, duration, Cts.Token);
+            await Task.Delay((int)(duration * 1000), Cts.Token);
+            if (Cts != null && thisCts == Cts) Cts?.Dispose();
             Status.OccupationDisable = true;
-            LastRequest = null;
         }
     }
 }
