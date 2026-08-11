@@ -1,0 +1,31 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Restore and build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore IslandCaller.slnx -p:EnableWindowsTargeting=true
+
+      - name: Build solution
+        run: dotnet build IslandCaller.slnx --configuration Release --no-restore --nologo -p:EnableWindowsTargeting=true

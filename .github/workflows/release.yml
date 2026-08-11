@@ -1,0 +1,144 @@
+name: Release
+
+on:
+  push:
+    # GitHub tag filters are globs; the exact four-integer format is checked below.
+    tags:
+      - '*.*.*.*'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build release artifact
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the release tag
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate tag and primary-branch ancestry
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          if [[ ! "$TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "A release tag must have the x.x.x.x format; received: $TAG" >&2
+            exit 1
+          fi
+
+          git fetch --force origin master:refs/remotes/origin/master refs/tags/*:refs/tags/*
+          TAG_COMMIT="$(git rev-list -n 1 "$TAG")"
+          if ! git merge-base --is-ancestor "$TAG_COMMIT" origin/master; then
+            echo "Tag $TAG does not point to a commit contained in master." >&2
+            exit 1
+          fi
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore IslandCaller.slnx -p:EnableWindowsTargeting=true
+
+      - name: Build plugin
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="${{ steps.version.outputs.tag }}"
+          sed -i -E "s/^version: .*/version: ${TAG}/" IslandCaller.Plugin2/manifest.yml
+          grep -Fx "version: ${TAG}" IslandCaller.Plugin2/manifest.yml
+          dotnet build IslandCaller.Plugin2/IslandCaller.Plugin2.csproj \
+            --configuration Release --no-restore --nologo \
+            -p:EnableWindowsTargeting=true -p:Version="${TAG}"
+
+          PLUGIN_OUTPUT="IslandCaller.Plugin2/bin/Release/net10.0-windows"
+          if [[ ! -d "$PLUGIN_OUTPUT" ]]; then
+            echo "Expected plugin build output was not generated: $PLUGIN_OUTPUT" >&2
+            exit 1
+          fi
+
+          mkdir -p artifacts/plugin
+          find "$PLUGIN_OUTPUT" -maxdepth 1 -type f ! -name '*.pdb' -exec cp {} artifacts/plugin/ \;
+          if [[ -z "$(find artifacts/plugin -maxdepth 1 -type f -print -quit)" ]]; then
+            echo "Plugin package source is empty." >&2
+            exit 1
+          fi
+          (
+            cd artifacts/plugin
+            zip -r ../IslandCaller.Plugin2.cipx .
+          )
+
+      - name: Create checksums and release notes
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="${{ steps.version.outputs.tag }}"
+          CIPX_FILE="IslandCaller.Plugin2.cipx"
+          CIPX_MD5="$(md5sum "artifacts/${CIPX_FILE}" | awk '{print $1}')"
+
+          mkdir -p artifacts
+          if [[ -f "docs/CHANGELOG/${TAG}.md" ]]; then
+            cp "docs/CHANGELOG/${TAG}.md" artifacts/release-notes.md
+          else
+            printf '# IslandCaller %s\n\nArtifact MD5: `%s`\n' "$TAG" "$CIPX_MD5" > artifacts/release-notes.md
+          fi
+          sed -i "s/<CIPX_MD5>/${CIPX_MD5}/g" artifacts/release-notes.md
+
+          jq -n \
+            --arg tag "$TAG" \
+            --arg cipx_package "$CIPX_FILE" \
+            '{tag: $tag, cipx_package: $cipx_package}' \
+            > artifacts/release-metadata.json
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts
+          if-no-files-found: error
+          path: |
+            artifacts/IslandCaller.Plugin2.cipx
+            artifacts/release-notes.md
+            artifacts/release-metadata.json
+
+  publish:
+    name: Approve and publish release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    environment:
+      name: release
+    steps:
+      - name: Download release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+          path: artifacts
+
+      - name: Create or update GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="$(jq -r '.tag' artifacts/release-metadata.json)"
+          CIPX_PACKAGE="$(jq -r '.cipx_package' artifacts/release-metadata.json)"
+          REPOSITORY="$GITHUB_REPOSITORY"
+
+          if gh release view "$TAG" --repo "$REPOSITORY" >/dev/null 2>&1; then
+            gh release edit "$TAG" --repo "$REPOSITORY" --title "$TAG" --notes-file artifacts/release-notes.md
+            gh release upload "$TAG" --repo "$REPOSITORY" "artifacts/${CIPX_PACKAGE}" --clobber
+          else
+            gh release create "$TAG" \
+              --repo "$REPOSITORY" \
+              "artifacts/${CIPX_PACKAGE}" \
+              --title "$TAG" \
+              --notes-file artifacts/release-notes.md
+          fi
