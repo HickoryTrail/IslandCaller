@@ -218,6 +218,21 @@
                 </Button>
             </fa:FASettingsExpander.Footer>
         </fa:FASettingsExpander>
+        <fa:FASettingsExpander
+            IconSource="{ci:FluentIconSource &#xE898;}"
+            Header="档案数据导入与导出"
+            Description="完整导入或导出 IslandCaller 设置及 AppData 数据">
+            <fa:FASettingsExpander.Footer>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Click="ImportSettingsButton_OnClick">
+                        <ci:IconText Glyph="&#xE896;" Text="导入数据包"/>
+                    </Button>
+                    <Button Click="ExportSettingsButton_OnClick">
+                        <ci:IconText Glyph="&#xE898;" Text="导出数据包"/>
+                    </Button>
+                </StackPanel>
+            </fa:FASettingsExpander.Footer>
+        </fa:FASettingsExpander>
   </StackPanel>
     </ScrollViewer>
 </ci2:SettingsPageBase>

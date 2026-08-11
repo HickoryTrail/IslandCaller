@@ -1,11 +1,14 @@
 using Avalonia.Controls;
+using Avalonia.Platform.Storage;
 using Avalonia.VisualTree;
+using ClassIsland.Core;
 using ClassIsland.Core.Abstractions.Controls;
 using ClassIsland.Core.Attributes;
 using ClassIsland.Core.Controls;
 using ClassIsland.Core.Enums.SettingsWindow;
 using ClassIsland.Core.Extensions.UI;
 using ClassIsland.Core.Helpers.UI;
+using ClassIsland.Platforms.Abstraction;
 using ClassIsland.Shared;
 using FluentAvalonia.UI.Controls;
 using IslandCaller.Models;
@@ -22,6 +25,7 @@ public partial class SettingPage : SettingsPageBase
     private readonly SettingPageViewModel vm;
     private readonly HistoryService historyService;
     private readonly ILogger<SettingPage> logger;
+    private readonly SettingsTransferService transferService = new();
 
     public SettingPage()
     {
@@ -130,6 +134,161 @@ public partial class SettingPage : SettingsPageBase
         logger.LogInformation("清空点名历史记录");
         historyService.ClearThisLessonHistory();
         historyService.ClearLongTermHistory();
+    }
+
+    private async void ExportSettingsButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        var topLevel = TopLevel.GetTopLevel(this) ?? AppBase.Current.GetRootWindow();
+        if (topLevel == null)
+        {
+            await CommonTaskDialogs.ShowDialog("导出失败", "无法获取文件选择器窗口。", this);
+            return;
+        }
+
+        try
+        {
+            var filePath = await PlatformServices.FilePickerService.SaveFilePickerAsync(
+                new FilePickerSaveOptions
+                {
+                    Title = "导出 IslandCaller 数据包",
+                    SuggestedFileName = $"IslandCaller-{DateTime.Now:yyyyMMddHHmmss}.iscdoc",
+                    DefaultExtension = ".iscdoc",
+                    FileTypeChoices =
+                    [
+                        new FilePickerFileType("IslandCaller 数据包")
+                        {
+                            Patterns = ["*.iscdoc"]
+                        }
+                    ]
+                },
+                topLevel);
+
+            if (filePath == null)
+            {
+                return;
+            }
+
+            using var storageFile = await PlatformServices.FilePickerService.GetFileAsync(filePath, topLevel)
+                                     ?? throw new FileNotFoundException("无法打开导出目标文件。", filePath);
+            await using var outputStream = await storageFile.OpenWriteAsync();
+            if (outputStream.CanSeek)
+            {
+                outputStream.SetLength(0);
+                outputStream.Position = 0;
+            }
+
+            await transferService.ExportAsync(outputStream);
+            await CommonTaskDialogs.ShowDialog("导出完成", "IslandCaller 设置和 AppData 已成功导出。", this);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "导出 IslandCaller 数据包失败");
+            await CommonTaskDialogs.ShowDialog("导出失败", ex.Message, this);
+        }
+    }
+
+    private async void ImportSettingsButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        var topLevel = TopLevel.GetTopLevel(this) ?? AppBase.Current.GetRootWindow();
+        if (topLevel == null)
+        {
+            await CommonTaskDialogs.ShowDialog("导入失败", "无法获取文件选择器窗口。", this);
+            return;
+        }
+
+        try
+        {
+            var filePaths = await PlatformServices.FilePickerService.OpenFilesPickerAsync(
+                new FilePickerOpenOptions
+                {
+                    Title = "导入 IslandCaller 数据包",
+                    FileTypeFilter =
+                    [
+                        new FilePickerFileType("IslandCaller 数据包")
+                        {
+                            Patterns = ["*.iscdoc"]
+                        }
+                    ],
+                    AllowMultiple = false
+                },
+                topLevel);
+
+            if (filePaths == null || filePaths.Count == 0)
+            {
+                return;
+            }
+
+            var confirmation = new FATaskDialog
+            {
+                Header = "导入 IslandCaller 数据包",
+                Content = "导入将清空现有的 IslandCaller 设置、名单、历史记录以及 AppData 下的其他插件数据，并使用数据包内容完全替换。此操作不可逆，确定要继续吗？",
+                XamlRoot = this,
+                Buttons =
+                {
+                    new FATaskDialogButton("取消", false),
+                    new FATaskDialogButton("继续导入", true)
+                    {
+                        IsDefault = true
+                    }
+                }
+            };
+
+            if (!Equals(await confirmation.ShowAsync(), true))
+            {
+                return;
+            }
+
+            var temporaryPackagePath = Path.Combine(
+                Path.GetTempPath(),
+                $"IslandCaller-import-{Guid.NewGuid():N}.iscdoc");
+            try
+            {
+                using (var storageFile = await PlatformServices.FilePickerService.GetFileAsync(filePaths[0], topLevel)
+                                           ?? throw new FileNotFoundException("无法打开所选数据包。", filePaths[0]))
+                await using (var inputStream = await storageFile.OpenReadAsync())
+                await using (var temporaryPackageStream = new FileStream(
+                                 temporaryPackagePath,
+                                 FileMode.CreateNew,
+                                 FileAccess.Write,
+                                 FileShare.None,
+                                 bufferSize: 81920,
+                                 useAsync: true))
+                {
+                    await inputStream.CopyToAsync(temporaryPackageStream);
+                }
+
+                await using var packageStream = new FileStream(
+                    temporaryPackagePath,
+                    FileMode.Open,
+                    FileAccess.Read,
+                    FileShare.Read,
+                    bufferSize: 81920,
+                    useAsync: true);
+                await transferService.ImportAsync(packageStream);
+            }
+            finally
+            {
+                try
+                {
+                    if (File.Exists(temporaryPackagePath))
+                    {
+                        File.Delete(temporaryPackagePath);
+                    }
+                }
+                catch (Exception cleanupException)
+                {
+                    logger.LogWarning(cleanupException, "清理临时 IslandCaller 数据包失败：{Path}", temporaryPackagePath);
+                }
+            }
+
+            await CommonTaskDialogs.ShowDialog("导入完成", "数据包已成功导入，应用将重新启动以应用设置。", this);
+            RequestRestart();
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "导入 IslandCaller 数据包失败");
+            await CommonTaskDialogs.ShowDialog("导入失败", ex.Message, this);
+        }
     }
 
     private Window? GetOwnerWindow()

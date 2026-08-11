@@ -7,7 +7,7 @@ namespace IslandCaller.Models
 {
     public class Settings(ProfileService profileService)
     {
-        public static SettingsModel Instance { get; } = new SettingsModel();
+        public static SettingsModel Instance { get; private set; } = new SettingsModel();
         public ProfileService ProfileService { get; } = profileService;
 
         private static string GetAppDataRootPath()
@@ -150,6 +150,17 @@ namespace IslandCaller.Models
             IsC_CallKey?.SetValue("NotifyMethod", Instance.Call.NotifyMethod);
             IsC_CallKey?.SetValue("BaseTime", Instance.Call.BaseTime);
             IsC_CallKey?.SetValue("AdditionalTime", Instance.Call.AdditionalTime);
+        }
+
+        /// <summary>
+        /// 替换当前设置模型，并将其绑定到注册表保存逻辑。
+        /// </summary>
+        public void ReplaceModel(SettingsModel model)
+        {
+            ArgumentNullException.ThrowIfNull(model);
+            Instance = model;
+            SettingsBinder.Bind(Instance, Save);
+            Save();
         }
 
         private static TtsProvider ReadTtsProvider(object? value)
