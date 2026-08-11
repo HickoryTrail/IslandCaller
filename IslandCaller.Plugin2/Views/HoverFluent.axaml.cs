@@ -6,6 +6,7 @@ using IslandCaller.Helpers;
 using IslandCaller.Services.IslandCallerService;
 using IslandCaller.ViewModels;
 using Microsoft.Extensions.Logging;
+using System.ComponentModel;
 
 namespace IslandCaller.Views;
 public partial class HoverFluent : Window
@@ -13,10 +14,12 @@ public partial class HoverFluent : Window
     private HoverFluentViewModel vm { get; set; }
     private double scaling { get; set; }
     private bool _isDragging;
+    private bool _isApplyingNativeSize;
     private long _lastPositionLogTime;
     private const int PositionLogIntervalMs = 200;
     private readonly ILogger<HoverFluent> logger = ClassIsland.Shared.IAppHost.GetService<ILogger<HoverFluent>>();
     private readonly WindowTopmostHelper windowTopmostHelper = ClassIsland.Shared.IAppHost.GetService<WindowTopmostHelper>();
+    private readonly WindowSizeHelper windowSizeHelper = ClassIsland.Shared.IAppHost.GetService<WindowSizeHelper>();
     private readonly ScreenBrightnessHelper screenBrightnessHelper = ClassIsland.Shared.IAppHost.GetService<ScreenBrightnessHelper>();
     private CancellationTokenSource? topmostCts;
 
@@ -30,6 +33,8 @@ public partial class HoverFluent : Window
         base.OnOpened(e);
         vm = DataContext as HoverFluentViewModel;
         scaling = RenderScaling;
+        vm.PropertyChanged += OnViewModelPropertyChanged;
+        Dispatcher.UIThread.Post(ApplyNativeWindowSize, DispatcherPriority.Render);
         Position = new PixelPoint((int)Math.Round(vm.PositionX * scaling), (int)Math.Round(vm.PositionY * scaling));
         PositionChanged += OnPositionChanged;
         Activated += OnWindowLayerChanged;
@@ -45,12 +50,48 @@ public partial class HoverFluent : Window
     protected override void OnClosed(EventArgs e)
     {
         PositionChanged -= OnPositionChanged;
+        if (vm is not null)
+        {
+            vm.PropertyChanged -= OnViewModelPropertyChanged;
+        }
         Activated -= OnWindowLayerChanged;
         Deactivated -= OnWindowLayerChanged;
         topmostCts?.Cancel();
         topmostCts?.Dispose();
         topmostCts = null;
         base.OnClosed(e);
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is not (nameof(HoverFluentViewModel.Width)
+            or nameof(HoverFluentViewModel.Height)
+            or nameof(HoverFluentViewModel.WindowScalingFactor)))
+        {
+            return;
+        }
+
+        // Apply after the binding/layout pass so Avalonia cannot immediately
+        // restore its content-derived minimum size.
+        Dispatcher.UIThread.Post(ApplyNativeWindowSize, DispatcherPriority.Render);
+    }
+
+    private void ApplyNativeWindowSize()
+    {
+        if (vm is null || _isApplyingNativeSize)
+        {
+            return;
+        }
+
+        _isApplyingNativeSize = true;
+        try
+        {
+            windowSizeHelper.SetWindowSize(this, vm.Width, vm.Height);
+        }
+        finally
+        {
+            _isApplyingNativeSize = false;
+        }
     }
 
     private void StartTopmostLoop()
@@ -118,6 +159,10 @@ public partial class HoverFluent : Window
         scaling = RenderScaling;
         if (_isDragging)
         {
+            // During a native drag, each move message can reapply Avalonia's
+            // content minimum. Keep the WinAPI size authoritative for the
+            // whole drag, not only after it ends.
+            ApplyNativeWindowSize();
             return;
         }
 
@@ -140,6 +185,10 @@ public partial class HoverFluent : Window
     {
         _isDragging = false;
         ApplyPositionClampIfNeeded();
+        // Windows/Avalonia may have processed the move through its native
+        // sizing path. Restore the requested compact size after the drag
+        // transaction has completed and all position messages have drained.
+        Dispatcher.UIThread.Post(ApplyNativeWindowSize, DispatcherPriority.Render);
     }
 
     private void ApplyPositionClampIfNeeded()

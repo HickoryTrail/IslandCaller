@@ -34,6 +34,7 @@ namespace IslandCaller
             services.AddSingleton<CoreService>();
             services.AddSingleton<WindowsManager>();
             services.AddSingleton<WindowDragHelper>();
+            services.AddSingleton<WindowSizeHelper>();
             services.AddSingleton<WindowTopmostHelper>();
             services.AddSingleton<ScreenBrightnessHelper>();
             services.AddSettingsPage<SettingPage>();
@@ -54,8 +55,6 @@ namespace IslandCaller
                     IAppHost.GetService<CoreService>().Initialize();
                     IAppHost.GetService<IslandCallerService>().Initialize();
                     IAppHost.GetService<WindowsManager>().Initialize();
-                    await IAppHost.GetService<WindowsManager>().ShowCallWindowAsync("李华", 12.5f, CancellationToken.None);
-                    await IAppHost.GetService<WindowsManager>().ShowCallWindowAsync("李华 小明 Mike", 12.5f, CancellationToken.None);
                 }
                 catch (Exception ex)
                 {
