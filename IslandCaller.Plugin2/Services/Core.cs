@@ -31,7 +31,7 @@ namespace IslandCaller.Services
             ProfileService = IAppHost.GetService<ProfileService>();
             HistoryService = IAppHost.GetService<HistoryService>();
             Status = IAppHost.GetService<Status>();
-            Status.IsTimeStatusAvailable = false;
+            Status.CoreServiceInitialized = false;
             Persons.Clear();
             foreach (var person in ProfileService.Members)
             {
