@@ -119,9 +119,13 @@ namespace IslandCaller.Services.IslandCallerService
             var thisCts = Cts;
             if (Settings.Instance.TTS.Provider == Plugin2.TtsProvider.OmniTTS) OmniTTS?.PlayAudio(speechContent, Cts.Token);
             else if (Settings.Instance.TTS.Provider == Plugin2.TtsProvider.ClassIsland) ClassIslandTTS?.EnqueueSpeechQueue(speechContent);
-            if ((Settings.Instance.Call.NotifyMethod & 0b01) == 1) new IslandCallerNotificationProviderNew().RandomCall(output, duration, Cts.Token);
-            if ((Settings.Instance.Call.NotifyMethod & 0b10) == 1) WindowsManager.ShowCallWindow(output, duration, Cts.Token);
-            await Task.Delay((int)(duration * 1000), Cts.Token);
+            if ((Settings.Instance.Call.NotifyMethod & 0b01) != 0) new IslandCallerNotificationProviderNew().RandomCall(output, duration, Cts.Token);
+            if ((Settings.Instance.Call.NotifyMethod & 0b10) != 0) WindowsManager.ShowCallWindow(output, duration, Cts.Token);
+            try
+            {
+                await Task.Delay((int)(duration * 1000), Cts.Token);
+            }
+            catch { }
             if (Cts != null && thisCts == Cts) Cts?.Dispose();
             Status.OccupationDisable = true;
         }

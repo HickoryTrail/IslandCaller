@@ -35,6 +35,7 @@ namespace IslandCaller
             services.AddSingleton<WindowsManager>();
             services.AddSingleton<WindowDragHelper>();
             services.AddSingleton<WindowTopmostHelper>();
+            services.AddSingleton<ScreenBrightnessHelper>();
             services.AddSettingsPage<SettingPage>();
             services.AddAction<DisableHoverAction>();
             services.AddAction<EnableHoverAction>();

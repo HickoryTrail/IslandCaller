@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Media;
 using Avalonia.Threading;
 using IslandCaller.Helpers;
 using IslandCaller.Services.IslandCallerService;
@@ -16,6 +17,7 @@ public partial class HoverFluent : Window
     private const int PositionLogIntervalMs = 200;
     private readonly ILogger<HoverFluent> logger = ClassIsland.Shared.IAppHost.GetService<ILogger<HoverFluent>>();
     private readonly WindowTopmostHelper windowTopmostHelper = ClassIsland.Shared.IAppHost.GetService<WindowTopmostHelper>();
+    private readonly ScreenBrightnessHelper screenBrightnessHelper = ClassIsland.Shared.IAppHost.GetService<ScreenBrightnessHelper>();
     private CancellationTokenSource? topmostCts;
 
     public HoverFluent()
@@ -88,8 +90,27 @@ public partial class HoverFluent : Window
     private void ApplyTopmost(string reason)
     {
         windowTopmostHelper.EnsureTopmost(this);
+        UpdateSecondaryButtonForeground();
         Focusable = false;
         logger.LogTrace("执行窗口置顶，触发原因: {Reason}", reason);
+    }
+
+    private void UpdateSecondaryButtonForeground()
+    {
+        if (!HoverControl.IsSecondaryButtonEffectivelyEnabled)
+        {
+            HoverControl.ResetSecondaryButtonForeground();
+            return;
+        }
+
+        var foreground = Colors.Black;
+        if (HoverControl.TryGetSecondaryButtonScreenRect(out var buttonRect)
+            && screenBrightnessHelper.TryGetAverageRelativeLuminance(buttonRect, out var luminance))
+        {
+            foreground = ScreenBrightnessHelper.GetRecommendedForeground(luminance);
+        }
+
+        HoverControl.SetSecondaryButtonForeground(foreground);
     }
 
     private void OnPositionChanged(object? sender, PixelPointEventArgs e)

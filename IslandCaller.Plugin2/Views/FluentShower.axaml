@@ -8,7 +8,7 @@
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="IslandCaller.Plugin2.FluentShower"
         Title="FluentShower"
-        Topmost="False"
+        Topmost="True"
         WindowDecorations="BorderOnly"
         Focusable="False"
         Background="Transparent"
@@ -16,9 +16,12 @@
         ExtendClientAreaTitleBarHeightHint="-1"
         TransparencyLevelHint="AcrylicBlur"
         ShowActivated="False"
-        ShowInTaskbar="True"
+        ShowInTaskbar="False"
         CanResize="False"
         Height="110"
         WindowStartupLocation="CenterScreen"
-        SizeToContent="Width">		
+        HorizontalContentAlignment="Center"
+        VerticalContentAlignment="Center"
+        HorizontalAlignment="Center"
+        VerticalAlignment="Center">		
 </Window>

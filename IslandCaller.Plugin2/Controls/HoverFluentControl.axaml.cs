@@ -1,6 +1,9 @@
 using Avalonia;
+using Avalonia.Animation;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
+using Avalonia.Media;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using ClassIsland.Shared;
@@ -33,6 +36,7 @@ public partial class HoverFluentControl : UserControl
     private long _manualDragStartTime;
     private bool _touchDragDelayElapsed;
     private bool _touchDragThresholdElapsed;
+    private Color? _secondaryButtonForeground;
 
     public HoverFluentControl()
     {
@@ -40,11 +44,81 @@ public partial class HoverFluentControl : UserControl
         logger = IAppHost.GetService<ILogger<HoverFluentControl>>();
         windowDragHelper = IAppHost.GetService<WindowDragHelper>();
         InitializeComponent();
+        Button2.Transitions = new Transitions
+        {
+            new BrushTransition
+            {
+                Property = TemplatedControl.ForegroundProperty,
+                Duration = TimeSpan.FromMilliseconds(250)
+            }
+        };
+        Button2.PropertyChanged += Button2_PropertyChanged;
         DragSurface.AddHandler(InputElement.PointerPressedEvent, DragSurface_PointerPressed, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, true);
         // 移动事件只处理一次，避免窗口移动后同一触控采样在冒泡阶段再次计算而形成反馈抖动。
         DragSurface.AddHandler(InputElement.PointerMovedEvent, DragPointerMoved, RoutingStrategies.Tunnel, true);
         DragSurface.AddHandler(InputElement.PointerReleasedEvent, DragPointerReleased, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, true);
         DragSurface.AddHandler(InputElement.PointerCaptureLostEvent, DragPointerCaptureLost, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, true);
+    }
+
+    private void Button2_PropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
+    {
+        if (e.Property == InputElement.IsEffectivelyEnabledProperty && !Button2.IsEffectivelyEnabled)
+        {
+            ResetSecondaryButtonForeground();
+        }
+    }
+
+    public bool IsSecondaryButtonEffectivelyEnabled => Button2.IsEffectivelyEnabled;
+
+    public bool TryGetSecondaryButtonScreenRect(out PixelRect rect)
+    {
+        rect = default;
+        if (!Button2.IsVisible || Button2.Bounds.Width <= 0 || Button2.Bounds.Height <= 0)
+        {
+            return false;
+        }
+
+        var topLeft = Button2.PointToScreen(new Point(0, 0));
+        var bottomRight = Button2.PointToScreen(new Point(Button2.Bounds.Width, Button2.Bounds.Height));
+        var x = Math.Min(topLeft.X, bottomRight.X);
+        var y = Math.Min(topLeft.Y, bottomRight.Y);
+        var width = Math.Abs(bottomRight.X - topLeft.X);
+        var height = Math.Abs(bottomRight.Y - topLeft.Y);
+
+        if (width <= 0 || height <= 0)
+        {
+            return false;
+        }
+
+        rect = new PixelRect(x, y, width, height);
+        return true;
+    }
+
+    public void SetSecondaryButtonForeground(Color foreground)
+    {
+        if (Button2.IsEffectivelyEnabled)
+        {
+            if (_secondaryButtonForeground == foreground)
+            {
+                return;
+            }
+
+            _secondaryButtonForeground = foreground;
+            Button2.Foreground = foreground == Colors.White ? Brushes.White : Brushes.Black;
+        }
+        else
+        {
+            ResetSecondaryButtonForeground();
+        }
+    }
+
+    public void ResetSecondaryButtonForeground()
+    {
+        _secondaryButtonForeground = null;
+        var transitions = Button2.Transitions;
+        Button2.Transitions = null;
+        Button2.ClearValue(TemplatedControl.ForegroundProperty);
+        Button2.Transitions = transitions;
     }
 
     private async void DragSurface_PointerPressed(object? sender, PointerPressedEventArgs e)

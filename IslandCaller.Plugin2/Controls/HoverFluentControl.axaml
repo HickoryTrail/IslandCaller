@@ -34,8 +34,8 @@
                   <ColumnDefinition Width="3"/>
                   <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
-              <ci:FluentIcon Glyph="{Binding Glyph1}" FontSize="28" Focusable="False" Grid.Column="0"/>
-              <TextBlock Text="Call" FontFamily="HarmonyOS Sans SC" FontWeight="Medium" FontSize="21" Grid.Column="2" VerticalAlignment="Center" Focusable="False"/>
+              <ci:FluentIcon Glyph="{Binding Glyph1}" FontSize="28" Focusable="False" Grid.Column="0" Foreground="White"/>
+              <TextBlock Text="Call" FontFamily="HarmonyOS Sans SC" FontWeight="Medium" FontSize="21" Grid.Column="2" VerticalAlignment="Center" Focusable="False" Foreground="White"/>
           </Grid>
       </Button>
       <Button
