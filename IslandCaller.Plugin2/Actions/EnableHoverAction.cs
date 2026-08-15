@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace IslandCaller.Actions
 {
-    [ActionInfo("IslandCaller.EnableHover", "启用悬浮窗", "\uF484", true)]
+    [ActionInfo("IslandCaller.EnableHover", "启用悬浮窗", "\uF484", false)]
     public class EnableHoverAction(ILogger<EnableHoverAction> logger) : ActionBase
     {
         private readonly ILogger<EnableHoverAction> _logger = logger;

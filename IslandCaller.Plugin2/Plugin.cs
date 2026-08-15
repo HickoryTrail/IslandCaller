@@ -1,8 +1,10 @@
 using Avalonia.Controls;
 using ClassIsland.Core;
 using ClassIsland.Core.Abstractions;
+using ClassIsland.Core.Abstractions.Services;
 using ClassIsland.Core.Attributes;
 using ClassIsland.Core.Extensions.Registry;
+using ClassIsland.Core.Models.Automation;
 using ClassIsland.Shared;
 using IslandCaller.Actions;
 using IslandCaller.Helpers;
@@ -38,6 +40,7 @@ namespace IslandCaller
             services.AddSingleton<WindowTopmostHelper>();
             services.AddSingleton<ScreenBrightnessHelper>();
             services.AddSettingsPage<SettingPage>();
+            BuildActionMenu();
             services.AddAction<DisableHoverAction>();
             services.AddAction<EnableHoverAction>();
             services.AddAction<CallAction>();
@@ -64,6 +67,17 @@ namespace IslandCaller
                 }
 
             };
+        }
+
+        private static void BuildActionMenu()
+        {
+            IActionService.ActionMenuTree.Add(new ActionMenuTreeGroup("IslandCaller 行动", "\uECF9"));
+            IActionService.ActionMenuTree["IslandCaller 行动"].Add(
+                new ActionMenuTreeItem("IslandCaller.Call", "随机点名", "\uECF9"));
+            IActionService.ActionMenuTree["IslandCaller 行动"].Add(
+                new ActionMenuTreeItem("IslandCaller.EnableHover", "启用悬浮窗", "\uF484"));
+            IActionService.ActionMenuTree["IslandCaller 行动"].Add(
+                new ActionMenuTreeItem("IslandCaller.DisableHover", "禁用悬浮窗", "\uF486"));
         }
     }
 }
