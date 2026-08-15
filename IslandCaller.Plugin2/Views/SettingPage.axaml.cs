@@ -107,10 +107,15 @@ public partial class SettingPage : SettingsPageBase
             return;
         }
 
+        int ruleCount = vm.GetProfilePreferenceRuleCount(profileId);
+        string rulesDescription = ruleCount == 0
+            ? string.Empty
+            : $"\n\n同时会移除引用此名单的 {ruleCount} 条科目规则。";
+
         var dialog = new FAContentDialog
         {
             Title = "移除名单",
-            Content = $"确定要从档案列表中移除“{profileName}”吗？本地名单文件不会被删除。",
+            Content = $"确定要从档案列表中移除“{profileName}”吗？本地名单文件不会被删除。{rulesDescription}",
             PrimaryButtonText = "移除",
             SecondaryButtonText = "取消",
             DefaultButton = FAContentDialogButton.Secondary
@@ -121,12 +126,26 @@ public partial class SettingPage : SettingsPageBase
             return;
         }
 
+        vm.RemoveProfilePreferenceRulesForProfile(profileId);
         var profileList = new Dictionary<Guid, string>(profile);
         profileList.Remove(profileId);
         Settings.Instance.Profile.ProfileList = profileList;
         Settings.Instance.Profile.ProfileNum = profileList.Count;
         vm.ReloadProfiles();
         logger.LogInformation("档案已从设置列表移除，Guid: {ProfileGuid}", profileId);
+    }
+
+    private void AddProfilePreferenceRuleButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        vm.AddProfilePreferenceRule();
+    }
+
+    private void DeleteProfilePreferenceRuleButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: SettingPageViewModel.ProfilePreferenceItemViewModel item })
+        {
+            vm.RemoveProfilePreferenceRule(item);
+        }
     }
 
     private void ClearButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)

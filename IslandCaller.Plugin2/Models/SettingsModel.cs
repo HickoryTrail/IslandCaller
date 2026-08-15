@@ -75,7 +75,7 @@ namespace IslandCaller.Models
             get => _profilelist;
             set { if (_profilelist != value) { _profilelist = value; OnPropertyChanged(nameof(ProfileList)); } }
         }
-        private Dictionary<Guid, string> _profileprefer = new Dictionary<Guid, string>();
+        private Dictionary<Guid, Guid> _profileprefer = new Dictionary<Guid, Guid>();
 
         private bool _ispreferprofile;
         public bool IsPreferProfile
@@ -83,7 +83,7 @@ namespace IslandCaller.Models
             get => _ispreferprofile;
             set { if (_ispreferprofile != value) { _ispreferprofile = value; OnPropertyChanged(nameof(IsPreferProfile)); } }
         }
-        public Dictionary<Guid, string> ProfilePrefer
+        public Dictionary<Guid, Guid> ProfilePrefer
         {
             get => _profileprefer;
             set { if (_profileprefer != value) { _profileprefer = value; OnPropertyChanged(nameof(ProfilePrefer)); } }

@@ -209,9 +209,59 @@
             </fa:FASettingsExpander.Footer>
         </fa:FASettingsExpander>
         <fa:FASettingsExpander
+            IconSource="{ci:FluentIconSource &#xE215;}"
+            Header="按科目切换名单"
+            Description="上课时根据当前科目自动选择名单"
+            ItemsSource="{Binding ProfilePreferenceItems}">
+            <fa:FASettingsExpander.Footer>
+                <ToggleSwitch IsChecked="{Binding IsPreferProfile, Mode=TwoWay}"/>
+            </fa:FASettingsExpander.Footer>
+            <fa:FASettingsExpander.ItemTemplate>
+                <DataTemplate x:CompileBindings="False">
+                    <fa:FASettingsExpanderItem IsClickEnabled="false">
+                        <StackPanel>
+                            <StackPanel IsVisible="{Binding IsAddAction}">
+                                <Button Click="AddProfilePreferenceRuleButton_OnClick"
+                                        IsEnabled="{Binding CanAddRule}">
+                                    <ci:IconText Glyph="&#xE00D;" Text="添加规则"/>
+                                </Button>
+                            </StackPanel>
+                            <StackPanel IsVisible="{Binding IsRule}" Orientation="Horizontal" Spacing="8">
+                                <ComboBox ItemsSource="{Binding AvailableSubjects}"
+                                          SelectedValue="{Binding SubjectId, Mode=TwoWay}"
+                                          SelectedValueBinding="{Binding SubjectId}"
+                                          Width="180">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate x:CompileBindings="False">
+                                            <TextBlock Text="{Binding Name}"/>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <ComboBox ItemsSource="{Binding AvailableProfiles}"
+                                          SelectedValue="{Binding ProfileId, Mode=TwoWay}"
+                                          SelectedValueBinding="{Binding ProfileId}"
+                                          Width="180">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate x:CompileBindings="False">
+                                            <TextBlock Text="{Binding Name}"/>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <Button Tag="{Binding}"
+                                        Click="DeleteProfilePreferenceRuleButton_OnClick"
+                                        ToolTip.Tip="删除规则">
+                                    <ci:IconText Glyph="&#xE61D;"/>
+                                </Button>
+                            </StackPanel>
+                        </StackPanel>
+                    </fa:FASettingsExpanderItem>
+                </DataTemplate>
+            </fa:FASettingsExpander.ItemTemplate>
+        </fa:FASettingsExpander>
+        <fa:FASettingsExpander
             IconSource="{ci:FluentIconSource &#xE2C2;}"
             Header="清除点名历史"
-            Description="清除当前默认名单的长期和本节课点名记录">
+            Description="清除当前使用名单的长期和本节课点名记录">
             <fa:FASettingsExpander.Footer>
                 <Button Click="ClearButton_OnClick">
                     <ci:IconText Glyph="&#xE2C2;" Text="清除历史记录"/>

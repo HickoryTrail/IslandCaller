@@ -12,6 +12,7 @@ namespace IslandCaller.Services
         private ILogger<HistoryService>? Logger { get; set; }
         private ProfileService ProfileService {  get; set; }
         private Status Status {  get; set; }
+        public Guid ActiveProfileId { get; private set; }
 
         internal void Initialize()
         {
@@ -83,6 +84,7 @@ namespace IslandCaller.Services
                 }
             }
             Status.HistoryServiceInitialized = true;
+            ActiveProfileId = guid;
             Logger?.LogInformation("HistoryService loaded for profile {ProfileGuid}.", guid);
         }
 
@@ -105,8 +107,7 @@ namespace IslandCaller.Services
                 top20List.RemoveAt(top20List.Count - 1);
 
             // 3️自动保存
-            Guid guid = Settings.Instance.Profile.DefaultProfile;
-            Save(guid);
+            Save(ActiveProfileId);
         }
 
         // 保存长期记录到本地
@@ -158,8 +159,8 @@ namespace IslandCaller.Services
         public void ClearLongTermHistory()
         {
             historyDict.Clear();
-            Save(Settings.Instance.Profile.DefaultProfile);
-            Logger?.LogInformation("HistoryService long-term history cleared for profile {ProfileGuid}.", Settings.Instance.Profile.DefaultProfile);
+            Save(ActiveProfileId);
+            Logger?.LogInformation("HistoryService long-term history cleared for profile {ProfileGuid}.", ActiveProfileId);
         }
 
         // 清空短期记录

@@ -15,12 +15,14 @@ namespace IslandCaller.Services.IslandCallerService
     public class IslandCallerService
     {
         private ILessonsService? LessonsService { get; set; }
+        private IProfileService? ClassIslandProfileService { get; set; }
         private IUriNavigationService? UriNavigationService { get; set; }
         private ILogger<IslandCallerService>? Logger { get; }
         private CancellationTokenSource Cts {  get; set; }
 
         private CoreService CoreService { get; set; }
         private HistoryService HistoryService { get; set; }
+        private ProfileService ProfileService { get; set; }
         private IOmniTTS? OmniTTS { get; set; }
         private ISpeechService? ClassIslandTTS { get; set; }
         private WindowsManager WindowsManager { get; set; }
@@ -35,10 +37,12 @@ namespace IslandCaller.Services.IslandCallerService
         {
             HistoryService = IAppHost.GetService<HistoryService>();
             CoreService = IAppHost.GetService<CoreService>();
+            ProfileService = IAppHost.GetService<ProfileService>();
             Status = IAppHost.GetService<Status>();
             WindowsManager = IAppHost.GetService<WindowsManager>();
             // 获取服务
             LessonsService = IAppHost.TryGetService<ILessonsService>();
+            ClassIslandProfileService = IAppHost.TryGetService<IProfileService>();
             UriNavigationService = IAppHost.TryGetService<IUriNavigationService>();
             ClassIslandTTS = IAppHost.TryGetService<ISpeechService>();
             OmniTTS = IAppHost.TryGetService<IOmniTTS>();
@@ -51,11 +55,23 @@ namespace IslandCaller.Services.IslandCallerService
             if (Settings.Instance.TTS.Provider == Plugin2.TtsProvider.OmniTTS && !CheckDependences.CheckOmniTTS()) Settings.Instance.TTS.Provider = Plugin2.TtsProvider.None;
             OmniTTS = IAppHost.TryGetService<IOmniTTS>();
 
+            if (Settings.Instance.Profile.IsPreferProfile)
+            {
+                ApplyProfileForCurrentLesson(clearThisLessonHistory: false);
+            }
+
             // 订阅设置变更
             LessonsService?.CurrentTimeStateChanged += (s, e) =>
             {
-                HistoryService.ClearThisLessonHistory();
                 Status.IsTimeStatusAvailable = !(Settings.Instance.General.BreakDisable & (LessonsService?.CurrentState ?? TimeState.OnClass) == TimeState.Breaking);
+                if (Settings.Instance.Profile.IsPreferProfile)
+                {
+                    ApplyProfileForCurrentLesson(clearThisLessonHistory: true);
+                }
+                else
+                {
+                    HistoryService.ClearThisLessonHistory();
+                }
             };
             Settings.Instance.General.PropertyChanged += (s, e) =>
             {
@@ -76,6 +92,7 @@ namespace IslandCaller.Services.IslandCallerService
                     else WindowsManager.CloseHoverWindow();
                 }
             };
+            Settings.Instance.Profile.PropertyChanged += ProfileSettingsOnPropertyChanged;
             UriNavigationService?.HandlePluginsNavigation(
                 "IslandCaller/Simple",
                 args => ShowRandomStudent(1)
@@ -89,6 +106,100 @@ namespace IslandCaller.Services.IslandCallerService
             );
             Status.IslandCallerServiceInitialized = true;
             Logger?.LogInformation("IslandCallerService initialized.");
+        }
+
+        private void ProfileSettingsOnPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (ProfileService.ActiveProfileId != Guid.Empty &&
+                !Settings.Instance.Profile.ProfileList.ContainsKey(ProfileService.ActiveProfileId))
+            {
+                SwitchToDefaultProfile(clearThisLessonHistory: true);
+                return;
+            }
+
+            if (Settings.Instance.Profile.IsPreferProfile &&
+                e.PropertyName is nameof(ProfileSetting.IsPreferProfile) or nameof(ProfileSetting.ProfilePrefer) or
+                nameof(ProfileSetting.DefaultProfile) or nameof(ProfileSetting.ProfileList))
+            {
+                ApplyProfileForCurrentLesson(clearThisLessonHistory: true);
+            }
+        }
+
+        private void ApplyProfileForCurrentLesson(bool clearThisLessonHistory)
+        {
+            Guid defaultProfileId = Settings.Instance.Profile.DefaultProfile;
+            Guid targetProfileId = ResolvePreferredProfileId();
+
+            if (!TryLoadProfile(targetProfileId) && targetProfileId != defaultProfileId)
+            {
+                TryLoadProfile(defaultProfileId);
+            }
+
+            if (clearThisLessonHistory)
+            {
+                HistoryService.ClearThisLessonHistory();
+            }
+        }
+
+        private void SwitchToDefaultProfile(bool clearThisLessonHistory)
+        {
+            TryLoadProfile(Settings.Instance.Profile.DefaultProfile);
+            if (clearThisLessonHistory)
+            {
+                HistoryService.ClearThisLessonHistory();
+            }
+        }
+
+        private Guid ResolvePreferredProfileId()
+        {
+            Guid defaultProfileId = Settings.Instance.Profile.DefaultProfile;
+            object? classIslandProfile = ClassIslandProfileService?.Profile;
+            if (!Settings.Instance.Profile.IsPreferProfile ||
+                LessonsService?.CurrentState != TimeState.OnClass ||
+                LessonsService.CurrentSubject is not { } currentSubject ||
+                classIslandProfile is null)
+            {
+                return defaultProfileId;
+            }
+
+            Guid subjectId = ClassIslandSubjectHelper.FindSubjectId(classIslandProfile, currentSubject);
+            if (subjectId == Guid.Empty ||
+                !Settings.Instance.Profile.ProfilePrefer.TryGetValue(subjectId, out Guid preferredProfileId) ||
+                !Settings.Instance.Profile.ProfileList.ContainsKey(preferredProfileId))
+            {
+                return defaultProfileId;
+            }
+
+            return preferredProfileId;
+        }
+
+        private bool TryLoadProfile(Guid profileId)
+        {
+            if (!Settings.Instance.Profile.ProfileList.ContainsKey(profileId))
+            {
+                Logger?.LogWarning("名单 {ProfileGuid} 不在当前设置中，已跳过加载。", profileId);
+                return false;
+            }
+
+            if (ProfileService.ActiveProfileId == profileId && HistoryService.ActiveProfileId == profileId &&
+                Status.ProfileServiceInitialized && Status.HistoryServiceInitialized && Status.CoreServiceInitialized)
+            {
+                return true;
+            }
+
+            try
+            {
+                ProfileService.LoadSelectedProfile(profileId);
+                HistoryService.Load(profileId);
+                CoreService.Initialize();
+                Logger?.LogInformation("已切换至名单 {ProfileGuid}。", profileId);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError(ex, "加载名单 {ProfileGuid} 失败。", profileId);
+                return false;
+            }
         }
 
         public async void ShowRandomStudent(int stunum)

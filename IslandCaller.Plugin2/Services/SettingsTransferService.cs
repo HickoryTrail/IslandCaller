@@ -245,7 +245,7 @@ public sealed class SettingsTransferService
         settings.Call ??= new CallSettings();
 
         settings.Profile.ProfileList ??= new Dictionary<Guid, string>();
-        settings.Profile.ProfilePrefer ??= new Dictionary<Guid, string>();
+        settings.Profile.ProfilePrefer ??= new Dictionary<Guid, Guid>();
         settings.Hover.Position ??= new PositionSetting();
     }
 

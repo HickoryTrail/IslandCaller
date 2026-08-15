@@ -29,6 +29,7 @@ namespace IslandCaller.Services
         }
         // 名单存储
         public List<Person> Members { get; set; } = new List<Person>();
+        public Guid ActiveProfileId { get; private set; }
 
         private static string GetBasePath()
         {
@@ -48,59 +49,9 @@ namespace IslandCaller.Services
         public void LoadSelectedProfile(Guid guid)
         {
             Status.ProfileServiceInitialized = false;
-            // 构建路径
-
-            string filePath = Path.Combine(GetFilePath(guid));
-
-            // 如果文件不存在
-            if (!File.Exists(filePath))
-            {
-                Logger?.LogError($"找不到对应的名单文件: {filePath}");
-                throw new FileNotFoundException($"找不到对应的名单文件: {filePath}");
-            }
-
-            string[] lines = File.ReadAllLines(filePath);
-
-            if (lines.Length == 0)
-            {
-                Logger?.LogError("CSV 文件为空");
-                throw new Exception("CSV 文件为空");
-            }
-
-            // 检查标题
-            string header = lines[0].Trim();
-            if (header != "id,name,gender,manualweight")
-            {
-                Logger?.LogError("CSV 标题格式错误，必须为: id,name,gender,manualweight");
-                throw new Exception("CSV 标题格式错误，必须为: id,name,gender,manualweight");
-            }
-
-            Members.Clear();
-
-            // 读取数据
-            for (int i = 1; i < lines.Length; i++)
-            {
-                string line = lines[i].Trim();
-                if (string.IsNullOrWhiteSpace(line))
-                    continue;
-
-                string[] parts = line.Split(',');
-
-                if (parts.Length != 4)
-                {
-                    Logger?.LogWarning($"第 {i + 1} 行格式错误: {line}");
-                    continue;
-                }
-
-                Members.Add(new Person
-                {
-                    Id = Convert.ToInt32(parts[0]),
-                    Name = parts[1],
-                    Gender = Convert.ToInt32(parts[2]),
-                    ManualWeight = Convert.ToDouble(parts[3])
-                });
-            }
-            Members = Members.OrderBy(x => x.Id).ToList();
+            var members = GetMembers(guid);
+            Members = members;
+            ActiveProfileId = guid;
             Status.ProfileServiceInitialized = true;
         }
 

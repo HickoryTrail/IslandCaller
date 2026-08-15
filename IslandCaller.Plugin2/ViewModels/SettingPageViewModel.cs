@@ -1,6 +1,8 @@
+using ClassIsland.Core.Abstractions.Services;
 using ClassIsland.Shared;
 using IslandCaller.Models;
 using IslandCaller.Plugin2;
+using IslandCaller.Plugin2.Helpers;
 using IslandCaller.Services;
 using ReactiveUI;
 using System.Collections.ObjectModel;
@@ -153,15 +155,32 @@ public class SettingPageViewModel : ReactiveObject
         }
     }
 
+    private bool _isPreferProfile;
+    public bool IsPreferProfile
+    {
+        get => _isPreferProfile;
+        set => this.RaiseAndSetIfChanged(ref _isPreferProfile, value);
+    }
+
+    private IReadOnlyList<SubjectItemViewModel> _subjectItems = [];
+    private ObservableCollection<ProfilePreferenceItemViewModel> _profilePreferenceItems = new();
+    public ObservableCollection<ProfilePreferenceItemViewModel> ProfilePreferenceItems
+    {
+        get => _profilePreferenceItems;
+        private set => this.RaiseAndSetIfChanged(ref _profilePreferenceItems, value);
+    }
+
     public ProfileService ProfileService { get; }
     private HistoryService HistoryService { get; }
     private CoreService CoreService { get; }
+    private IProfileService? ClassIslandProfileService { get; }
 
     public SettingPageViewModel()
     {
         ProfileService = IAppHost.GetService<ProfileService>();
         HistoryService = IAppHost.GetService<HistoryService>();
         CoreService = IAppHost.GetService<CoreService>();
+        ClassIslandProfileService = IAppHost.TryGetService<IProfileService>();
 
         IsBreakDisable = Settings.Instance.General.BreakDisable;
         Interruptable = Settings.Instance.General.Interruptable;
@@ -173,6 +192,7 @@ public class SettingPageViewModel : ReactiveObject
         Provider = Settings.Instance.TTS.Provider;
         BeforeText = Settings.Instance.TTS.BeforeText;
         AfterText = Settings.Instance.TTS.AfterText;
+        IsPreferProfile = Settings.Instance.Profile.IsPreferProfile;
         ExampleText = $"{BeforeText}{{学生姓名}}{AfterText}";
         ReloadProfiles();
 
@@ -220,6 +240,10 @@ public class SettingPageViewModel : ReactiveObject
                 Settings.Instance.TTS.AfterText = AfterText;
                 ExampleText = $"{BeforeText}{{学生姓名}}{AfterText}";
             }
+            else if (args.PropertyName == nameof(IsPreferProfile))
+            {
+                Settings.Instance.Profile.IsPreferProfile = IsPreferProfile;
+            }
         };
     }
 
@@ -230,6 +254,132 @@ public class SettingPageViewModel : ReactiveObject
             .Select(profile => new ProfileItemViewModel(profile.Key, profile.Value,
                 profile.Key != Settings.Instance.Profile.DefaultProfile)));
         SelectedProfile = ProfileItems.FirstOrDefault(profile => profile.ProfileId == Settings.Instance.Profile.DefaultProfile);
+
+        ReloadSubjects();
+        ReloadProfilePreferenceItems();
+    }
+
+    public void AddProfilePreferenceRule()
+    {
+        var assignedSubjectIds = ProfilePreferenceItems
+            .Where(item => item.IsRule)
+            .Select(item => item.SubjectId)
+            .ToHashSet();
+        var subject = _subjectItems.FirstOrDefault(item => !assignedSubjectIds.Contains(item.SubjectId));
+        if (subject is null || Settings.Instance.Profile.DefaultProfile == Guid.Empty)
+        {
+            return;
+        }
+
+        ProfilePreferenceItems.Add(ProfilePreferenceItemViewModel.CreateRule(subject.SubjectId,
+            Settings.Instance.Profile.DefaultProfile, SynchronizeProfilePreferenceRules));
+        SynchronizeProfilePreferenceRules();
+    }
+
+    public void RemoveProfilePreferenceRule(ProfilePreferenceItemViewModel item)
+    {
+        if (!item.IsRule)
+        {
+            return;
+        }
+
+        ProfilePreferenceItems.Remove(item);
+        SynchronizeProfilePreferenceRules();
+    }
+
+    public int RemoveProfilePreferenceRulesForProfile(Guid profileId)
+    {
+        var rules = ProfilePreferenceItems
+            .Where(item => item.IsRule && item.ProfileId == profileId)
+            .ToList();
+        foreach (var rule in rules)
+        {
+            ProfilePreferenceItems.Remove(rule);
+        }
+
+        if (rules.Count > 0)
+        {
+            SynchronizeProfilePreferenceRules();
+        }
+
+        return rules.Count;
+    }
+
+    public int GetProfilePreferenceRuleCount(Guid profileId)
+    {
+        return ProfilePreferenceItems.Count(item => item.IsRule && item.ProfileId == profileId);
+    }
+
+    private void ReloadSubjects()
+    {
+        object? classIslandProfile = ClassIslandProfileService?.Profile;
+        _subjectItems = ClassIslandSubjectHelper.GetSubjects(classIslandProfile)
+            .OrderBy(subject => subject.Name)
+            .Select(subject => new SubjectItemViewModel(subject.SubjectId, subject.Name))
+            .ToList();
+    }
+
+    private void ReloadProfilePreferenceItems()
+    {
+        var items = new ObservableCollection<ProfilePreferenceItemViewModel>
+        {
+            ProfilePreferenceItemViewModel.CreateAddAction()
+        };
+        foreach (var preference in Settings.Instance.Profile.ProfilePrefer.OrderBy(item => GetSubjectName(item.Key)))
+        {
+            items.Add(ProfilePreferenceItemViewModel.CreateRule(preference.Key, preference.Value,
+                SynchronizeProfilePreferenceRules));
+        }
+
+        ProfilePreferenceItems = items;
+        RefreshProfilePreferenceRuleOptions();
+    }
+
+    private void SynchronizeProfilePreferenceRules()
+    {
+        var preferences = new Dictionary<Guid, Guid>();
+        foreach (var rule in ProfilePreferenceItems.Where(item => item.IsRule))
+        {
+            if (rule.SubjectId != Guid.Empty && rule.ProfileId != Guid.Empty)
+            {
+                preferences.TryAdd(rule.SubjectId, rule.ProfileId);
+            }
+        }
+
+        Settings.Instance.Profile.ProfilePrefer = preferences;
+        RefreshProfilePreferenceRuleOptions();
+    }
+
+    private void RefreshProfilePreferenceRuleOptions()
+    {
+        var rules = ProfilePreferenceItems.Where(item => item.IsRule).ToList();
+        var assignedSubjectIds = rules.Select(item => item.SubjectId).ToHashSet();
+        foreach (var rule in rules)
+        {
+            var subjects = _subjectItems.ToList();
+            if (subjects.All(subject => subject.SubjectId != rule.SubjectId))
+            {
+                subjects.Add(new SubjectItemViewModel(rule.SubjectId, "未知科目"));
+            }
+
+            rule.AvailableSubjects = subjects
+                .Where(subject => subject.SubjectId == rule.SubjectId || !assignedSubjectIds.Contains(subject.SubjectId))
+                .OrderBy(subject => subject.Name)
+                .ToList();
+            rule.AvailableProfiles = ProfileItems.ToList();
+        }
+
+        var addAction = ProfilePreferenceItems.FirstOrDefault(item => item.IsAddAction);
+        if (addAction is not null)
+        {
+            addAction.CanAddRule = ProfileItems.Count > 0 &&
+                                   _subjectItems.Any(subject => !assignedSubjectIds.Contains(subject.SubjectId));
+        }
+    }
+
+    private string GetSubjectName(Guid subjectId)
+    {
+        return _subjectItems.FirstOrDefault(subject => subject.SubjectId == subjectId)?.Name ?? "未知科目";
     }
 
     public sealed class ProfileItemViewModel
@@ -243,6 +393,99 @@ public class SettingPageViewModel : ReactiveObject
             ProfileId = profileId;
             Name = name;
             CanDelete = canDelete;
+        }
+    }
+
+    public sealed class SubjectItemViewModel
+    {
+        public Guid SubjectId { get; }
+        public string Name { get; }
+
+        public SubjectItemViewModel(Guid subjectId, string name)
+        {
+            SubjectId = subjectId;
+            Name = name;
+        }
+    }
+
+    public sealed class ProfilePreferenceItemViewModel : ReactiveObject
+    {
+        private readonly Action? _onRuleChanged;
+        private Guid _subjectId;
+        private Guid _profileId;
+        private bool _canAddRule;
+        private IReadOnlyList<SubjectItemViewModel> _availableSubjects = [];
+        private IReadOnlyList<ProfileItemViewModel> _availableProfiles = [];
+
+        private ProfilePreferenceItemViewModel(bool isAddAction, Action? onRuleChanged = null)
+        {
+            IsAddAction = isAddAction;
+            _onRuleChanged = onRuleChanged;
+        }
+
+        public bool IsAddAction { get; }
+        public bool IsRule => !IsAddAction;
+
+        public bool CanAddRule
+        {
+            get => _canAddRule;
+            internal set => this.RaiseAndSetIfChanged(ref _canAddRule, value);
+        }
+
+        public Guid SubjectId
+        {
+            get => _subjectId;
+            set
+            {
+                if (_subjectId == value)
+                {
+                    return;
+                }
+
+                this.RaiseAndSetIfChanged(ref _subjectId, value);
+                _onRuleChanged?.Invoke();
+            }
+        }
+
+        public Guid ProfileId
+        {
+            get => _profileId;
+            set
+            {
+                if (_profileId == value)
+                {
+                    return;
+                }
+
+                this.RaiseAndSetIfChanged(ref _profileId, value);
+                _onRuleChanged?.Invoke();
+            }
+        }
+
+        public IReadOnlyList<SubjectItemViewModel> AvailableSubjects
+        {
+            get => _availableSubjects;
+            internal set => this.RaiseAndSetIfChanged(ref _availableSubjects, value);
+        }
+
+        public IReadOnlyList<ProfileItemViewModel> AvailableProfiles
+        {
+            get => _availableProfiles;
+            internal set => this.RaiseAndSetIfChanged(ref _availableProfiles, value);
+        }
+
+        public static ProfilePreferenceItemViewModel CreateAddAction()
+        {
+            return new ProfilePreferenceItemViewModel(isAddAction: true);
+        }
+
+        public static ProfilePreferenceItemViewModel CreateRule(Guid subjectId, Guid profileId, Action onRuleChanged)
+        {
+            return new ProfilePreferenceItemViewModel(isAddAction: false, onRuleChanged)
+            {
+                _subjectId = subjectId,
+                _profileId = profileId
+            };
         }
     }
 }

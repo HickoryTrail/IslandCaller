@@ -83,7 +83,7 @@ public partial class ProfileEditor : Window
             Settings.Instance.Profile.ProfileList = profileList;
             vm.ProfileName = profileName;
 
-            if (vm.ProfileId == Settings.Instance.Profile.DefaultProfile)
+            if (vm.ProfileId == profileService.ActiveProfileId)
             {
                 profileService.Members = members;
                 historyService.Load(vm.ProfileId);
