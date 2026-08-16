@@ -51,21 +51,31 @@ namespace IslandCaller.Services
 
         private double ComputeSingleWeight(
                                 double manualWeight,     // W_manual_i
-                                int lastHitStep,         // s_i_last：该学生上次被点到的轮次（没点过可设为 -1）
+                                int lastHitDistance,     // 距上次被点到的抽取次数（没点过为 -1）
                                 int nHist,               // n_hist_i：历史被点次数
                                 double avgHist)          // avg_hist：全班历史平均被点次数
         {
             // -----------------------------
-            // 1. 本节课防重复因子（随时间恢复）
+            // 1. 本节课防重复因子（Hill 型 S 曲线）
             // -----------------------------
-            const double fMin = 0;     // 最低值
-            const double beta = 0.54;    // 恢复系数
+            const double halfRecoveryDistance = 5.0;
+            const double curvePower = 6.0;
 
-            int deltaS = lastHitStep;
-            if (deltaS < 0) deltaS = 15;
+            // 不在短期历史中的学生不应低于已在历史末尾的学生。
+            double F_session;
+            if (lastHitDistance < 0)
+            {
+                F_session = 1.0;
+            }
+            else
+            {
+                double distance = Math.Max(0, lastHitDistance);
+                double distancePower = Math.Pow(distance, curvePower);
+                double halfRecoveryPower = Math.Pow(halfRecoveryDistance, curvePower);
 
-            // F_session = 1 - (1 - fMin) * exp(-beta * Δs)
-            double F_session = 1 - (1 - fMin) * Math.Exp(-beta * deltaS);
+                // F_session = d^p / (d^p + h^p)，d = h 时恰为 0.5。
+                F_session = distancePower / (distancePower + halfRecoveryPower);
+            }
 
             // -----------------------------
             // 2. 历史均衡因子
@@ -94,14 +104,14 @@ namespace IslandCaller.Services
             foreach (var person in Persons)
             {
                 int nHist = HistoryService.GetLongTermCount(person.Name);
-                int lastHitStep = HistoryService.GetLastCallIndex(person.Name);
+                int lastHitDistance = HistoryService.GetLastCallIndex(person.Name);
                 double weight = ComputeSingleWeight(
                                     person.ManualWeight,
-                                    lastHitStep,
+                                    lastHitDistance,
                                     nHist,
                                     avgHist);
                 person.Weight = weight;
-                Logger?.LogTrace($"计算权重 - 学生: {person.Name}, ManualWeight: {person.ManualWeight}, LastHitStep: {lastHitStep}, nHist: {nHist}, Weight: {weight}");
+                Logger?.LogTrace($"计算权重 - 学生: {person.Name}, ManualWeight: {person.ManualWeight}, LastHitDistance: {lastHitDistance}, nHist: {nHist}, Weight: {weight}");
             }
         }
 
@@ -132,4 +142,3 @@ namespace IslandCaller.Services
         }
     }
 }
-
