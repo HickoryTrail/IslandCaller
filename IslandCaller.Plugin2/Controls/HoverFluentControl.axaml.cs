@@ -93,7 +93,7 @@ public partial class HoverFluentControl : UserControl
         }
 
         Button2.IsVisible = !isMiniLayout;
-        Button2.Width = isFullLayout ? 58 : 56;
+        Button2.Width = isFullLayout ? 56 : 56;
         if (TopLevel.GetTopLevel(this) is HoverFluent hoverWindow)
         {
             hoverWindow.RequestContentSizeUpdate();

@@ -87,7 +87,7 @@
         <Separator Margin="0 12 0 4" />
         <ci:IconText Glyph="&#xECF9;" Text="点名设置" Margin="0,0,0,4"/>
         <fa:FASettingsExpander
-        IconSource="{ci:FluentIconSource &#xECEE;}"
+        IconSource="{ci:FluentIconSource &#xECEF;}"
         Header="点名结果展示渠道"
         Description="选择展示点名结果的提醒渠道，可多选">
             <fa:FASettingsExpanderItem IsClickEnabled="false">
@@ -100,11 +100,11 @@
             </fa:FASettingsExpanderItem>
         </fa:FASettingsExpander>
         <fa:FASettingsExpander
-        IconSource="{ci:FluentIconSource &#xEE83;}"
+        IconSource="{ci:FluentIconSource &#xE4C4;}"
         Header="点名提醒时长"
         Description="调整单次点名提醒的持续时间，总时长为 {人数 * 基础时间 + 附加时间}">
             <fa:FASettingsExpanderItem IsClickEnabled="false" >
-                <ci:IconText Glyph="&#xF1C0;" Text="基础时间"/>
+                <ci:IconText Glyph="&#xED07;" Text="基础时间"/>
                 <fa:FASettingsExpanderItem.Footer>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="{Binding BaseTime, StringFormat={}{0:F2}}" FontSize="15" VerticalAlignment="Center" Margin="8,0"/>
@@ -118,7 +118,7 @@
                 </fa:FASettingsExpanderItem.Footer>
             </fa:FASettingsExpanderItem>
             <fa:FASettingsExpanderItem IsClickEnabled="false" >
-                <ci:IconText Glyph="&#xF1C0;" Text="附加时间"/>
+                <ci:IconText Glyph="&#xE00F;" Text="附加时间"/>
                 <fa:FASettingsExpanderItem.Footer>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="{Binding AdditionalTime, StringFormat={}{0:F1}}" FontSize="15" VerticalAlignment="Center" Margin="8,0"/>
@@ -137,7 +137,7 @@
         <Separator Margin="0 12 0 4" />
         <ci:IconText Glyph="&#xED53;" Text="TTS 设置" Margin="0,0,0,4"/>
         <fa:FASettingsExpander
-        IconSource="{ci:FluentIconSource &#xEE83;}"
+        IconSource="{ci:FluentIconSource &#xECD9;}"
         Header="TTS 提供方"
         Description="选择用于播报点名结果的 TTS 提供方">
             <fa:FASettingsExpander.Footer>
@@ -205,7 +205,7 @@
             </fa:FASettingsExpander.ItemTemplate>
         </fa:FASettingsExpander>
         <fa:FASettingsExpander
-            IconSource="{ci:FluentIconSource &#xE2C2;}"
+            IconSource="{ci:FluentIconSource &#xE6A7;}"
             Header="默认名单"
             Description="选择点名时使用的默认名单">
             <fa:FASettingsExpander.Footer>
@@ -221,7 +221,7 @@
             </fa:FASettingsExpander.Footer>
         </fa:FASettingsExpander>
         <fa:FASettingsExpander
-            IconSource="{ci:FluentIconSource &#xE215;}"
+            IconSource="{ci:FluentIconSource &#xE6F9;}"
             Header="按科目切换名单"
             Description="上课时根据当前科目自动选择名单"
             ItemsSource="{Binding ProfilePreferenceItems}">
@@ -281,16 +281,16 @@
             </fa:FASettingsExpander.Footer>
         </fa:FASettingsExpander>
         <fa:FASettingsExpander
-            IconSource="{ci:FluentIconSource &#xE898;}"
+            IconSource="{ci:FluentIconSource &#xE89D;}"
             Header="档案数据导入与导出"
             Description="完整导入或导出 IslandCaller 设置及 AppData 数据">
             <fa:FASettingsExpander.Footer>
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <Button Click="ImportSettingsButton_OnClick">
-                        <ci:IconText Glyph="&#xE896;" Text="导入数据包"/>
+                        <ci:IconText Glyph="&#xE879;" Text="导入数据包"/>
                     </Button>
                     <Button Click="ExportSettingsButton_OnClick">
-                        <ci:IconText Glyph="&#xE898;" Text="导出数据包"/>
+                        <ci:IconText Glyph="&#xE87B;" Text="导出数据包"/>
                     </Button>
                 </StackPanel>
             </fa:FASettingsExpander.Footer>
