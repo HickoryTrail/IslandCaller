@@ -13,7 +13,7 @@
         ExtendClientAreaToDecorationsHint="True"
         Background="Transparent"
         WindowDecorations="BorderOnly"
-        TransparencyLevelHint="Mica"
+        TransparencyLevelHint="Mica, AcrylicBlur"
         ShowInTaskbar="False"
         Topmost="True"
         CanResize="False"
