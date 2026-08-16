@@ -41,6 +41,13 @@ public class SettingPageViewModel : ReactiveObject
         set => this.RaiseAndSetIfChanged(ref _hoverScalingFactor, value);
     }
 
+    private int _hoverLayout;
+    public int HoverLayout
+    {
+        get => _hoverLayout;
+        set => this.RaiseAndSetIfChanged(ref _hoverLayout, Math.Clamp(value, 0, 2));
+    }
+
     // 点名设置
     private int _notifyMethod;
     public int NotifyMethod
@@ -182,6 +189,7 @@ public class SettingPageViewModel : ReactiveObject
         Interruptable = Settings.Instance.General.Interruptable;
         IsHoverEnable = Settings.Instance.Hover.IsEnable;
         HoverScalingFactor = Settings.Instance.Hover.ScalingFactor;
+        HoverLayout = Settings.Instance.Hover.HoverLayout;
         NotifyMethod = Settings.Instance.Call.NotifyMethod;
         BaseTime = Settings.Instance.Call.BaseTime;
         AdditionalTime = Settings.Instance.Call.AdditionalTime;
@@ -209,6 +217,10 @@ public class SettingPageViewModel : ReactiveObject
             else if (args.PropertyName == nameof(HoverScalingFactor))
             {
                 Settings.Instance.Hover.ScalingFactor = HoverScalingFactor;
+            }
+            else if (args.PropertyName == nameof(HoverLayout))
+            {
+                Settings.Instance.Hover.HoverLayout = HoverLayout;
             }
             else if (args.PropertyName == nameof(NotifyMethod))
             {

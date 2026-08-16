@@ -5,9 +5,11 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using ClassIsland.Shared;
 using IslandCaller.Helpers;
+using IslandCaller.Models;
 using IslandCaller.Services.IslandCallerService;
 using IslandCaller.Views;
 using Microsoft.Extensions.Logging;
@@ -53,11 +55,49 @@ public partial class HoverFluentControl : UserControl
             }
         };
         Button2.PropertyChanged += Button2_PropertyChanged;
+        Settings.Instance.Hover.PropertyChanged += HoverSetting_PropertyChanged;
+        DetachedFromVisualTree += (_, _) => Settings.Instance.Hover.PropertyChanged -= HoverSetting_PropertyChanged;
+        ApplyHoverLayout();
         DragSurface.AddHandler(InputElement.PointerPressedEvent, DragSurface_PointerPressed, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, true);
         // 移动事件只处理一次，避免窗口移动后同一触控采样在冒泡阶段再次计算而形成反馈抖动。
         DragSurface.AddHandler(InputElement.PointerMovedEvent, DragPointerMoved, RoutingStrategies.Tunnel, true);
         DragSurface.AddHandler(InputElement.PointerReleasedEvent, DragPointerReleased, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, true);
         DragSurface.AddHandler(InputElement.PointerCaptureLostEvent, DragPointerCaptureLost, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, true);
+    }
+
+    private void HoverSetting_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(Settings.Instance.Hover.HoverLayout))
+        {
+            return;
+        }
+
+        Dispatcher.UIThread.Post(ApplyHoverLayout, DispatcherPriority.Render);
+    }
+
+    private void ApplyHoverLayout()
+    {
+        int hoverLayout = Settings.Instance.Hover.HoverLayout;
+        bool isFullLayout = hoverLayout == 0;
+        bool isMiniLayout = hoverLayout == 2;
+
+        CallText.IsVisible = isFullLayout;
+        Button1.Width = isFullLayout ? 88 : 56;
+        if (isMiniLayout)
+        {
+            Button1.CornerRadius = new CornerRadius(28);
+        }
+        else
+        {
+            Button1.ClearValue(TemplatedControl.CornerRadiusProperty);
+        }
+
+        Button2.IsVisible = !isMiniLayout;
+        Button2.Width = isFullLayout ? 58 : 56;
+        if (TopLevel.GetTopLevel(this) is HoverFluent hoverWindow)
+        {
+            hoverWindow.RequestContentSizeUpdate();
+        }
     }
 
     private void Button2_PropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
@@ -68,7 +108,7 @@ public partial class HoverFluentControl : UserControl
         }
     }
 
-    public bool IsSecondaryButtonEffectivelyEnabled => Button2.IsEffectivelyEnabled;
+    public bool IsSecondaryButtonEffectivelyEnabled => Button2.IsVisible && Button2.IsEffectivelyEnabled;
 
     public bool TryGetSecondaryButtonScreenRect(out PixelRect rect)
     {
@@ -173,7 +213,7 @@ public partial class HoverFluentControl : UserControl
             return DragClickAction.Button1;
         }
 
-        if (Button2.IsEnabled && IsPointerWithin(Button2, e))
+        if (Button2.IsVisible && Button2.IsEnabled && IsPointerWithin(Button2, e))
         {
             return DragClickAction.Button2;
         }

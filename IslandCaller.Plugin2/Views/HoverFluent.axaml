@@ -30,6 +30,7 @@
     </Design.DataContext>
 
     <LayoutTransformControl
+        x:Name="ScaledContent"
         HorizontalAlignment="Center"
         VerticalAlignment="Center"
         Focusable="False">

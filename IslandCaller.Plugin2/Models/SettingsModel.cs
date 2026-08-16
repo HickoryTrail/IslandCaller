@@ -170,6 +170,7 @@ namespace IslandCaller.Models
         {
             _isEnable = true;
             _scalingFactor = 1.0;
+            _hoverLayout = 0;
         }
 
         private bool _isEnable;
@@ -185,6 +186,21 @@ namespace IslandCaller.Models
         {
             get => _scalingFactor;
             set { if (_scalingFactor != value) { _scalingFactor = value; OnPropertyChanged(nameof(ScalingFactor)); } }
+        }
+
+        private int _hoverLayout;
+        public int HoverLayout
+        {
+            get => _hoverLayout;
+            set
+            {
+                int hoverLayout = Math.Clamp(value, 0, 2);
+                if (_hoverLayout != hoverLayout)
+                {
+                    _hoverLayout = hoverLayout;
+                    OnPropertyChanged(nameof(HoverLayout));
+                }
+            }
         }
 
         public PositionSetting Position { get; set; } = new PositionSetting();

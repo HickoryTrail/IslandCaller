@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Threading;
 using IslandCaller.Helpers;
+using IslandCaller.Models;
 using IslandCaller.Services.IslandCallerService;
 using IslandCaller.ViewModels;
 using Microsoft.Extensions.Logging;
@@ -11,10 +12,12 @@ using System.ComponentModel;
 namespace IslandCaller.Views;
 public partial class HoverFluent : Window
 {
+    private const double MinimumMeasuredContentExtent = 16;
     private HoverFluentViewModel vm { get; set; }
     private double scaling { get; set; }
     private bool _isDragging;
     private bool _isApplyingNativeSize;
+    private bool _isContentSizeUpdatePending;
     private long _lastPositionLogTime;
     private const int PositionLogIntervalMs = 200;
     private readonly ILogger<HoverFluent> logger = ClassIsland.Shared.IAppHost.GetService<ILogger<HoverFluent>>();
@@ -26,6 +29,7 @@ public partial class HoverFluent : Window
     public HoverFluent()
     {
         InitializeComponent();
+        UpdateWindowChrome(Settings.Instance.Hover.HoverLayout);
     }
 
     protected override void OnOpened(EventArgs e)
@@ -34,7 +38,9 @@ public partial class HoverFluent : Window
         vm = DataContext as HoverFluentViewModel;
         scaling = RenderScaling;
         vm.PropertyChanged += OnViewModelPropertyChanged;
-        UpdateCompactSizeGuard();
+        UpdateWindowChrome(vm.HoverLayout);
+        HoverControl.SizeChanged += OnHoverContentSizeChanged;
+        ScaledContent.SizeChanged += OnHoverContentSizeChanged;
         Dispatcher.UIThread.Post(ApplyNativeWindowSize, DispatcherPriority.Render);
         Position = new PixelPoint((int)Math.Round(vm.PositionX * scaling), (int)Math.Round(vm.PositionY * scaling));
         PositionChanged += OnPositionChanged;
@@ -55,6 +61,10 @@ public partial class HoverFluent : Window
         {
             vm.PropertyChanged -= OnViewModelPropertyChanged;
         }
+        HoverControl.SizeChanged -= OnHoverContentSizeChanged;
+        ScaledContent.SizeChanged -= OnHoverContentSizeChanged;
+        ScaledContent.LayoutUpdated -= ScaledContent_LayoutUpdated;
+        _isContentSizeUpdatePending = false;
         windowSizeHelper.RemoveCompactSizeGuard(this);
         Activated -= OnWindowLayerChanged;
         Deactivated -= OnWindowLayerChanged;
@@ -66,15 +76,40 @@ public partial class HoverFluent : Window
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is not (nameof(HoverFluentViewModel.Width)
-            or nameof(HoverFluentViewModel.Height)
+        if (e.PropertyName == nameof(HoverFluentViewModel.HoverLayout))
+        {
+            UpdateWindowChrome(vm.HoverLayout);
+        }
+
+        if (e.PropertyName is not (nameof(HoverFluentViewModel.HoverLayout)
             or nameof(HoverFluentViewModel.WindowScalingFactor)))
         {
             return;
         }
 
-        // Apply after the binding/layout pass so Avalonia cannot immediately
-        // restore its content-derived minimum size.
+        RequestContentSizeUpdate();
+    }
+
+    private void OnHoverContentSizeChanged(object? sender, SizeChangedEventArgs e)
+    {
+        RequestContentSizeUpdate();
+    }
+
+    public void RequestContentSizeUpdate()
+    {
+        if (_isContentSizeUpdatePending)
+        {
+            return;
+        }
+
+        _isContentSizeUpdatePending = true;
+        ScaledContent.LayoutUpdated += ScaledContent_LayoutUpdated;
+    }
+
+    private void ScaledContent_LayoutUpdated(object? sender, EventArgs e)
+    {
+        ScaledContent.LayoutUpdated -= ScaledContent_LayoutUpdated;
+        _isContentSizeUpdatePending = false;
         Dispatcher.UIThread.Post(ApplyNativeWindowSize, DispatcherPriority.Render);
     }
 
@@ -88,13 +123,42 @@ public partial class HoverFluent : Window
         _isApplyingNativeSize = true;
         try
         {
-            UpdateCompactSizeGuard();
-            windowSizeHelper.SetWindowSize(this, vm.Width, vm.Height);
+            if (!TryGetMeasuredContentSize(out var contentSize))
+            {
+                return;
+            }
+
+            windowSizeHelper.UpdateCompactSizeGuard(this, contentSize.Width, contentSize.Height);
+            windowSizeHelper.SetWindowSize(this, contentSize.Width, contentSize.Height);
         }
         finally
         {
             _isApplyingNativeSize = false;
         }
+    }
+
+    private void UpdateWindowChrome(int hoverLayout)
+    {
+        bool isMiniLayout = hoverLayout == 2;
+        WindowDecorations = isMiniLayout
+            ? Avalonia.Controls.WindowDecorations.None
+            : Avalonia.Controls.WindowDecorations.BorderOnly;
+        TransparencyLevelHint = isMiniLayout
+            ? new[] { WindowTransparencyLevel.Transparent }
+            : new[] { WindowTransparencyLevel.AcrylicBlur, WindowTransparencyLevel.Transparent };
+    }
+
+    private bool TryGetMeasuredContentSize(out Size contentSize)
+    {
+        // A constrained measure can briefly report a sub-pixel size while
+        // changing decorations. Measure the layout's natural transformed size
+        // before passing it to the native HWND sizing path.
+        ScaledContent.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        contentSize = ScaledContent.DesiredSize;
+        return double.IsFinite(contentSize.Width)
+            && double.IsFinite(contentSize.Height)
+            && contentSize.Width >= MinimumMeasuredContentExtent
+            && contentSize.Height >= MinimumMeasuredContentExtent;
     }
 
     private void StartTopmostLoop()
@@ -162,9 +226,6 @@ public partial class HoverFluent : Window
         scaling = RenderScaling;
         if (_isDragging)
         {
-            // The HWND subclass protects the compact dimensions inside the
-            // native move transaction. Do not send another size request here:
-            // doing so would re-enter Avalonia's minimum-size layout path.
             UpdateCompactSizeGuard();
             return;
         }
@@ -189,9 +250,6 @@ public partial class HoverFluent : Window
     {
         _isDragging = false;
         ApplyPositionClampIfNeeded();
-        // Windows/Avalonia may have processed the move through its native
-        // sizing path. Restore the requested compact size after the drag
-        // transaction has completed and all position messages have drained.
         Dispatcher.UIThread.Post(ApplyNativeWindowSize, DispatcherPriority.Render);
     }
 
@@ -207,9 +265,9 @@ public partial class HoverFluent : Window
 
     private void UpdateCompactSizeGuard()
     {
-        if (vm is not null)
+        if (TryGetMeasuredContentSize(out var contentSize))
         {
-            windowSizeHelper.UpdateCompactSizeGuard(this, vm.Width, vm.Height);
+            windowSizeHelper.UpdateCompactSizeGuard(this, contentSize.Width, contentSize.Height);
         }
     }
 

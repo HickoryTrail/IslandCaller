@@ -56,6 +56,7 @@ namespace IslandCaller.Models
             IsC_ProfileKey?.SetValue("PreferProfile", JsonSerializer.Serialize(Instance.Profile.ProfilePrefer));
             IsC_HoverKey?.SetValue("IsEnable", Instance.Hover.IsEnable);
             IsC_HoverKey?.SetValue("ScalingFactor", Instance.Hover.ScalingFactor);
+            IsC_HoverKey?.SetValue("HoverLayout", Instance.Hover.HoverLayout);
             IsC_HoverKey_Position?.SetValue("X", Instance.Hover.Position.X);
             IsC_HoverKey_Position?.SetValue("Y", Instance.Hover.Position.Y);
             IsC_TTSKey?.SetValue("BeforeText", Instance.TTS.BeforeText);
@@ -111,6 +112,7 @@ namespace IslandCaller.Models
                 Instance.Profile.ProfilePrefer = JsonSerializer.Deserialize<Dictionary<Guid, Guid>>(profilePreferJson) ?? new Dictionary<Guid, Guid>();
                 Instance.Hover.IsEnable = Convert.ToBoolean(IsC_HoverKey?.GetValue("IsEnable") ?? true);
                 Instance.Hover.ScalingFactor = Convert.ToDouble(IsC_HoverKey?.GetValue("ScalingFactor") ?? 1.0);
+                Instance.Hover.HoverLayout = Convert.ToInt32(IsC_HoverKey?.GetValue("HoverLayout") ?? 0);
                 Instance.Hover.Position.X = Convert.ToDouble(IsC_HoverKey_Position?.GetValue("X") ?? 200.0);
                 Instance.Hover.Position.Y = Convert.ToDouble(IsC_HoverKey_Position?.GetValue("Y") ?? 200.0);
                 Instance.TTS.BeforeText = IsC_TTSKey?.GetValue("BeforeText") as string ?? string.Empty;
@@ -144,6 +146,7 @@ namespace IslandCaller.Models
             IsC_ProfileKey?.SetValue("PreferProfile", JsonSerializer.Serialize(Instance.Profile.ProfilePrefer));
             IsC_HoverKey?.SetValue("IsEnable", Instance.Hover.IsEnable);
             IsC_HoverKey?.SetValue("ScalingFactor", Instance.Hover.ScalingFactor);
+            IsC_HoverKey?.SetValue("HoverLayout", Instance.Hover.HoverLayout);
             IsC_HoverKey_Position?.SetValue("X", Instance.Hover.Position.X);
             IsC_HoverKey_Position?.SetValue("Y", Instance.Hover.Position.Y);
             IsC_TTSKey?.SetValue("BeforeText", Instance.TTS.BeforeText);

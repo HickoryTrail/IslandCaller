@@ -7,7 +7,7 @@ namespace IslandCaller.ViewModels
 {
     public class HoverFluentViewModel : ReactiveObject
     {
-        private double _windowScalingFactor;
+        private double _windowScalingFactor = 1.0;
         public double WindowScalingFactor
         {
             get => _windowScalingFactor;
@@ -24,18 +24,11 @@ namespace IslandCaller.ViewModels
         public string Glyph1 => IsEnabled ? "\uECF8" : "\uED08";
         public string Glyph2 => IsEnabled ? "\uED42" : "\uED08";
 
-        private double _height;
-        public double Height
+        private int _hoverLayout;
+        public int HoverLayout
         {
-            get => _height;
-            set => this.RaiseAndSetIfChanged(ref _height, value);
-        }
-
-        private double _width;
-        public double Width
-        {
-            get => _width;
-            set => this.RaiseAndSetIfChanged(ref _width, value);
+            get => _hoverLayout;
+            private set => this.RaiseAndSetIfChanged(ref _hoverLayout, value);
         }
 
         private double _positionX;
@@ -60,48 +53,22 @@ namespace IslandCaller.ViewModels
             }
         }
 
-        private double _button1Width;
-        public double Button1Width
-        {
-            get => _button1Width;
-            set => this.RaiseAndSetIfChanged(ref _button1Width, value);
-        }
-        private double _button2Width;
-        public double Button2Width
-        {
-            get => _button2Width;
-            set => this.RaiseAndSetIfChanged(ref _button2Width, value);
-        }
-        private double _buttonHeight;
-        public double ButtonHeight
-        {
-            get => _buttonHeight;
-            set => this.RaiseAndSetIfChanged(ref _buttonHeight, value);
-        }
-
         public HoverFluentViewModel()
         {
             // 从设置加载初始值
             WindowScalingFactor = Settings.Instance.Hover.ScalingFactor;
-            Height = 70 * WindowScalingFactor;
-            Width = 163 * WindowScalingFactor;
+            HoverLayout = Settings.Instance.Hover.HoverLayout;
             PositionX = Settings.Instance.Hover.Position.X;
             PositionY = Settings.Instance.Hover.Position.Y;
-            Button1Width = Width * 0.46;
-            Button2Width = Width * 0.34;
-            ButtonHeight = Height * 0.8;
 
             // 监听设置变化
             Settings.Instance.Hover.PropertyChanged += (sender, e) =>
             {
-                if (e.PropertyName == nameof(Settings.Instance.Hover.ScalingFactor))
+                if (e.PropertyName is nameof(Settings.Instance.Hover.ScalingFactor)
+                    or nameof(Settings.Instance.Hover.HoverLayout))
                 {
                     WindowScalingFactor = Settings.Instance.Hover.ScalingFactor;
-                    Height = 70 * WindowScalingFactor;
-                    Width = 163 * WindowScalingFactor;
-                    Button1Width = Width * 0.46;
-                    Button2Width = Width * 0.34;
-                    ButtonHeight = Height * 0.8;
+                    HoverLayout = Settings.Instance.Hover.HoverLayout;
                 }
             };
             var status = IAppHost.GetService<Status>();
@@ -118,5 +85,6 @@ namespace IslandCaller.ViewModels
             this.WhenAnyValue(x => x.IsEnabled)
                 .Subscribe(_ => this.RaisePropertyChanged(nameof(Glyph2)));
         }
+
     }
 }

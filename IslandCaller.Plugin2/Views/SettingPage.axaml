@@ -70,6 +70,18 @@
                         Value="{Binding HoverScalingFactor, Mode=TwoWay}"/>
             </fa:FASettingsExpander.Footer>
         </fa:FASettingsExpander>
+        <fa:FASettingsExpander
+        IconSource="{ci:FluentIconSource &#xE7C3;}"
+        Header="悬浮窗布局"
+        Description="选择完整、紧凑或 Mini 悬浮窗布局">
+            <fa:FASettingsExpander.Footer>
+                <ComboBox SelectedIndex="{Binding HoverLayout, Mode=TwoWay}" Width="180">
+                    <ComboBoxItem Content="完整"/>
+                    <ComboBoxItem Content="紧凑"/>
+                    <ComboBoxItem Content="Mini"/>
+                </ComboBox>
+            </fa:FASettingsExpander.Footer>
+        </fa:FASettingsExpander>
 
         <!-- 点名设置 -->
         <Separator Margin="0 12 0 4" />
