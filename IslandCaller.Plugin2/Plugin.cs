@@ -34,6 +34,7 @@ namespace IslandCaller
             services.AddSingleton<ProfileService>();
             services.AddSingleton<HistoryService>();
             services.AddSingleton<CoreService>();
+            services.AddSingleton<ProfileRuntimeService>();
             services.AddSingleton<WindowsManager>();
             services.AddSingleton<WindowDragHelper>();
             services.AddSingleton<WindowSizeHelper>();
@@ -53,9 +54,7 @@ namespace IslandCaller
                     logger?.LogInformation("插件状态初始化完成，正在加载设置...");
                     new Settings(IAppHost.GetService<ProfileService>()).Load();
                     logger?.LogDebug("设置加载完成，正在加载默认配置...");
-                    IAppHost.GetService<ProfileService>().Initialize();
-                    IAppHost.GetService<HistoryService>().Initialize();
-                    IAppHost.GetService<CoreService>().Initialize();
+                    IAppHost.GetService<ProfileRuntimeService>().Initialize();
                     IAppHost.GetService<IslandCallerService>().Initialize();
                     IAppHost.GetService<WindowsManager>().Initialize();
                 }

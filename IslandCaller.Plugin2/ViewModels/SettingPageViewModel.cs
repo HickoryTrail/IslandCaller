@@ -140,9 +140,7 @@ public class SettingPageViewModel : ReactiveObject
             var previousProfile = Settings.Instance.Profile.DefaultProfile;
             try
             {
-                ProfileService.LoadSelectedProfile(value.ProfileId);
-                HistoryService.Load(value.ProfileId);
-                CoreService.Initialize();
+                ProfileRuntimeService.Reload(value.ProfileId);
                 Settings.Instance.Profile.DefaultProfile = value.ProfileId;
                 ReloadProfiles();
             }
@@ -171,15 +169,13 @@ public class SettingPageViewModel : ReactiveObject
     }
 
     public ProfileService ProfileService { get; }
-    private HistoryService HistoryService { get; }
-    private CoreService CoreService { get; }
+    private ProfileRuntimeService ProfileRuntimeService { get; }
     private IProfileService? ClassIslandProfileService { get; }
 
     public SettingPageViewModel()
     {
         ProfileService = IAppHost.GetService<ProfileService>();
-        HistoryService = IAppHost.GetService<HistoryService>();
-        CoreService = IAppHost.GetService<CoreService>();
+        ProfileRuntimeService = IAppHost.GetService<ProfileRuntimeService>();
         ClassIslandProfileService = IAppHost.TryGetService<IProfileService>();
 
         IsBreakDisable = Settings.Instance.General.BreakDisable;

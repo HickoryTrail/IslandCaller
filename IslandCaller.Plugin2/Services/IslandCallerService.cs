@@ -23,6 +23,7 @@ namespace IslandCaller.Services.IslandCallerService
         private CoreService CoreService { get; set; }
         private HistoryService HistoryService { get; set; }
         private ProfileService ProfileService { get; set; }
+        private ProfileRuntimeService ProfileRuntimeService { get; set; }
         private IOmniTTS? OmniTTS { get; set; }
         private ISpeechService? ClassIslandTTS { get; set; }
         private WindowsManager WindowsManager { get; set; }
@@ -38,6 +39,7 @@ namespace IslandCaller.Services.IslandCallerService
             HistoryService = IAppHost.GetService<HistoryService>();
             CoreService = IAppHost.GetService<CoreService>();
             ProfileService = IAppHost.GetService<ProfileService>();
+            ProfileRuntimeService = IAppHost.GetService<ProfileRuntimeService>();
             Status = IAppHost.GetService<Status>();
             WindowsManager = IAppHost.GetService<WindowsManager>();
             // 获取服务
@@ -181,25 +183,7 @@ namespace IslandCaller.Services.IslandCallerService
                 return false;
             }
 
-            if (ProfileService.ActiveProfileId == profileId && HistoryService.ActiveProfileId == profileId &&
-                Status.ProfileServiceInitialized && Status.HistoryServiceInitialized && Status.CoreServiceInitialized)
-            {
-                return true;
-            }
-
-            try
-            {
-                ProfileService.LoadSelectedProfile(profileId);
-                HistoryService.Load(profileId);
-                CoreService.Initialize();
-                Logger?.LogInformation("已切换至名单 {ProfileGuid}。", profileId);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Logger?.LogError(ex, "加载名单 {ProfileGuid} 失败。", profileId);
-                return false;
-            }
+            return ProfileRuntimeService.EnsureLoaded(profileId);
         }
 
         public async void ShowRandomStudent(int stunum)

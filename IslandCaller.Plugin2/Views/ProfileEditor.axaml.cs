@@ -13,8 +13,7 @@ public partial class ProfileEditor : Window
 {
     private readonly ProfileEditorViewModel vm;
     private readonly ProfileService profileService;
-    private readonly HistoryService historyService;
-    private readonly CoreService coreService;
+    private readonly ProfileRuntimeService profileRuntimeService;
     private readonly ILogger<ProfileEditor> logger;
     private bool isClosingAfterSave;
 
@@ -24,8 +23,7 @@ public partial class ProfileEditor : Window
         vm = new ProfileEditorViewModel(profileId);
         DataContext = vm;
         profileService = IAppHost.GetService<ProfileService>();
-        historyService = IAppHost.GetService<HistoryService>();
-        coreService = IAppHost.GetService<CoreService>();
+        profileRuntimeService = IAppHost.GetService<ProfileRuntimeService>();
         logger = IAppHost.GetService<ILogger<ProfileEditor>>();
     }
 
@@ -85,9 +83,7 @@ public partial class ProfileEditor : Window
 
             if (vm.ProfileId == profileService.ActiveProfileId)
             {
-                profileService.Members = members;
-                historyService.Load(vm.ProfileId);
-                coreService.Initialize();
+                profileRuntimeService.Reload(vm.ProfileId);
             }
 
             logger.LogInformation("档案保存成功，Guid: {ProfileGuid}，人数：{Count}", vm.ProfileId, members.Count);
