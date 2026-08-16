@@ -34,6 +34,7 @@ public partial class HoverFluent : Window
         vm = DataContext as HoverFluentViewModel;
         scaling = RenderScaling;
         vm.PropertyChanged += OnViewModelPropertyChanged;
+        UpdateCompactSizeGuard();
         Dispatcher.UIThread.Post(ApplyNativeWindowSize, DispatcherPriority.Render);
         Position = new PixelPoint((int)Math.Round(vm.PositionX * scaling), (int)Math.Round(vm.PositionY * scaling));
         PositionChanged += OnPositionChanged;
@@ -54,6 +55,7 @@ public partial class HoverFluent : Window
         {
             vm.PropertyChanged -= OnViewModelPropertyChanged;
         }
+        windowSizeHelper.RemoveCompactSizeGuard(this);
         Activated -= OnWindowLayerChanged;
         Deactivated -= OnWindowLayerChanged;
         topmostCts?.Cancel();
@@ -86,6 +88,7 @@ public partial class HoverFluent : Window
         _isApplyingNativeSize = true;
         try
         {
+            UpdateCompactSizeGuard();
             windowSizeHelper.SetWindowSize(this, vm.Width, vm.Height);
         }
         finally
@@ -159,10 +162,10 @@ public partial class HoverFluent : Window
         scaling = RenderScaling;
         if (_isDragging)
         {
-            // During a native drag, each move message can reapply Avalonia's
-            // content minimum. Keep the WinAPI size authoritative for the
-            // whole drag, not only after it ends.
-            ApplyNativeWindowSize();
+            // The HWND subclass protects the compact dimensions inside the
+            // native move transaction. Do not send another size request here:
+            // doing so would re-enter Avalonia's minimum-size layout path.
+            UpdateCompactSizeGuard();
             return;
         }
 
@@ -179,6 +182,7 @@ public partial class HoverFluent : Window
     public void BeginDrag()
     {
         _isDragging = true;
+        UpdateCompactSizeGuard();
     }
 
     public void EndDragAndClamp()
@@ -199,6 +203,14 @@ public partial class HoverFluent : Window
             Position = clamped;
         }
         UpdateViewModelPosition(clamped.X, clamped.Y);
+    }
+
+    private void UpdateCompactSizeGuard()
+    {
+        if (vm is not null)
+        {
+            windowSizeHelper.UpdateCompactSizeGuard(this, vm.Width, vm.Height);
+        }
     }
 
     private PixelPoint ClampPositionToScreenBounds(PixelPoint current)
