@@ -7,6 +7,7 @@ using ClassIsland.Core.Extensions.Registry;
 using ClassIsland.Core.Models.Automation;
 using ClassIsland.Shared;
 using IslandCaller.Actions;
+using IslandCaller.Controls;
 using IslandCaller.Helpers;
 using IslandCaller.Models;
 using IslandCaller.Plugin2;
@@ -45,6 +46,7 @@ namespace IslandCaller
             services.AddAction<DisableHoverAction>();
             services.AddAction<EnableHoverAction>();
             services.AddAction<CallAction>();
+            services.AddAction<SwitchProfileAction, SwitchProfileActionSettingsControl>();
             AppBase.Current.AppStarted += async (_, _) =>
             {
                 try
@@ -77,6 +79,8 @@ namespace IslandCaller
                 new ActionMenuTreeItem("IslandCaller.EnableHover", "启用悬浮窗", "\uF484"));
             IActionService.ActionMenuTree["IslandCaller 行动"].Add(
                 new ActionMenuTreeItem("IslandCaller.DisableHover", "禁用悬浮窗", "\uF486"));
+            IActionService.ActionMenuTree["IslandCaller 行动"].Add(
+                new ActionMenuTreeItem("IslandCaller.SwitchProfile", "切换档案", "\uE9A8"));
         }
     }
 }
