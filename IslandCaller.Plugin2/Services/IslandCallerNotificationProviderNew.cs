@@ -1,10 +1,6 @@
-using AvaloniaEdit;
-using ClassIsland.Core.Abstractions.Services;
 using ClassIsland.Core.Abstractions.Services.NotificationProviders;
 using ClassIsland.Core.Attributes;
 using ClassIsland.Core.Models.Notification;
-using ClassIsland.Shared.Enums;
-using IslandCaller.Models;
 
 namespace IslandCaller.Services.NotificationProvidersNew;
 

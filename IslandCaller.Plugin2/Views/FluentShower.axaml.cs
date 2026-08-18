@@ -1,8 +1,6 @@
-using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Markup.Xaml;
 
-namespace IslandCaller.Plugin2;
+namespace IslandCaller.Views;
 
 public partial class FluentShower : Window
 {

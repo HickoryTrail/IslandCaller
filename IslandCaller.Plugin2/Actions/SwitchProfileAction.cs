@@ -1,6 +1,5 @@
 using ClassIsland.Core.Abstractions.Automation;
 using ClassIsland.Core.Attributes;
-using IslandCaller.Models;
 using IslandCaller.Services;
 using Microsoft.Extensions.Logging;
 

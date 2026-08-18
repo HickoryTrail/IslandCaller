@@ -48,6 +48,13 @@ public class SettingPageViewModel : ReactiveObject
         set => this.RaiseAndSetIfChanged(ref _hoverLayout, Math.Clamp(value, 0, 2));
     }
 
+    private int _hoverTheme;
+    public int HoverTheme
+    {
+        get => _hoverTheme;
+        set => this.RaiseAndSetIfChanged(ref _hoverTheme, Math.Clamp(value, 0, 1));
+    }
+
     // 点名设置
     private int _notifyMethod;
     public int NotifyMethod
@@ -77,6 +84,13 @@ public class SettingPageViewModel : ReactiveObject
     {
         get => (NotifyMethod & 0b10) != 0;
         set => NotifyMethod = value ? NotifyMethod | 0b10 : NotifyMethod & ~0b10;
+    }
+
+    private int _showerTheme;
+    public int ShowerTheme
+    {
+        get => _showerTheme;
+        set => this.RaiseAndSetIfChanged(ref _showerTheme, Math.Clamp(value, 0, 1));
     }
 
     private float _baseTime = 2.0f;
@@ -190,7 +204,9 @@ public class SettingPageViewModel : ReactiveObject
         IsHoverEnable = Settings.Instance.Hover.IsEnable;
         HoverScalingFactor = Settings.Instance.Hover.ScalingFactor;
         HoverLayout = Settings.Instance.Hover.HoverLayout;
+        HoverTheme = Settings.Instance.Hover.HoverTheme;
         NotifyMethod = Settings.Instance.Call.NotifyMethod;
+        ShowerTheme = Settings.Instance.Call.ShowerTheme;
         BaseTime = Settings.Instance.Call.BaseTime;
         AdditionalTime = Settings.Instance.Call.AdditionalTime;
         Provider = Settings.Instance.TTS.Provider;
@@ -222,9 +238,17 @@ public class SettingPageViewModel : ReactiveObject
             {
                 Settings.Instance.Hover.HoverLayout = HoverLayout;
             }
+            else if (args.PropertyName == nameof(HoverTheme))
+            {
+                Settings.Instance.Hover.HoverTheme = HoverTheme;
+            }
             else if (args.PropertyName == nameof(NotifyMethod))
             {
                 Settings.Instance.Call.NotifyMethod = NotifyMethod;
+            }
+            else if (args.PropertyName == nameof(ShowerTheme))
+            {
+                Settings.Instance.Call.ShowerTheme = ShowerTheme;
             }
             else if (args.PropertyName == nameof(BaseTime))
             {

@@ -130,6 +130,21 @@ namespace IslandCaller.Models
 
     public class CallSettings : INotifyPropertyChanged
     {
+        private int _showerTheme;
+        public int ShowerTheme
+        {
+            get => _showerTheme;
+            set
+            {
+                int showerTheme = Math.Clamp(value, 0, 1);
+                if (_showerTheme != showerTheme)
+                {
+                    _showerTheme = showerTheme;
+                    OnPropertyChanged(nameof(ShowerTheme));
+                }
+            }
+        }
+
         private int _notifyMethod = 1;
         public int NotifyMethod
         {
@@ -171,6 +186,7 @@ namespace IslandCaller.Models
             _isEnable = true;
             _scalingFactor = 1.0;
             _hoverLayout = 0;
+            _hoverTheme = 0;
         }
 
         private bool _isEnable;
@@ -199,6 +215,21 @@ namespace IslandCaller.Models
                 {
                     _hoverLayout = hoverLayout;
                     OnPropertyChanged(nameof(HoverLayout));
+                }
+            }
+        }
+
+        private int _hoverTheme;
+        public int HoverTheme
+        {
+            get => _hoverTheme;
+            set
+            {
+                int hoverTheme = Math.Clamp(value, 0, 1);
+                if (_hoverTheme != hoverTheme)
+                {
+                    _hoverTheme = hoverTheme;
+                    OnPropertyChanged(nameof(HoverTheme));
                 }
             }
         }

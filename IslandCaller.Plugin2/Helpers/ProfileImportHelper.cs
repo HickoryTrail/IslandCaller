@@ -1,6 +1,5 @@
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
-using Avalonia.VisualTree;
 using ClassIsland.Core.Controls;
 using IslandCaller.Views;
 using Microsoft.Extensions.Logging;

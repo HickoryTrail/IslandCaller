@@ -16,7 +16,7 @@
         <vm:HoverFluentViewModel />
     </Design.DataContext>
     <StackPanel
-        x:Name="DragSurface"
+        x:Name="DragSurfacePanel"
         HorizontalAlignment="Center"
         VerticalAlignment="Center"
         Orientation="Horizontal"

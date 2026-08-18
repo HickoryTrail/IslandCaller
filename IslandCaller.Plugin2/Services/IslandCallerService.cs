@@ -4,7 +4,6 @@ using ClassIsland.Shared;
 using ClassIsland.Shared.Enums;
 using IslandCaller.Models;
 using IslandCaller.Plugin2.Helpers;
-using IslandCaller.Plugin2.Services;
 using IslandCaller.Services.NotificationProvidersNew;
 using IslandCaller.Views;
 using Microsoft.Extensions.Logging;

@@ -1,4 +1,3 @@
-using Avalonia.Controls;
 using ClassIsland.Core;
 using ClassIsland.Core.Abstractions;
 using ClassIsland.Core.Abstractions.Services;
@@ -10,8 +9,6 @@ using IslandCaller.Actions;
 using IslandCaller.Controls;
 using IslandCaller.Helpers;
 using IslandCaller.Models;
-using IslandCaller.Plugin2;
-using IslandCaller.Plugin2.Services;
 using IslandCaller.Services;
 using IslandCaller.Services.IslandCallerService;
 using IslandCaller.Services.NotificationProvidersNew;
@@ -19,7 +16,6 @@ using IslandCaller.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using System.ComponentModel;
 
 namespace IslandCaller
 {
@@ -37,6 +33,7 @@ namespace IslandCaller
             services.AddSingleton<CoreService>();
             services.AddSingleton<ProfileRuntimeService>();
             services.AddSingleton<WindowsManager>();
+            services.AddSingleton<LiquidGlassRuntime>();
             services.AddSingleton<WindowDragHelper>();
             services.AddSingleton<WindowSizeHelper>();
             services.AddSingleton<WindowTopmostHelper>();
@@ -55,6 +52,7 @@ namespace IslandCaller
                     IAppHost.GetService<Status>();
                     logger?.LogInformation("插件状态初始化完成，正在加载设置...");
                     new Settings(IAppHost.GetService<ProfileService>()).Load();
+                    await IAppHost.GetService<LiquidGlassRuntime>().PrewarmAsync();
                     logger?.LogDebug("设置加载完成，正在加载默认配置...");
                     IAppHost.GetService<ProfileRuntimeService>().Initialize();
                     IAppHost.GetService<IslandCallerService>().Initialize();

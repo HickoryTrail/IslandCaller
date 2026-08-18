@@ -57,12 +57,14 @@ namespace IslandCaller.Models
             IsC_HoverKey?.SetValue("IsEnable", Instance.Hover.IsEnable);
             IsC_HoverKey?.SetValue("ScalingFactor", Instance.Hover.ScalingFactor);
             IsC_HoverKey?.SetValue("HoverLayout", Instance.Hover.HoverLayout);
+            IsC_HoverKey?.SetValue("HoverTheme", Instance.Hover.HoverTheme);
             IsC_HoverKey_Position?.SetValue("X", Instance.Hover.Position.X);
             IsC_HoverKey_Position?.SetValue("Y", Instance.Hover.Position.Y);
             IsC_TTSKey?.SetValue("BeforeText", Instance.TTS.BeforeText);
             IsC_TTSKey?.SetValue("AfterText", Instance.TTS.AfterText);
             IsC_TTSKey?.SetValue("Provider", Instance.TTS.Provider.ToString());
             IsC_CallKey?.SetValue("NotifyMethod", Instance.Call.NotifyMethod);
+            IsC_CallKey?.SetValue("ShowerTheme", Instance.Call.ShowerTheme);
             IsC_CallKey?.SetValue("BaseTime", Instance.Call.BaseTime);
             IsC_CallKey?.SetValue("AdditionalTime", Instance.Call.AdditionalTime);
 
@@ -113,12 +115,14 @@ namespace IslandCaller.Models
                 Instance.Hover.IsEnable = Convert.ToBoolean(IsC_HoverKey?.GetValue("IsEnable") ?? true);
                 Instance.Hover.ScalingFactor = Convert.ToDouble(IsC_HoverKey?.GetValue("ScalingFactor") ?? 1.0);
                 Instance.Hover.HoverLayout = Convert.ToInt32(IsC_HoverKey?.GetValue("HoverLayout") ?? 0);
+                Instance.Hover.HoverTheme = Convert.ToInt32(IsC_HoverKey?.GetValue("HoverTheme") ?? 0);
                 Instance.Hover.Position.X = Convert.ToDouble(IsC_HoverKey_Position?.GetValue("X") ?? 200.0);
                 Instance.Hover.Position.Y = Convert.ToDouble(IsC_HoverKey_Position?.GetValue("Y") ?? 200.0);
                 Instance.TTS.BeforeText = IsC_TTSKey?.GetValue("BeforeText") as string ?? string.Empty;
                 Instance.TTS.AfterText = IsC_TTSKey?.GetValue("AfterText") as string ?? string.Empty;
                 Instance.TTS.Provider = ReadTtsProvider(IsC_TTSKey?.GetValue("Provider"));
                 Instance.Call.NotifyMethod = Convert.ToInt32(IsC_CallKey?.GetValue("NotifyMethod") ?? 1);
+                Instance.Call.ShowerTheme = Convert.ToInt32(IsC_CallKey?.GetValue("ShowerTheme") ?? 0);
                 Instance.Call.BaseTime = Convert.ToSingle(IsC_CallKey?.GetValue("BaseTime") ?? 1.0f);
                 Instance.Call.AdditionalTime = Convert.ToSingle(IsC_CallKey?.GetValue("AdditionalTime") ?? 2.0f);
                 Save();
@@ -147,12 +151,14 @@ namespace IslandCaller.Models
             IsC_HoverKey?.SetValue("IsEnable", Instance.Hover.IsEnable);
             IsC_HoverKey?.SetValue("ScalingFactor", Instance.Hover.ScalingFactor);
             IsC_HoverKey?.SetValue("HoverLayout", Instance.Hover.HoverLayout);
+            IsC_HoverKey?.SetValue("HoverTheme", Instance.Hover.HoverTheme);
             IsC_HoverKey_Position?.SetValue("X", Instance.Hover.Position.X);
             IsC_HoverKey_Position?.SetValue("Y", Instance.Hover.Position.Y);
             IsC_TTSKey?.SetValue("BeforeText", Instance.TTS.BeforeText);
             IsC_TTSKey?.SetValue("AfterText", Instance.TTS.AfterText);
             IsC_TTSKey?.SetValue("Provider", Instance.TTS.Provider.ToString());
             IsC_CallKey?.SetValue("NotifyMethod", Instance.Call.NotifyMethod);
+            IsC_CallKey?.SetValue("ShowerTheme", Instance.Call.ShowerTheme);
             IsC_CallKey?.SetValue("BaseTime", Instance.Call.BaseTime);
             IsC_CallKey?.SetValue("AdditionalTime", Instance.Call.AdditionalTime);
         }

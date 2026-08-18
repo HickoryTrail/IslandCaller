@@ -20,6 +20,16 @@ $pluginDirectory = Join-Path $releaseDirectory 'plugin'
 $cipxPath = Join-Path $releaseDirectory 'IslandCaller.Plugin2.cipx'
 $releaseNoteSource = Join-Path $repositoryRoot "docs\CHANGELOG\$Version.md"
 $releaseNotePath = Join-Path $releaseDirectory 'release-notes.md'
+$projectPath = Join-Path $repositoryRoot 'IslandCaller.Plugin2\IslandCaller.Plugin2.csproj'
+
+[xml]$projectDefinition = Get-Content -LiteralPath $projectPath
+$targetFramework = [string]($projectDefinition.Project.PropertyGroup |
+    ForEach-Object { $_.TargetFramework } |
+    Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+    Select-Object -First 1)
+if ([string]::IsNullOrWhiteSpace($targetFramework)) {
+    throw "No TargetFramework was found in $projectPath"
+}
 
 if (Test-Path -LiteralPath $releaseDirectory) {
     throw "Output directory already exists: $releaseDirectory. Choose a different -OutputDirectory or remove it first."
@@ -36,7 +46,7 @@ try {
         '-p:EnableWindowsTargeting=true' "-p:Version=$Version"
     if ($LASTEXITCODE -ne 0) { throw 'Failed to build IslandCaller.Plugin2.' }
 
-    $pluginBuildDirectory = Join-Path $repositoryRoot 'IslandCaller.Plugin2\bin\Release\net10.0-windows'
+    $pluginBuildDirectory = Join-Path $repositoryRoot "IslandCaller.Plugin2\bin\Release\$targetFramework"
     if (-not (Test-Path -LiteralPath $pluginBuildDirectory -PathType Container)) {
         throw "Plugin build output not found: $pluginBuildDirectory"
     }
@@ -69,7 +79,9 @@ $pluginContents = @(Get-ChildItem -LiteralPath $pluginDirectory -Force)
 if ($pluginContents.Count -eq 0) {
     throw 'Plugin package output is empty.'
 }
-Compress-Archive -Path $pluginContents.FullName -DestinationPath $cipxPath -CompressionLevel Optimal
+$zipPath = Join-Path $releaseDirectory 'IslandCaller.Plugin2.zip'
+Compress-Archive -Path $pluginContents.FullName -DestinationPath $zipPath -CompressionLevel Optimal
+Move-Item -LiteralPath $zipPath -Destination $cipxPath
 
 $cipxMd5 = (Get-FileHash -LiteralPath $cipxPath -Algorithm MD5).Hash.ToLowerInvariant()
 if (Test-Path -LiteralPath $releaseNoteSource -PathType Leaf) {

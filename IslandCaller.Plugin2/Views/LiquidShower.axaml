@@ -1,0 +1,34 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materials="using:MorerialsAvalonia"
+        xmlns:liquid="using:MorerialsAvalonia.Materials.LiquidGlass"
+        x:Class="IslandCaller.Views.LiquidShower"
+        Title="LiquidShower"
+        Topmost="True"
+        WindowDecorations="None"
+        Focusable="False"
+        Background="Transparent"
+        TransparencyLevelHint="Transparent"
+        ShowActivated="False"
+        ShowInTaskbar="False"
+        CanResize="False"
+        Height="110"
+        HorizontalContentAlignment="Center"
+        VerticalContentAlignment="Center">
+    <materials:MaterialHost x:Name="Materials"
+                            ExcludeWindowFromCapture="True"
+                            EnableOcclusionPause="True">
+        <liquid:LiquidGlassContainer x:Name="GlassContainer"
+                                     CornerRadius="55"
+                                     HighlightIntensity="0.5"
+                                     materials:MaterialForeground.Mode="Automatic"
+                                     HorizontalAlignment="Stretch"
+                                     VerticalAlignment="Stretch"
+                                     Height="110">
+            <ContentControl x:Name="DisplayContent"
+                            materials:MaterialForeground.Mode="Automatic"
+                            HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center" />
+        </liquid:LiquidGlassContainer>
+    </materials:MaterialHost>
+</Window>

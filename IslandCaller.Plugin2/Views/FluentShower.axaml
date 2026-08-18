@@ -6,7 +6,7 @@
         xmlns:ci="clr-namespace:ClassIsland.Core.Controls;assembly=ClassIsland.Core"
         xmlns:ci2="clr-namespace:ClassIsland.Core.Abstractions.Controls;assembly=ClassIsland.Core"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-        x:Class="IslandCaller.Plugin2.FluentShower"
+        x:Class="IslandCaller.Views.FluentShower"
         Title="FluentShower"
         Topmost="True"
         WindowDecorations="BorderOnly"

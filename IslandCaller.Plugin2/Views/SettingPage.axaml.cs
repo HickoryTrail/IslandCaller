@@ -1,13 +1,10 @@
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
-using Avalonia.VisualTree;
 using ClassIsland.Core;
 using ClassIsland.Core.Abstractions.Controls;
 using ClassIsland.Core.Attributes;
 using ClassIsland.Core.Controls;
 using ClassIsland.Core.Enums.SettingsWindow;
-using ClassIsland.Core.Extensions.UI;
-using ClassIsland.Core.Helpers.UI;
 using ClassIsland.Platforms.Abstraction;
 using ClassIsland.Shared;
 using FluentAvalonia.UI.Controls;

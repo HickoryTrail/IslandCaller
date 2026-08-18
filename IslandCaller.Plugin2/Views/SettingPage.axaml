@@ -82,6 +82,17 @@
                 </ComboBox>
             </fa:FASettingsExpander.Footer>
         </fa:FASettingsExpander>
+        <fa:FASettingsExpander
+        IconSource="{ci:FluentIconSource &#xE950;}"
+        Header="悬浮窗主题"
+        Description="选择悬浮窗的 Fluent 或 LiquidGlass 外观">
+            <fa:FASettingsExpander.Footer>
+                <ComboBox SelectedIndex="{Binding HoverTheme, Mode=TwoWay}" Width="180">
+                    <ComboBoxItem Content="Fluent"/>
+                    <ComboBoxItem Content="LiquidGlass"/>
+                </ComboBox>
+            </fa:FASettingsExpander.Footer>
+        </fa:FASettingsExpander>
 
         <!-- 点名设置 -->
         <Separator Margin="0 12 0 4" />
@@ -98,6 +109,17 @@
                               IsChecked="{Binding IsIslandCallerNotificationEnabled, Mode=TwoWay}" />
                 </StackPanel>
             </fa:FASettingsExpanderItem>
+        </fa:FASettingsExpander>
+        <fa:FASettingsExpander
+        IconSource="{ci:FluentIconSource &#xE950;}"
+        Header="点名展示主题"
+        Description="选择 IslandCaller 展示窗口的 Fluent 或 LiquidGlass 外观">
+            <fa:FASettingsExpander.Footer>
+                <ComboBox SelectedIndex="{Binding ShowerTheme, Mode=TwoWay}" Width="180">
+                    <ComboBoxItem Content="Fluent"/>
+                    <ComboBoxItem Content="LiquidGlass"/>
+                </ComboBox>
+            </fa:FASettingsExpander.Footer>
         </fa:FASettingsExpander>
         <fa:FASettingsExpander
         IconSource="{ci:FluentIconSource &#xE4C4;}"

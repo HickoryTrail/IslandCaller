@@ -2,7 +2,6 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using ClassIsland.Core.Abstractions.Controls;
 using IslandCaller.Actions;
-using IslandCaller.Models;
 
 namespace IslandCaller.Controls;
 

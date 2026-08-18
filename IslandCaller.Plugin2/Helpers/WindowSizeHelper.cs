@@ -1,4 +1,3 @@
-using Avalonia;
 using Avalonia.Controls;
 using ClassIsland.Shared;
 using Microsoft.Extensions.Logging;
