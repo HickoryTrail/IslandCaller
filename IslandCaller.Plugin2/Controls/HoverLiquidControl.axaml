@@ -11,9 +11,6 @@
              VerticalAlignment="Center"
              HorizontalContentAlignment="Center"
              VerticalContentAlignment="Center">
-    <UserControl.DataContext>
-        <vm:HoverFluentViewModel />
-    </UserControl.DataContext>
     <Grid x:Name="DragSurfacePanel"
           HorizontalAlignment="Center"
           VerticalAlignment="Center"

@@ -87,6 +87,8 @@ public abstract class HoverWindowBase : Window, IHoverWindow
         if (_viewModel is not null)
         {
             _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+            _viewModel.Dispose();
+            _viewModel = null;
         }
 
         if (_hoverControl is not null)
