@@ -7,7 +7,7 @@ id: IslandCaller.Plugin2
 name: IslandCaller
 description: 一个基于Classisland2.0插件的轻量级点名器
 entranceAssembly: "IslandCaller.Plugin2.dll"
-url: https://github.com/HUSX100/IslandCaller
+url: https://github.com/HickoryTrail/IslandCaller
 author: HickoryTrail
 version: 0.0.0.0
 apiVersion: 2.1.1.0

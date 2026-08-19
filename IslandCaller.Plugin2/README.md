@@ -1,86 +1,103 @@
-<div align="center">
+# IslandCaller（ClassIsland 插件）
 
-# <image src="https://github.com/HUSX100/IslandCaller/blob/master/Icon.png" height="28" width="28"/> IslandCaller（ClassIsland 2.0 插件）
+IslandCaller 是一个基于 ClassIsland 2.0 插件 SDK 开发的课堂点名插件，使用 .NET 10 与 Avalonia UI 构建。
 
-一个为课堂场景设计的轻量级点名插件。  
-目标是：**上手快、抽取公平、课堂操作顺手**。
+设计目标：**上手快、抽取公平、课堂操作顺手**。
 
-[![正式版 Release](https://img.shields.io/github/v/release/HUSX100/IslandCaller?style=flat-square&color=%233fb950&label=正式版)](https://github.com/HUSX100/IslandCaller/releases/latest)
-[![下载量](https://img.shields.io/github/downloads/HUSX100/IslandCaller/total?style=social&label=下载量&logo=github)](https://github.com/HUSX100/IslandCaller/releases/latest)
-[![GitHub Repo Languages](https://img.shields.io/github/languages/top/HUSX100/IslandCaller?style=flat-square)](https://github.com/HUSX100/IslandCaller/search?l=c%23)
-</div>
+> **维护状态提示**
+> 作者已进入高三备考阶段，未来一年内 IslandCaller 暂停大版本更新与常规 Bug 修复，项目交由 Codex 维护。
+> 提交 Issue 时请尽量详细描述问题（复现步骤、环境、日志等），以便 AI 快速定位；严重 Bug 将由 Codex 修复。
+> 欢迎有时间的开发者提交 PR，参与 Bug 修复、优化与功能开发，经 review 后会被尽快合并。
+> 功能建议仍欢迎通过 Issue 留言，作者会及时回复。
+> 项目开发将于明年高考结束后恢复，感谢大家的支持！
 
----
+## 环境要求
 
-## 插件特色
+- 操作系统：Windows 10 2004（10.0.19041）及以上，x64
+- 主程序：ClassIsland 2.1.1 及以上（插件 API 版本 2.1.1.0）
 
-- **一键点名**：支持快速抽取 1 人。
-- **自定义抽取人数**：支持图形界面选择人数后再抽取。
-- **名单可视化编辑**：在设置页直接增删学生、修改性别、手动权重。
-- **多格式导入**：支持 `.txt`、SecRandom `.json`、`.csv`。
-- **公平性优化**：综合“手动权重 + 本节课记录 + 长期历史”动态计算抽取概率。
-- **悬浮窗快捷操作**：支持启用/禁用、缩放、位置记忆。
-- **下课保护**：可设置在非上课时间禁用点名功能。
+## 安装
 
----
+1. 打开 ClassIsland，进入**插件市场**，搜索 **IslandCaller** 并安装；
+2. 安装后进入 `应用设置 -> 插件 -> IslandCaller 设置` 完成配置。
 
-## 使用教程
+> 首次启动会自动创建一份示例名单并弹出欢迎提示；新建名单时也会预填示例名单，替换成自己的名单即可开始使用。
 
-### 1. 安装插件
+## 快速上手
 
-1. 打开 ClassIsland 插件市场。
-2. 搜索并安装 **IslandCaller**。
-3. 安装后进入：`应用设置 -> 插件 -> IslandCaller 设置`。
+1. **准备名单**：在“档案设置 -> 档案编辑”中新建名单，或在档案编辑器中点击“导入名单”，从 `.txt` / SecRandom `.json` / `.csv` 导入；
+2. **开始点名**：点击悬浮窗主按钮一键抽取 1 人；点击悬浮窗副按钮（或通过 URI）打开“自定义抽取”窗口，用滑块指定 1~5 人后点名；
+3. **按需调整**：在设置页开启/关闭“下课禁用”“打断点名”，选择点名结果展示渠道与 TTS 播报提供方。
 
-### 2. 准备名单
+## 功能说明
 
-你可以使用以下任一方式：
+### 点名
 
-- **手动录入**：在“档案编辑”里直接添加学生；
-- **导入名单**：点击“导入名单”，选择支持格式文件。
+- **一键点名**：单击即可抽取 1 人；
+- **自定义抽取**：通过悬浮窗副按钮或 URI 打开“自定义抽取”窗口，指定 1~5 人后点名（该窗口不抢焦点，点击窗口外部会自动关闭）；
+- **下课禁用**（默认开启）：课间（非上课时间）自动禁用所有点名入口，避免误触发；
+- **打断点名**（默认关闭）：开启后，新的点名会取消正在展示的上一次点名结果；
+- **点名提醒时长**：单次点名总时长 = 人数 × 基础时间 + 附加时间，两项均可调节；建议保持总时长大于 0，否则会显示错误提示。
 
-支持格式：
+### 公平性算法
 
-- 文本名单：`*.txt`（姓名用空格/逗号/换行分隔）
-- SecRandom 名单：`*.json`
-- CSV 名单：`*.csv`
+点名不是简单的随机数，插件会综合以下因素动态计算每个学生的抽取概率：
 
-### 3. 开始点名
+- **手动权重**：在档案编辑器中为每个学生设置 0~2.0 的权重，权重越高被抽中的概率越大；
+- **本节课防重复**：最近被点过的学生权重会降低，并随抽取次数增加逐渐恢复，避免短期重复点名；
+- **长期历史均衡**：参考长期点名次数（按名单分别记录），历史被点较少的学生会获得一定补偿，被点较多的学生会适当降低概率。
 
-- **快速点名（1 人）**：直接调用简单抽取入口；
-- **自定义点名（多人）**：打开高级界面设置人数后抽取；
-- **悬浮窗点名**：在设置中启用悬浮窗后可快速操作。
+### 点名结果展示
 
-### 4. 可选设置建议
+- **展示渠道**（可多选）：
+  - **ClassIsland 提醒**：使用 ClassIsland 的通知提醒展示结果（默认渠道）；
+  - **IslandCaller 提醒**：使用插件自带的独立结果窗口展示结果；
+- **展示主题**：独立结果窗口可选择 Fluent 或 LiquidGlass 外观；设置页提示悬浮窗与展示窗口**只有一个**能使用 LiquidGlass；
+- **自适应对比度**：Fluent 独立结果窗口会自动分析屏幕背景亮度，在深色/浅色背景下自动切换黑白色文字，保证清晰可读；
+- **TTS 语音播报**：提供方可选“无 / ClassIsland / OmniTTS”，并可设置播报前文本与播报后文本；播报内容为“播报前文本 + 点名结果 + 播报后文本”。选择 OmniTTS 需要 ClassIsland 已安装并启用 OmniTTS 插件，未检测到 OmniTTS 服务时提供方会自动回退为“无”。
 
-- 开启“下课禁用”：避免非上课时误触发；
-- 按屏幕调整“悬浮窗缩放系数”；
-- 按需设置学生“手动权重”，实现更灵活的抽取策略。
+### 悬浮窗
 
----
+- **三种布局**：完整、紧凑、Mini；
+- **两种主题**：Fluent 与 LiquidGlass（实验性 GPU 液态玻璃，见下方警告）；
+- **缩放系数**：0.5~2.0 可调，用于适配不同屏幕；
+- **位置记忆**：拖动后自动记忆位置，重启后按上次位置显示，并自动限制在屏幕范围内；
+- **超级置顶**：悬浮窗持续保持置顶且不抢焦点，不会被其他窗口遮挡；
+- **触控友好**：鼠标与触控/手写笔均可拖动，自动区分点击与拖动，拖动不误触；
+- **操作**：主按钮 = 快速点名 1 人，副按钮 = 打开自定义抽取窗口（Mini 布局无副按钮）。
 
-## URI 调用方式（可用于快捷方式/联动）
+> **⚠警告**
+> 
+> **LiquidGlass 为实验性主题，仅供个人测试使用**，存在严重的内存泄漏和 use-after-free 问题，可能导致 ClassIsland 崩溃或 Windows BSOD，严禁在教学或生产环境下使用！
 
-- 简单抽取（1 人）
+### 名单档案
 
-```text
-classisland://plugins/IslandCaller/Simple/1
-```
+- **多档案管理**：可创建多份独立名单，设置其中一份为默认名单，也可移除不再使用的名单（默认名单不可移除，移除不会删除本地名单文件，并会同步移除引用该名单的科目规则）；
+- **可视化编辑**：在档案编辑器中直接增删学生、修改姓名、性别与手动权重，并可为名单重命名，关闭窗口时自动保存；
+- **按科目自动切换**：开启后可为科目绑定名单，上课时根据 ClassIsland 当前科目自动加载对应名单；时间状态切换时会自动重置本节课的短期防重复记录；
+- **多格式导入**：支持文本名单（`.txt`）、SecRandom 名单（`.json`）、CSV 名单（`.csv`），详见下文“导入文件示例”；
+- **清除点名历史**：可一键清除当前名单的长期点名记录与本节课短期记录。
 
-- 高级抽取（GUI 指定人数）
+### 自动化与 URI 调用
 
-```text
-classisland://plugins/IslandCaller/Advanced/GUI
-```
+- **ClassIsland 行动**：在 ClassIsland 自动化中可直接使用“IslandCaller 行动”菜单，包含：
+  - **随机点名**：抽取 1 人；
+  - **启用悬浮窗** / **禁用悬浮窗**；
+  - **切换档案**：切换到指定名单（可配置目标档案）。
+- **URI 调用**（可用于快捷方式/联动）：
+  - 简单抽取（1 人）：`classisland://plugins/IslandCaller/Simple/1`
+  - 高级抽取（弹出窗口指定 1~5 人）：`classisland://plugins/IslandCaller/Advanced/GUI`
 
----
+### 数据迁移
+
+- **`.iscdoc` 数据包**：在设置页可将全部设置、名单与点名历史导出为数据包；换机或重装时导入即可完整恢复；
+- 导入数据包会**完全替换**当前的设置、名单、历史记录及 `%AppData%\IslandCaller` 下的数据，导入完成后需要重启 ClassIsland 生效。
 
 ## 导入文件示例
 
 ### 文本名单（`.txt`）
 
->[!tip]
->相邻姓名之间使用逗号，空格，或换行分隔
+名单只包含姓名，相邻姓名使用空格、逗号或换行分隔；性别与手动权重自动使用默认值。
 
 ```text
 张三 李四
@@ -90,8 +107,7 @@ classisland://plugins/IslandCaller/Advanced/GUI
 
 ### CSV 名单（`.csv`）
 
->[!important]
-> 要求不带标题行；如有性别列，请在导入时配置男/女映射值。
+文件**不能包含标题行**；姓名列与性别列（可选）在导入对话框中指定，男/女关键字需与源文件中的写法完全一致；无法识别的性别行会被跳过。
 
 ```csv
 1,张三,男
@@ -99,31 +115,43 @@ classisland://plugins/IslandCaller/Advanced/GUI
 3,王五,男
 ```
 
----
+### SecRandom 名单（`.json`）
+
+每个键为学生姓名，值为包含 `gender` 字段的对象；可在导入对话框中勾选是否转换性别，并配置男/女关键字；启用性别转换时，每个条目都需要有 `gender` 字段。
+
+```json
+{
+  "张三": { "gender": "男" },
+  "李四": { "gender": "女" }
+}
+```
 
 ## 常见问题
 
-- **点击快捷方式无反应？**
-  - 请确认 ClassIsland 已启用 URI 协议注册。
+- **点名按钮无反应？**
+  - 请确认当前不在课间（开启“下课禁用”时课间会禁用点名），并检查插件是否已完成初始化（可在 ClassIsland 日志中搜索 `IslandCaller`）。
+- **OmniTTS 播报不生效？**
+  - 未检测到 OmniTTS 服务时，TTS 提供方会自动回退为“无”，请确认已安装并启用 OmniTTS 插件。
 - **导入后性别不正确？**
-  - 请在导入对话框中检查男/女映射文本是否与源文件一致。
-- **悬浮窗位置异常？**
-  - 调整一次位置后会自动记忆，下次启动会按保存位置显示。
-
----
+  - 请检查导入对话框中的男/女关键字是否与源文件中的写法完全一致。
+- **LiquidGlass 主题导致异常？**
+  - LiquidGlass 为实验性主题，存在内存泄漏与崩溃风险，教学/生产环境请使用 Fluent 主题。
+- **我的数据保存在哪里？**
+  - 名单与历史记录存放在 `%AppData%\IslandCaller`，设置保存在注册表 `HKCU\Software\IslandCaller`；换机迁移建议使用 `.iscdoc` 数据包导出/导入。
 
 ## 反馈与支持
 
-- 项目地址：<https://github.com/HUSX100/IslandCaller>
-- 问题反馈：<https://github.com/HUSX100/IslandCaller/issues>
----
+- 项目地址：<https://github.com/HickoryTrail/IslandCaller>
+- 问题与建议：<https://github.com/HickoryTrail/IslandCaller/issues>
 
 ## 致谢
 
-本项目使用了以下第三方库：
+本项目使用了以下开源库：
 
 - ClassIsland.PluginSdk
+- MorerialsAvalonia
+- OmniTTS.Shared
 
 ## 许可
 
-本项目使用 GPL3 许可证进行开源，详细信息请查看 LICENSE 文件。
+本项目使用 [GPL-3.0](https://github.com/HickoryTrail/IslandCaller/blob/master/LICENSE) 许可证开源。
