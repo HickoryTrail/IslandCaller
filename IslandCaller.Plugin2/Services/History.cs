@@ -40,6 +40,11 @@ namespace IslandCaller.Services
         // 载入长期历史（只加载 Dictionary）
         public void Load(Guid guid)
         {
+            if (ActiveProfileId != guid)
+            {
+                top20List.Clear();
+            }
+
             Status.HistoryServiceInitialized = false;
             historyDict.Clear();
 
