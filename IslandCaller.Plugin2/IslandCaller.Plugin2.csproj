@@ -27,7 +27,7 @@
         <PackageReference Include="ClassIsland.PluginSdk" Version="2.1.1">
             <ExcludeAssets>runtime; native</ExcludeAssets>
         </PackageReference>
-        <PackageReference Include="MorerialsAvalonia" Version="1.0.3" GeneratePathProperty="true" />
+        <PackageReference Include="MorerialsAvalonia" Version="1.1.0" GeneratePathProperty="true" />
         <PackageReference Include="OmniTTS.Shared" Version="1.0.0" GeneratePathProperty="true" />
     </ItemGroup>
 

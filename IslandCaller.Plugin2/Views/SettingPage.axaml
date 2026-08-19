@@ -18,6 +18,13 @@
     </Design.DataContext>
     <ScrollViewer>
         <StackPanel Classes="settings-container animated-intro">
+            <fa:FAInfoBar
+            IsEnabled="True"
+            IsOpen="True"
+            IsVisible="True"
+            IsClosable="False"
+            Severity="Warning"
+            Message="LiquidGlass 效果目前仅供个人测试使用，存在严重的内存泄漏和 use-after-free 问题，会导致 ClassIsland 崩溃或 Windows BSOD，严禁在教学或生产环境下使用！"/>
         <!-- 基本设置 -->
         <ci:IconText Glyph="&#xEF27;" Text="基本设置" Margin="0,0,0,4"/>
         <!-- 下课禁用 -->
@@ -71,7 +78,7 @@
             </fa:FASettingsExpander.Footer>
         </fa:FASettingsExpander>
         <fa:FASettingsExpander
-        IconSource="{ci:FluentIconSource &#xE7C3;}"
+        IconSource="{ci:FluentIconSource &#xEFBD;}"
         Header="悬浮窗布局"
         Description="选择完整、紧凑或 Mini 悬浮窗布局">
             <fa:FASettingsExpander.Footer>
@@ -83,13 +90,13 @@
             </fa:FASettingsExpander.Footer>
         </fa:FASettingsExpander>
         <fa:FASettingsExpander
-        IconSource="{ci:FluentIconSource &#xE950;}"
+        IconSource="{ci:FluentIconSource &#xE7C3;}"
         Header="悬浮窗主题"
-        Description="选择悬浮窗的 Fluent 或 LiquidGlass 外观">
+        Description="选择悬浮窗的 Fluent 或 LiquidGlass 外观 (悬浮窗和展示窗口只有一个能为LiquidGlass)">
             <fa:FASettingsExpander.Footer>
                 <ComboBox SelectedIndex="{Binding HoverTheme, Mode=TwoWay}" Width="180">
                     <ComboBoxItem Content="Fluent"/>
-                    <ComboBoxItem Content="LiquidGlass"/>
+                    <ComboBoxItem Content="LiquidGlass (Dev)"/>
                 </ComboBox>
             </fa:FASettingsExpander.Footer>
         </fa:FASettingsExpander>
@@ -111,13 +118,13 @@
             </fa:FASettingsExpanderItem>
         </fa:FASettingsExpander>
         <fa:FASettingsExpander
-        IconSource="{ci:FluentIconSource &#xE950;}"
+        IconSource="{ci:FluentIconSource &#xE7C3;}"
         Header="点名展示主题"
-        Description="选择 IslandCaller 展示窗口的 Fluent 或 LiquidGlass 外观">
+        Description="选择 IslandCaller 展示窗口的 Fluent 或 LiquidGlass 外观 (悬浮窗和展示窗口只有一个能为LiquidGlass)">
             <fa:FASettingsExpander.Footer>
                 <ComboBox SelectedIndex="{Binding ShowerTheme, Mode=TwoWay}" Width="180">
                     <ComboBoxItem Content="Fluent"/>
-                    <ComboBoxItem Content="LiquidGlass"/>
+                    <ComboBoxItem Content="LiquidGlass (Dev)"/>
                 </ComboBox>
             </fa:FASettingsExpander.Footer>
         </fa:FASettingsExpander>
