@@ -138,7 +138,7 @@ namespace IslandCaller.Services
                 }
             }
             Logger?.LogWarning($"随机选择学生时发生了意外情况，权重总和: {totalWeight}, 随机数: {r}");
-            return "Error"; // 理论上不应该到达这里
+            return "Error: 名单人数小于所需人数"; // 理论上不应该到达这里
         }
     }
 }
