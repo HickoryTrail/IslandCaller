@@ -207,6 +207,13 @@ namespace IslandCaller.Services.IslandCallerService
             string output = string.Join("  ", students);
             string speechContent = $"{Settings.Instance.TTS.BeforeText}{output}{Settings.Instance.TTS.AfterText}";
             float duration = stunum * Settings.Instance.Call.BaseTime + Settings.Instance.Call.AdditionalTime; // 计算持续时间
+            if(duration <= 0)
+            {
+                Logger?.LogError($"点名时长小于 0: {duration}");
+                speechContent = String.Empty;
+                duration = 3;
+                output = "Error: 点名时长小于 0";
+            }
 
             // 发送结果
             Cts = new CancellationTokenSource();
@@ -214,12 +221,15 @@ namespace IslandCaller.Services.IslandCallerService
             if (Settings.Instance.TTS.Provider == Plugin2.TtsProvider.OmniTTS) OmniTTS?.PlayAudio(speechContent, Cts.Token);
             else if (Settings.Instance.TTS.Provider == Plugin2.TtsProvider.ClassIsland) ClassIslandTTS?.EnqueueSpeechQueue(speechContent);
             if ((Settings.Instance.Call.NotifyMethod & 0b01) != 0) _ = new IslandCallerNotificationProviderNew().RandomCall(output, duration, Cts.Token);
-            if ((Settings.Instance.Call.NotifyMethod & 0b10) != 0) WindowsManager.ShowCallWindow(output, duration, Cts.Token);
+            if ((Settings.Instance.Call.NotifyMethod & 0b10) != 0) _ = WindowsManager.ShowCallWindowAsync(output, duration, Cts.Token);
             try
             {
                 await Task.Delay((int)(duration * 1000), Cts.Token);
             }
-            catch { }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
             if (Cts != null && thisCts == Cts) Cts?.Dispose();
             Status.OccupationDisable = true;
         }
