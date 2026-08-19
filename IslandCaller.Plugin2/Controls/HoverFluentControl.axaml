@@ -9,9 +9,6 @@
              Focusable="False"
              x:Class="IslandCaller.Controls.HoverFluentControl"
              x:DataType="vm:HoverFluentViewModel">
-    <UserControl.DataContext>
-        <vm:HoverFluentViewModel />
-    </UserControl.DataContext>
     <Design.DataContext>
         <vm:HoverFluentViewModel />
     </Design.DataContext>

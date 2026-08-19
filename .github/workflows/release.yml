@@ -58,7 +58,7 @@ jobs:
             --configuration Release --no-restore --nologo \
             -p:EnableWindowsTargeting=true -p:Version="${TAG}"
 
-          PLUGIN_OUTPUT="IslandCaller.Plugin2/bin/Release/net10.0-windows"
+          PLUGIN_OUTPUT="IslandCaller.Plugin2/bin/Release/net10.0-windows10.0.19041.0"
           if [[ ! -d "$PLUGIN_OUTPUT" ]]; then
             echo "Expected plugin build output was not generated: $PLUGIN_OUTPUT" >&2
             exit 1
