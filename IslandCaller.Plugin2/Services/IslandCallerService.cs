@@ -209,11 +209,11 @@ namespace IslandCaller.Services.IslandCallerService
             float duration = stunum * Settings.Instance.Call.BaseTime + Settings.Instance.Call.AdditionalTime; // 计算持续时间
 
             // 发送结果
-            Cts = new CancellationTokenSource(new TimeSpan(0, 0, 0, (int)duration, (int)((duration - (int)duration) * 1000)));
+            Cts = new CancellationTokenSource();
             var thisCts = Cts;
             if (Settings.Instance.TTS.Provider == Plugin2.TtsProvider.OmniTTS) OmniTTS?.PlayAudio(speechContent, Cts.Token);
             else if (Settings.Instance.TTS.Provider == Plugin2.TtsProvider.ClassIsland) ClassIslandTTS?.EnqueueSpeechQueue(speechContent);
-            if ((Settings.Instance.Call.NotifyMethod & 0b01) != 0) new IslandCallerNotificationProviderNew().RandomCall(output, duration, Cts.Token);
+            if ((Settings.Instance.Call.NotifyMethod & 0b01) != 0) _ = new IslandCallerNotificationProviderNew().RandomCall(output, duration, Cts.Token);
             if ((Settings.Instance.Call.NotifyMethod & 0b10) != 0) WindowsManager.ShowCallWindow(output, duration, Cts.Token);
             try
             {

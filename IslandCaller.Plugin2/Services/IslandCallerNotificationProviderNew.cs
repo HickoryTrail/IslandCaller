@@ -13,7 +13,7 @@ public class IslandCallerNotificationProviderNew() : NotificationProviderBase
 {
     public NotificationRequest? Request { get; set; }
 
-    public async void RandomCall(string name, float second, CancellationToken token)
+    public async Task RandomCall(string name, float second, CancellationToken token)
     {
         using var registration = token.Register(() =>
         {
@@ -28,5 +28,10 @@ public class IslandCallerNotificationProviderNew() : NotificationProviderBase
             })
         };
         ShowNotification(Request);
+        try
+        {
+            await Task.Delay((int)(second * 1000), token);
+        }
+        catch { }
     }
 }
