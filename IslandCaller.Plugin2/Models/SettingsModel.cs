@@ -1,5 +1,6 @@
 ﻿using static System.Guid;
 using System.ComponentModel;
+using IslandCaller.Plugin2;
 
 namespace IslandCaller.Models
 {
@@ -8,6 +9,8 @@ namespace IslandCaller.Models
         public GeneralSetting General { get; set; } = new GeneralSetting();
         public ProfileSetting Profile { get; set; } = new ProfileSetting();
         public HoverSetting Hover { get; set; } = new HoverSetting();
+        public TTSSetting TTS { get; set; } = new TTSSetting();
+        public CallSettings Call { get; set; } = new CallSettings();
     }
 
     public class GeneralSetting : INotifyPropertyChanged
@@ -72,7 +75,7 @@ namespace IslandCaller.Models
             get => _profilelist;
             set { if (_profilelist != value) { _profilelist = value; OnPropertyChanged(nameof(ProfileList)); } }
         }
-        private Dictionary<Guid, string> _profileprefer = new Dictionary<Guid, string>();
+        private Dictionary<Guid, Guid> _profileprefer = new Dictionary<Guid, Guid>();
 
         private bool _ispreferprofile;
         public bool IsPreferProfile
@@ -80,11 +83,97 @@ namespace IslandCaller.Models
             get => _ispreferprofile;
             set { if (_ispreferprofile != value) { _ispreferprofile = value; OnPropertyChanged(nameof(IsPreferProfile)); } }
         }
-        public Dictionary<Guid, string> ProfilePrefer
+        public Dictionary<Guid, Guid> ProfilePrefer
         {
             get => _profileprefer;
             set { if (_profileprefer != value) { _profileprefer = value; OnPropertyChanged(nameof(ProfilePrefer)); } }
         }
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected void OnPropertyChanged(string name) =>
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+    }
+
+    public class TTSSetting : INotifyPropertyChanged
+    {
+        public TTSSetting()
+        {
+            _beforeText = string.Empty;
+            _afterText = string.Empty;
+            _provider = TtsProvider.None;
+        }
+
+        private TtsProvider _provider;
+        public TtsProvider Provider
+        {
+            get => _provider;
+            set { if (_provider != value) { _provider = value; OnPropertyChanged(nameof(Provider)); } }
+        }
+
+        private string _beforeText;
+        public string BeforeText
+        {
+            get => _beforeText;
+            set { if (_beforeText != value) { _beforeText = value; OnPropertyChanged(nameof(BeforeText)); } }
+        }
+
+        private string _afterText;
+        public string AfterText
+        {
+            get => _afterText;
+            set { if (_afterText != value) { _afterText = value; OnPropertyChanged(nameof(AfterText)); } }
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected void OnPropertyChanged(string name) =>
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+    }
+
+    public class CallSettings : INotifyPropertyChanged
+    {
+        private int _showerTheme;
+        public int ShowerTheme
+        {
+            get => _showerTheme;
+            set
+            {
+                int showerTheme = Math.Clamp(value, 0, 1);
+                if (_showerTheme != showerTheme)
+                {
+                    _showerTheme = showerTheme;
+                    OnPropertyChanged(nameof(ShowerTheme));
+                }
+            }
+        }
+
+        private int _notifyMethod = 1;
+        public int NotifyMethod
+        {
+            get => _notifyMethod;
+            set
+            {
+                int notifyMethod = value & 0b11;
+                if (_notifyMethod != notifyMethod)
+                {
+                    _notifyMethod = notifyMethod;
+                    OnPropertyChanged(nameof(NotifyMethod));
+                }
+            }
+        }
+
+        private float _baseTime = 1.0f;
+        public float BaseTime
+        {
+            get => _baseTime;
+            set { if (_baseTime != value) { _baseTime = value; OnPropertyChanged(nameof(BaseTime)); } }
+        }
+
+        private float _additionalTime = 2.0f;
+        public float AdditionalTime
+        {
+            get => _additionalTime;
+            set { if (_additionalTime != value) { _additionalTime = value; OnPropertyChanged(nameof(AdditionalTime)); } }
+        }
+
         public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged(string name) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
@@ -96,6 +185,8 @@ namespace IslandCaller.Models
         {
             _isEnable = true;
             _scalingFactor = 1.0;
+            _hoverLayout = 0;
+            _hoverTheme = 0;
         }
 
         private bool _isEnable;
@@ -111,6 +202,36 @@ namespace IslandCaller.Models
         {
             get => _scalingFactor;
             set { if (_scalingFactor != value) { _scalingFactor = value; OnPropertyChanged(nameof(ScalingFactor)); } }
+        }
+
+        private int _hoverLayout;
+        public int HoverLayout
+        {
+            get => _hoverLayout;
+            set
+            {
+                int hoverLayout = Math.Clamp(value, 0, 2);
+                if (_hoverLayout != hoverLayout)
+                {
+                    _hoverLayout = hoverLayout;
+                    OnPropertyChanged(nameof(HoverLayout));
+                }
+            }
+        }
+
+        private int _hoverTheme;
+        public int HoverTheme
+        {
+            get => _hoverTheme;
+            set
+            {
+                int hoverTheme = Math.Clamp(value, 0, 1);
+                if (_hoverTheme != hoverTheme)
+                {
+                    _hoverTheme = hoverTheme;
+                    OnPropertyChanged(nameof(HoverTheme));
+                }
+            }
         }
 
         public PositionSetting Position { get; set; } = new PositionSetting();

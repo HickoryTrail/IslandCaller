@@ -1,0 +1,83 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ci="clr-namespace:ClassIsland.Core.Controls;assembly=ClassIsland.Core"
+             xmlns:materials="using:MorerialsAvalonia"
+             xmlns:liquid="using:MorerialsAvalonia.Materials.LiquidGlass"
+             xmlns:vm="using:IslandCaller.ViewModels"
+             x:Class="IslandCaller.Controls.HoverLiquidControl"
+             x:DataType="vm:HoverFluentViewModel"
+             Focusable="False"
+             HorizontalAlignment="Center"
+             VerticalAlignment="Center"
+             HorizontalContentAlignment="Center"
+             VerticalContentAlignment="Center">
+    <Grid x:Name="DragSurfacePanel"
+          HorizontalAlignment="Center"
+          VerticalAlignment="Center"
+          Focusable="False">
+        <liquid:LiquidGlassContainer x:Name="GlassContainer"
+                                     CornerRadius="35"
+                                     HighlightIntensity="0.5"
+                                     HorizontalAlignment="Center"
+                                     VerticalAlignment="Center"
+                                     materials:MaterialForeground.Mode="Automatic">
+            <LayoutTransformControl HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Focusable="False">
+                <LayoutTransformControl.LayoutTransform>
+                    <ScaleTransform ScaleX="{Binding WindowScalingFactor}" ScaleY="{Binding WindowScalingFactor}"/>
+                </LayoutTransformControl.LayoutTransform>
+                <StackPanel Orientation="Horizontal"
+                            Spacing="7"
+                            Margin="7"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                    <Button x:Name="Button1"
+                            Width="88"
+                            Height="56"
+                            CornerRadius="28"
+                            Classes="accent"
+                            materials:MaterialForeground.Mode="Manual"
+                            Focusable="False"
+                            IsEnabled="{Binding IsEnabled}">
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="3"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center">
+                            <ci:FluentIcon Glyph="{Binding Glyph1}" FontSize="28" Foreground="White" Focusable="False"/>
+                            <TextBlock x:Name="CallText"
+                                       Text="Call"
+                                       FontFamily="HarmonyOS Sans SC"
+                                       FontWeight="Medium"
+                                       FontSize="21"
+                                       Foreground="White"
+                                       VerticalAlignment="Center"
+                                       Focusable="False"/>
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="Button2"
+                            Width="56"
+                            Height="56"
+                            CornerRadius="28"
+                            materials:MaterialForeground.Mode="Automatic"
+                            IsEnabled="{Binding IsEnabled}"
+                            Focusable="False">
+                        <ci:FluentIcon Glyph="{Binding Glyph2}" FontSize="28" Focusable="False"/>
+                    </Button>
+                </StackPanel>
+            </LayoutTransformControl>
+        </liquid:LiquidGlassContainer>
+        <liquid:LiquidGlassButton x:Name="MiniButton"
+                                  Width="56"
+                                  Height="56"
+                                  CornerRadius="28"
+                                  HighlightIntensity="0.6"
+                                  Margin="12"
+                                  materials:MaterialForeground.Mode="Automatic"
+                                  IsVisible="False"
+                                  IsEnabled="{Binding IsEnabled}"
+                                  Focusable="False">
+            <ci:FluentIcon x:Name="MiniIcon" Glyph="{Binding Glyph1}" FontSize="28" Focusable="False"/>
+        </liquid:LiquidGlassButton>
+    </Grid>
+</UserControl>

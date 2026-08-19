@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace IslandCaller.Actions
 {
-    [ActionInfo("IslandCaller.Call", "随机点名", "\uECF9", true)]
+    [ActionInfo("IslandCaller.Call", "随机点名", "\uECF9", false)]
     public class CallAction(ILogger<CallAction> logger) : ActionBase
     {
         private readonly ILogger<CallAction> _logger = logger;

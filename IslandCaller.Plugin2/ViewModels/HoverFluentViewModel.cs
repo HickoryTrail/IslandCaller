@@ -2,12 +2,21 @@
 using IslandCaller.Models;
 using IslandCaller.Services;
 using ReactiveUI;
+using System.ComponentModel;
 
 namespace IslandCaller.ViewModels
 {
-    public class HoverFluentViewModel : ReactiveObject
+    public class HoverFluentViewModel : ReactiveObject, IDisposable
     {
-        private double _windowScalingFactor;
+        private readonly HoverSetting _hoverSettings;
+        private readonly Status _status;
+        private readonly PropertyChangedEventHandler _hoverSettingsChangedHandler;
+        private readonly PropertyChangedEventHandler _statusChangedHandler;
+        private readonly IDisposable _glyph1Subscription;
+        private readonly IDisposable _glyph2Subscription;
+        private bool _disposed;
+
+        private double _windowScalingFactor = 1.0;
         public double WindowScalingFactor
         {
             get => _windowScalingFactor;
@@ -24,18 +33,11 @@ namespace IslandCaller.ViewModels
         public string Glyph1 => IsEnabled ? "\uECF8" : "\uED08";
         public string Glyph2 => IsEnabled ? "\uED42" : "\uED08";
 
-        private double _height;
-        public double Height
+        private int _hoverLayout;
+        public int HoverLayout
         {
-            get => _height;
-            set => this.RaiseAndSetIfChanged(ref _height, value);
-        }
-
-        private double _width;
-        public double Width
-        {
-            get => _width;
-            set => this.RaiseAndSetIfChanged(ref _width, value);
+            get => _hoverLayout;
+            private set => this.RaiseAndSetIfChanged(ref _hoverLayout, value);
         }
 
         private double _positionX;
@@ -60,63 +62,59 @@ namespace IslandCaller.ViewModels
             }
         }
 
-        private double _button1Width;
-        public double Button1Width
-        {
-            get => _button1Width;
-            set => this.RaiseAndSetIfChanged(ref _button1Width, value);
-        }
-        private double _button2Width;
-        public double Button2Width
-        {
-            get => _button2Width;
-            set => this.RaiseAndSetIfChanged(ref _button2Width, value);
-        }
-        private double _buttonHeight;
-        public double ButtonHeight
-        {
-            get => _buttonHeight;
-            set => this.RaiseAndSetIfChanged(ref _buttonHeight, value);
-        }
-
         public HoverFluentViewModel()
         {
             // 从设置加载初始值
-            WindowScalingFactor = Settings.Instance.Hover.ScalingFactor;
-            Height = 70 * WindowScalingFactor;
-            Width = 163 * WindowScalingFactor;
-            PositionX = Settings.Instance.Hover.Position.X;
-            PositionY = Settings.Instance.Hover.Position.Y;
-            Button1Width = Width * 0.46;
-            Button2Width = Width * 0.34;
-            ButtonHeight = Height * 0.8;
+            _hoverSettings = Settings.Instance.Hover;
+            WindowScalingFactor = _hoverSettings.ScalingFactor;
+            HoverLayout = _hoverSettings.HoverLayout;
+            PositionX = _hoverSettings.Position.X;
+            PositionY = _hoverSettings.Position.Y;
 
             // 监听设置变化
-            Settings.Instance.Hover.PropertyChanged += (sender, e) =>
-            {
-                if (e.PropertyName == nameof(Settings.Instance.Hover.ScalingFactor))
-                {
-                    WindowScalingFactor = Settings.Instance.Hover.ScalingFactor;
-                    Height = 70 * WindowScalingFactor;
-                    Width = 163 * WindowScalingFactor;
-                    Button1Width = Width * 0.46;
-                    Button2Width = Width * 0.34;
-                    ButtonHeight = Height * 0.8;
-                }
-            };
-            var status = IAppHost.GetService<Status>();
-            IsEnabled = status.IsPluginReady;
-            status.PropertyChanged += (sender, e) =>
-            {
-                if (e.PropertyName == nameof(status.IsPluginReady))
-                {
-                    IsEnabled = status.IsPluginReady;
-                }
-            };
-            this.WhenAnyValue(x => x.IsEnabled)
+            _hoverSettingsChangedHandler = OnHoverSettingsChanged;
+            _hoverSettings.PropertyChanged += _hoverSettingsChangedHandler;
+            _status = IAppHost.GetService<Status>();
+            IsEnabled = _status.IsPluginReady;
+            _statusChangedHandler = OnStatusChanged;
+            _status.PropertyChanged += _statusChangedHandler;
+            _glyph1Subscription = this.WhenAnyValue(x => x.IsEnabled)
                 .Subscribe(_ => this.RaisePropertyChanged(nameof(Glyph1)));
-            this.WhenAnyValue(x => x.IsEnabled)
+            _glyph2Subscription = this.WhenAnyValue(x => x.IsEnabled)
                 .Subscribe(_ => this.RaisePropertyChanged(nameof(Glyph2)));
         }
+
+        private void OnHoverSettingsChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName is nameof(HoverSetting.ScalingFactor)
+                or nameof(HoverSetting.HoverLayout))
+            {
+                WindowScalingFactor = _hoverSettings.ScalingFactor;
+                HoverLayout = _hoverSettings.HoverLayout;
+            }
+        }
+
+        private void OnStatusChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(Status.IsPluginReady))
+            {
+                IsEnabled = _status.IsPluginReady;
+            }
+        }
+
+        public void Dispose()
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            _disposed = true;
+            _hoverSettings.PropertyChanged -= _hoverSettingsChangedHandler;
+            _status.PropertyChanged -= _statusChangedHandler;
+            _glyph1Subscription.Dispose();
+            _glyph2Subscription.Dispose();
+        }
+
     }
 }

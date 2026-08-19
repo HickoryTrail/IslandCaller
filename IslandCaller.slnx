@@ -4,7 +4,5 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="IslandCaller.App/IslandCaller.App.csproj" />
   <Project Path="IslandCaller.Plugin2/IslandCaller.Plugin2.csproj" />
-  <Project Path="Previewer/Previewer.csproj" />
 </Solution>

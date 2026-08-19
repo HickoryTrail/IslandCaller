@@ -1,166 +1,37 @@
-using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Threading;
+using Avalonia.Media;
+using ClassIsland.Shared;
 using IslandCaller.Helpers;
-using IslandCaller.Services.IslandCallerService;
-using IslandCaller.ViewModels;
 using Microsoft.Extensions.Logging;
 
 namespace IslandCaller.Views;
-public partial class HoverFluent : Window
+
+public partial class HoverFluent : HoverWindowBase
 {
-    private HoverFluentViewModel vm { get; set; }
-    private double scaling { get; set; }
-    private bool _isDragging;
-    private long _lastPositionLogTime;
-    private const int PositionLogIntervalMs = 200;
-    private readonly ILogger<HoverFluent> logger = ClassIsland.Shared.IAppHost.GetService<ILogger<HoverFluent>>();
-    private readonly WindowTopmostHelper windowTopmostHelper = ClassIsland.Shared.IAppHost.GetService<WindowTopmostHelper>();
-    private CancellationTokenSource? topmostCts;
+    private readonly ILogger<HoverFluent> _logger = IAppHost.GetService<ILogger<HoverFluent>>();
+    private readonly ScreenBrightnessHelper _screenBrightnessHelper = IAppHost.GetService<ScreenBrightnessHelper>();
 
     public HoverFluent()
     {
         InitializeComponent();
+        InitializeHoverWindow(HoverControl, ScaledContent);
     }
 
-    protected override void OnOpened(EventArgs e)
+    protected override void ApplyThemeTopmost()
     {
-        base.OnOpened(e);
-        vm = DataContext as HoverFluentViewModel;
-        scaling = RenderScaling;
-        Position = new PixelPoint((int)Math.Round(vm.PositionX * scaling), (int)Math.Round(vm.PositionY * scaling));
-        PositionChanged += OnPositionChanged;
-        Activated += OnWindowLayerChanged;
-        Deactivated += OnWindowLayerChanged;
-        logger.LogDebug($"HoverFluent 坐标: PositionX={(int)Math.Round(vm.PositionX * scaling)}, PositionY={(int)Math.Round(vm.PositionY * scaling)}");
-        logger.LogInformation("HoverFluent 悬浮窗初始化成功");
-
-        StartTopmostLoop();
-        windowTopmostHelper.EnsureNoActivate(this);
-        ApplyTopmost("窗口打开");
-    }
-
-    protected override void OnClosed(EventArgs e)
-    {
-        PositionChanged -= OnPositionChanged;
-        Activated -= OnWindowLayerChanged;
-        Deactivated -= OnWindowLayerChanged;
-        topmostCts?.Cancel();
-        topmostCts?.Dispose();
-        topmostCts = null;
-        base.OnClosed(e);
-    }
-
-    private void StartTopmostLoop()
-    {
-        topmostCts?.Cancel();
-        topmostCts?.Dispose();
-        topmostCts = new CancellationTokenSource();
-        var token = topmostCts.Token;
-
-        Task.Run(async () =>
+        if (!HoverControl.IsSecondaryButtonEffectivelyEnabled)
         {
-            logger.LogInformation("HoverFluent 置顶任务启动，间隔: 3000ms");
-            while (!token.IsCancellationRequested)
-            {
-                try
-                {
-                    await Task.Delay(3000, token);
-                }
-                catch (TaskCanceledException)
-                {
-                    break;
-                }
-
-                if (token.IsCancellationRequested) break;
-
-                await Dispatcher.UIThread.InvokeAsync(() => ApplyTopmost("定时器触发"));
-            }
-            logger.LogInformation("HoverFluent 置顶任务结束");
-        }, token);
-    }
-
-    private void OnWindowLayerChanged(object? sender, EventArgs e)
-    {
-        ApplyTopmost("窗口层级变化");
-    }
-
-    private void ApplyTopmost(string reason)
-    {
-        windowTopmostHelper.EnsureTopmost(this);
-        Focusable = false;
-        logger.LogTrace("执行窗口置顶，触发原因: {Reason}", reason);
-    }
-
-    private void OnPositionChanged(object? sender, PixelPointEventArgs e)
-    {
-        scaling = RenderScaling;
-        if (_isDragging)
-        {
+            HoverControl.ResetSecondaryButtonForeground();
             return;
         }
 
-        var now = Environment.TickCount64;
-        if (now - _lastPositionLogTime >= PositionLogIntervalMs)
+        var foreground = Colors.Black;
+        if (HoverControl.TryGetSecondaryButtonScreenRect(out var buttonRect)
+            && _screenBrightnessHelper.TryGetAverageRelativeLuminance(buttonRect, out var luminance))
         {
-            logger.LogDebug($"窗口位置改变: X={Position.X}, Y={Position.Y}");
-            _lastPositionLogTime = now;
+            foreground = ScreenBrightnessHelper.GetRecommendedForeground(luminance);
         }
 
-        ApplyPositionClampIfNeeded();
-    }
-
-    public void BeginDrag()
-    {
-        _isDragging = true;
-    }
-
-    public void EndDragAndClamp()
-    {
-        _isDragging = false;
-        ApplyPositionClampIfNeeded();
-    }
-
-    private void ApplyPositionClampIfNeeded()
-    {
-        var clamped = ClampPositionToScreenBounds(Position);
-        if (clamped != Position)
-        {
-            Position = clamped;
-        }
-        UpdateViewModelPosition(clamped.X, clamped.Y);
-    }
-
-    private PixelPoint ClampPositionToScreenBounds(PixelPoint current)
-    {
-        var screen = Screens.ScreenFromWindow(this)?.Bounds ?? Screens.Primary.Bounds;
-        scaling = RenderScaling;
-
-        int x = current.X;
-        int y = current.Y;
-        int w = (int)Math.Round(Bounds.Width * scaling);
-        int h = (int)Math.Round(Bounds.Height * scaling);
-
-        if (x < screen.X) x = screen.X;
-        if (y < screen.Y) y = screen.Y;
-        if (x + w > screen.X + screen.Width)
-        {
-            x = screen.X + screen.Width - w;
-            logger.LogInformation("调整X坐标以适应屏幕");
-        }
-        if (y + h > screen.Y + screen.Height)
-        {
-            y = screen.Y + screen.Height - h;
-            logger.LogInformation("调整Y坐标以适应屏幕");
-        }
-
-        return new PixelPoint(x, y);
-    }
-
-    private void UpdateViewModelPosition(int x, int y)
-    {
-        vm.PositionX = x / scaling;
-        vm.PositionY = y / scaling;
+        HoverControl.SetSecondaryButtonForeground(foreground);
+        _logger.LogTrace("已更新 Fluent 次按钮前景色。");
     }
 }
-

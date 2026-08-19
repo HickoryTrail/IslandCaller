@@ -7,46 +7,44 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              Focusable="False"
-             x:Class="IslandCaller.Controls.HoverFluentControl">
-    <UserControl.DataContext>
-        <vm:HoverFluentViewModel />
-    </UserControl.DataContext>
+             x:Class="IslandCaller.Controls.HoverFluentControl"
+             x:DataType="vm:HoverFluentViewModel">
     <Design.DataContext>
         <vm:HoverFluentViewModel />
     </Design.DataContext>
-    <Grid
-    x:Name="DragSurface"
-    HorizontalAlignment="Center"
-    VerticalAlignment="Center"
-    Background="Transparent"
-    Focusable="False">
-      <Button
-        x:Name="Button1"
-        Height="56"
-        Width="88"
-        Classes="accent"
-        Focusable="False"
-        IsEnabled="{Binding IsEnabled}">
-          <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Focusable="False">
-              <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="Auto"/>
-                  <ColumnDefinition Width="3"/>
-                  <ColumnDefinition Width="Auto"/>
-              </Grid.ColumnDefinitions>
-              <ci:FluentIcon Glyph="{Binding Glyph1}" FontSize="28" Focusable="False" Grid.Column="0"/>
-              <TextBlock Text="Call" FontFamily="HarmonyOS Sans SC" FontWeight="Medium" FontSize="21" Grid.Column="2" VerticalAlignment="Center" Focusable="False"/>
-          </Grid>
-      </Button>
-      <Button
-        x:Name="Button2"
-        Height="56"
-        Width="58"
-        Margin="95,0,0,0"
-        IsEnabled="{Binding IsEnabled}"
+    <StackPanel
+        x:Name="DragSurfacePanel"
         HorizontalAlignment="Center"
         VerticalAlignment="Center"
+        Orientation="Horizontal"
+        Spacing="7"
+        Margin="7"
+        Background="Transparent"
         Focusable="False">
-          <ci:FluentIcon Glyph="{Binding Glyph2}" FontSize="28" Focusable="False"/>
-      </Button>
-  </Grid>
+        <Button
+            x:Name="Button1"
+            Height="56"
+            Width="88"
+            Classes="accent"
+            Focusable="False"
+            IsEnabled="{Binding IsEnabled}">
+            <StackPanel
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Orientation="Horizontal"
+                Spacing="3"
+                Focusable="False">
+                <ci:FluentIcon Glyph="{Binding Glyph1}" FontSize="28" Focusable="False" Foreground="White"/>
+                <TextBlock x:Name="CallText" Text="Call" FontFamily="HarmonyOS Sans SC" FontWeight="Medium" FontSize="21" VerticalAlignment="Center" Focusable="False" Foreground="White"/>
+            </StackPanel>
+        </Button>
+        <Button
+            x:Name="Button2"
+            Height="56"
+            Width="58"
+            IsEnabled="{Binding IsEnabled}"
+            Focusable="False">
+            <ci:FluentIcon Glyph="{Binding Glyph2}" FontSize="28" Focusable="False"/>
+        </Button>
+    </StackPanel>
 </UserControl>

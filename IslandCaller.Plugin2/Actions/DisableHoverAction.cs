@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace IslandCaller.Actions
 {
-    [ActionInfo("IslandCaller.DisableHover", "禁用悬浮窗", "\uF486", true)]
+    [ActionInfo("IslandCaller.DisableHover", "禁用悬浮窗", "\uF486", false)]
     public class DisableHoverAction(ILogger<DisableHoverAction> logger) : ActionBase
     {
         private readonly ILogger<DisableHoverAction> _logger = logger;

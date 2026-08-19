@@ -8,14 +8,15 @@
         xmlns:cvt="using:IslandCaller.Converters"
         mc:Ignorable="d"
         x:Class="IslandCaller.Views.HoverFluent"
-        ExtendClientAreaChromeHints="NoChrome"
+        x:DataType="vm:HoverFluentViewModel"
         ExtendClientAreaToDecorationsHint="True"
         ExtendClientAreaTitleBarHeightHint="-1"
         TransparencyLevelHint="AcrylicBlur"
         Background = "Transparent"
-        SystemDecorations="Full"
-        Height="{Binding Height}"
-        Width="{Binding Width}"
+        WindowDecorations="BorderOnly"
+        SizeToContent="Manual"
+        MinWidth="0"
+        MinHeight="0"
         ShowInTaskbar="False"
         Topmost="True"
         CanResize="False"
@@ -29,6 +30,7 @@
     </Design.DataContext>
 
     <LayoutTransformControl
+        x:Name="ScaledContent"
         HorizontalAlignment="Center"
         VerticalAlignment="Center"
         Focusable="False">

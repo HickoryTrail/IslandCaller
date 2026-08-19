@@ -1,10 +1,6 @@
-﻿using ClassIsland.Core.Abstractions.Services;
 using ClassIsland.Core.Abstractions.Services.NotificationProviders;
 using ClassIsland.Core.Attributes;
 using ClassIsland.Core.Models.Notification;
-using ClassIsland.Shared.Enums;
-using IslandCaller.Models;
-using System.Text;
 
 namespace IslandCaller.Services.NotificationProvidersNew;
 
@@ -13,34 +9,29 @@ namespace IslandCaller.Services.NotificationProvidersNew;
     "IslandCallerServices",
     "\uECEE",
     "用于为IslandCaller提供通知接口")]
-public class IslandCallerNotificationProviderNew(ILessonsService lessonsService,CoreService coreService) : NotificationProviderBase
+public class IslandCallerNotificationProviderNew() : NotificationProviderBase
 {
-    private readonly ILessonsService lessonsService = lessonsService;
-    public NotificationRequest Request { get; set; }
+    public NotificationRequest? Request { get; set; }
 
-    public async void RandomCall(int stunum)
+    public async Task RandomCall(string name, float second, CancellationToken token)
     {
-        var sb = new StringBuilder();
-        for (int i = 0; i < stunum; i++)
+        using var registration = token.Register(() =>
         {
-            sb.Append(coreService.GetRandomStudent());
-
-            if (i != stunum-1)
-            {
-                sb.Append("  ");
-            }
-        }
-        string output = sb.ToString();
-        int maskduration = stunum * 2 + 1; // 计算持续时间
+            Request?.Cancel();
+        });
         Request = new NotificationRequest()
         {
-            MaskContent = NotificationContent.CreateTwoIconsMask(output, factory: x =>
+            MaskContent = NotificationContent.CreateTwoIconsMask(name, factory: x =>
             {
-                x.Duration = new TimeSpan(0, 0, maskduration);
-                x.IsSpeechEnabled = true;
-                x.SpeechContent = output;
+                x.Duration = new TimeSpan(0, 0, 0, (int)second, (int)((second - (int)second) * 1000));
+                x.IsSpeechEnabled = false;
             })
         };
         ShowNotification(Request);
+        try
+        {
+            await Task.Delay((int)(second * 1000), token);
+        }
+        catch { }
     }
 }

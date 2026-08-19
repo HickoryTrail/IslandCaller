@@ -1,25 +1,48 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net8.0-windows</TargetFramework>
+        <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <AvaloniaUseCompiledBindingsByDefault>True</AvaloniaUseCompiledBindingsByDefault>
+        <PlatformTarget>x64</PlatformTarget>
+        <Prefer32Bit>false</Prefer32Bit>
+        <!-- Plugin dependencies are supplied by ClassIsland; only OmniTTS.Shared is bundled below. -->
+        <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
     </PropertyGroup>
 
     <PropertyGroup>
-        <ClassIslandPluginSdkVersion>1.7.106.2-dev-v2</ClassIslandPluginSdkVersion>
+        <ClassIslandPluginSdkVersion>2.1.1</ClassIslandPluginSdkVersion>
+        <WindowsSdkNetVersion>10.0.26100.87</WindowsSdkNetVersion>
+        <!-- Use the SDK projection version required by MorerialsAvalonia while keeping 19041 as the OS floor. -->
+        <WindowsSdkPackageVersion>$(WindowsSdkNetVersion)</WindowsSdkPackageVersion>
+    </PropertyGroup>
+
+    <PropertyGroup Label="Avalonia">
+      <AvaloniaXamlCreateSourceInfo>True</AvaloniaXamlCreateSourceInfo>
+      <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="ClassIsland.PluginSdk" Version="2.0.0.2">
+        <PackageReference Include="ClassIsland.PluginSdk" Version="2.1.1">
             <ExcludeAssets>runtime; native</ExcludeAssets>
         </PackageReference>
+        <PackageReference Include="MorerialsAvalonia" Version="1.1.0" GeneratePathProperty="true" />
+        <PackageReference Include="OmniTTS.Shared" Version="1.0.0" GeneratePathProperty="true" />
     </ItemGroup>
 
     <ItemGroup>
       <Compile Update="Views\CsvImport.axaml.cs">
         <DependentUpon>CsvImport.axaml</DependentUpon>
       </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Remove="C:\Users\HUS\.nuget\packages\omnitts.shared\1.0.0\lib\net10.0\OmniTTS.Shared.dll" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="C:\Users\HUS\.nuget\packages\omnitts.shared\1.0.0\lib\net10.0\OmniTTS.Shared.dll" />
     </ItemGroup>
 
     <ItemGroup>
@@ -36,5 +59,18 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
     </ItemGroup>
-
+    <Target Name="CopyRuntimeDependencies" AfterTargets="Build">
+        <ItemGroup>
+            <RuntimeDependency Include="$(NuGetPackageRoot)omnitts.shared\1.0.0\lib\net10.0\OmniTTS.Shared.dll" />
+            <!-- ClassIsland supplies Avalonia and its own SDK assemblies. Copy only the LiquidGlass closure. -->
+            <RuntimeDependency Include="$(PkgMorerialsAvalonia)\lib\net10.0-windows10.0.19041\MorerialsAvalonia.dll" />
+            <!-- MorerialsAvalonia's WGC layer references the 26100.86 Windows SDK assembly. -->
+            <RuntimeDependency Include="$(NuGetPackageRoot)silk.net.core\2.23.0\lib\net6.0\Silk.NET.Core.dll" />
+            <RuntimeDependency Include="$(NuGetPackageRoot)silk.net.maths\2.23.0\lib\net5.0\Silk.NET.Maths.dll" />
+            <RuntimeDependency Include="$(NuGetPackageRoot)silk.net.dxgi\2.23.0\lib\net5.0\Silk.NET.DXGI.dll" />
+            <RuntimeDependency Include="$(NuGetPackageRoot)silk.net.direct3d.compilers\2.23.0\lib\net5.0\Silk.NET.Direct3D.Compilers.dll" />
+            <RuntimeDependency Include="$(NuGetPackageRoot)silk.net.direct3d11\2.23.0\lib\net5.0\Silk.NET.Direct3D11.dll" />
+        </ItemGroup>
+        <Copy SourceFiles="@(RuntimeDependency);@(NugetRuntimeDependency)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
+    </Target>
 </Project>

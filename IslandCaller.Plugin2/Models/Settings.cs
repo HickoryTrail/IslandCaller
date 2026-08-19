@@ -1,12 +1,13 @@
-﻿using Microsoft.Win32;
+using Microsoft.Win32;
 using System.Text.Json;
 using IslandCaller.Services;
+using IslandCaller.Plugin2;
 
 namespace IslandCaller.Models
 {
     public class Settings(ProfileService profileService)
     {
-        public static SettingsModel Instance { get; } = new SettingsModel();
+        public static SettingsModel Instance { get; private set; } = new SettingsModel();
         public ProfileService ProfileService { get; } = profileService;
 
         private static string GetAppDataRootPath()
@@ -43,6 +44,8 @@ namespace IslandCaller.Models
             RegistryKey IsC_ProfileKey = IsC_RootKey?.CreateSubKey("Profile", writable: true);
             RegistryKey IsC_HoverKey = IsC_RootKey?.CreateSubKey("Hover", writable: true);
             RegistryKey IsC_HoverKey_Position = IsC_HoverKey?.CreateSubKey("Position", writable: true);
+            RegistryKey IsC_TTSKey = IsC_RootKey?.CreateSubKey("TTS", writable: true);
+            RegistryKey IsC_CallKey = IsC_RootKey?.CreateSubKey("Call", writable: true);
 
             IsC_GeneralKey?.SetValue("BreakDisable", Instance.General.BreakDisable);
             IsC_GeneralKey?.SetValue("Interruptable", Instance.General.Interruptable);
@@ -53,8 +56,17 @@ namespace IslandCaller.Models
             IsC_ProfileKey?.SetValue("PreferProfile", JsonSerializer.Serialize(Instance.Profile.ProfilePrefer));
             IsC_HoverKey?.SetValue("IsEnable", Instance.Hover.IsEnable);
             IsC_HoverKey?.SetValue("ScalingFactor", Instance.Hover.ScalingFactor);
+            IsC_HoverKey?.SetValue("HoverLayout", Instance.Hover.HoverLayout);
+            IsC_HoverKey?.SetValue("HoverTheme", Instance.Hover.HoverTheme);
             IsC_HoverKey_Position?.SetValue("X", Instance.Hover.Position.X);
             IsC_HoverKey_Position?.SetValue("Y", Instance.Hover.Position.Y);
+            IsC_TTSKey?.SetValue("BeforeText", Instance.TTS.BeforeText);
+            IsC_TTSKey?.SetValue("AfterText", Instance.TTS.AfterText);
+            IsC_TTSKey?.SetValue("Provider", Instance.TTS.Provider.ToString());
+            IsC_CallKey?.SetValue("NotifyMethod", Instance.Call.NotifyMethod);
+            IsC_CallKey?.SetValue("ShowerTheme", Instance.Call.ShowerTheme);
+            IsC_CallKey?.SetValue("BaseTime", Instance.Call.BaseTime);
+            IsC_CallKey?.SetValue("AdditionalTime", Instance.Call.AdditionalTime);
 
             ProfileService.CreateDemoProfile(Instance.Profile.DefaultProfile);
             ClassIsland.Core.Controls.CommonTaskDialogs.ShowDialog("Welcome", "欢迎使用IslandCaller2.0");
@@ -67,6 +79,8 @@ namespace IslandCaller.Models
             RegistryKey IsC_ProfileKey;
             RegistryKey IsC_HoverKey;
             RegistryKey IsC_HoverKey_Position;
+            RegistryKey IsC_TTSKey;
+            RegistryKey IsC_CallKey;
 
             if (IsC_RootKey == null)
             {
@@ -86,18 +100,31 @@ namespace IslandCaller.Models
                 IsC_ProfileKey = IsC_RootKey?.OpenSubKey("Profile", writable: true);
                 IsC_HoverKey = IsC_RootKey?.OpenSubKey("Hover", writable: true);
                 IsC_HoverKey_Position = IsC_HoverKey?.OpenSubKey("Position", writable: true);
+                IsC_TTSKey = IsC_RootKey?.OpenSubKey("TTS", writable: true) ?? IsC_RootKey?.CreateSubKey("TTS", writable: true);
+                IsC_CallKey = IsC_RootKey?.OpenSubKey("Call", writable: true) ?? IsC_RootKey?.CreateSubKey("Call", writable: true);
 
                 Instance.General.BreakDisable = Convert.ToBoolean(IsC_GeneralKey?.GetValue("BreakDisable") ?? true);
                 Instance.General.Interruptable = Convert.ToBoolean(IsC_GeneralKey?.GetValue("Interruptable") ?? false);
                 Instance.Profile.ProfileNum = Convert.ToInt32(IsC_ProfileKey?.GetValue("ProfileNum"));
                 Instance.Profile.DefaultProfile = Guid.Parse(IsC_ProfileKey?.GetValue("DefaultProfileName") as string);
                 Instance.Profile.IsPreferProfile = Convert.ToBoolean(IsC_ProfileKey?.GetValue("IsPreferProfile") ?? false);
-                Instance.Profile.ProfileList = JsonSerializer.Deserialize<Dictionary<Guid, string>>((IsC_ProfileKey?.GetValue("ProfileList") ?? "{}") as string);
-                Instance.Profile.ProfilePrefer = JsonSerializer.Deserialize<Dictionary<Guid, string>>((IsC_ProfileKey?.GetValue("PreferProfile") ?? "{}") as string);
+                string profileListJson = IsC_ProfileKey?.GetValue("ProfileList") as string ?? "{}";
+                string profilePreferJson = IsC_ProfileKey?.GetValue("PreferProfile") as string ?? "{}";
+                Instance.Profile.ProfileList = JsonSerializer.Deserialize<Dictionary<Guid, string>>(profileListJson) ?? new Dictionary<Guid, string>();
+                Instance.Profile.ProfilePrefer = JsonSerializer.Deserialize<Dictionary<Guid, Guid>>(profilePreferJson) ?? new Dictionary<Guid, Guid>();
                 Instance.Hover.IsEnable = Convert.ToBoolean(IsC_HoverKey?.GetValue("IsEnable") ?? true);
                 Instance.Hover.ScalingFactor = Convert.ToDouble(IsC_HoverKey?.GetValue("ScalingFactor") ?? 1.0);
+                Instance.Hover.HoverLayout = Convert.ToInt32(IsC_HoverKey?.GetValue("HoverLayout") ?? 0);
+                Instance.Hover.HoverTheme = Convert.ToInt32(IsC_HoverKey?.GetValue("HoverTheme") ?? 0);
                 Instance.Hover.Position.X = Convert.ToDouble(IsC_HoverKey_Position?.GetValue("X") ?? 200.0);
                 Instance.Hover.Position.Y = Convert.ToDouble(IsC_HoverKey_Position?.GetValue("Y") ?? 200.0);
+                Instance.TTS.BeforeText = IsC_TTSKey?.GetValue("BeforeText") as string ?? string.Empty;
+                Instance.TTS.AfterText = IsC_TTSKey?.GetValue("AfterText") as string ?? string.Empty;
+                Instance.TTS.Provider = ReadTtsProvider(IsC_TTSKey?.GetValue("Provider"));
+                Instance.Call.NotifyMethod = Convert.ToInt32(IsC_CallKey?.GetValue("NotifyMethod") ?? 1);
+                Instance.Call.ShowerTheme = Convert.ToInt32(IsC_CallKey?.GetValue("ShowerTheme") ?? 0);
+                Instance.Call.BaseTime = Convert.ToSingle(IsC_CallKey?.GetValue("BaseTime") ?? 1.0f);
+                Instance.Call.AdditionalTime = Convert.ToSingle(IsC_CallKey?.GetValue("AdditionalTime") ?? 2.0f);
                 Save();
             }
 
@@ -111,6 +138,8 @@ namespace IslandCaller.Models
             RegistryKey IsC_ProfileKey = IsC_RootKey?.OpenSubKey("Profile", writable: true);
             RegistryKey IsC_HoverKey = IsC_RootKey?.OpenSubKey("Hover", writable: true);
             RegistryKey IsC_HoverKey_Position = IsC_HoverKey?.OpenSubKey("Position", writable: true);
+            RegistryKey IsC_TTSKey = IsC_RootKey?.OpenSubKey("TTS", writable: true) ?? IsC_RootKey?.CreateSubKey("TTS", writable: true);
+            RegistryKey IsC_CallKey = IsC_RootKey?.OpenSubKey("Call", writable: true) ?? IsC_RootKey?.CreateSubKey("Call", writable: true);
 
             IsC_GeneralKey?.SetValue("BreakDisable", Instance.General.BreakDisable);
             IsC_GeneralKey?.SetValue("Interruptable", Instance.General.Interruptable);
@@ -121,8 +150,44 @@ namespace IslandCaller.Models
             IsC_ProfileKey?.SetValue("PreferProfile", JsonSerializer.Serialize(Instance.Profile.ProfilePrefer));
             IsC_HoverKey?.SetValue("IsEnable", Instance.Hover.IsEnable);
             IsC_HoverKey?.SetValue("ScalingFactor", Instance.Hover.ScalingFactor);
+            IsC_HoverKey?.SetValue("HoverLayout", Instance.Hover.HoverLayout);
+            IsC_HoverKey?.SetValue("HoverTheme", Instance.Hover.HoverTheme);
             IsC_HoverKey_Position?.SetValue("X", Instance.Hover.Position.X);
             IsC_HoverKey_Position?.SetValue("Y", Instance.Hover.Position.Y);
+            IsC_TTSKey?.SetValue("BeforeText", Instance.TTS.BeforeText);
+            IsC_TTSKey?.SetValue("AfterText", Instance.TTS.AfterText);
+            IsC_TTSKey?.SetValue("Provider", Instance.TTS.Provider.ToString());
+            IsC_CallKey?.SetValue("NotifyMethod", Instance.Call.NotifyMethod);
+            IsC_CallKey?.SetValue("ShowerTheme", Instance.Call.ShowerTheme);
+            IsC_CallKey?.SetValue("BaseTime", Instance.Call.BaseTime);
+            IsC_CallKey?.SetValue("AdditionalTime", Instance.Call.AdditionalTime);
+        }
+
+        /// <summary>
+        /// 替换当前设置模型，并将其绑定到注册表保存逻辑。
+        /// </summary>
+        public void ReplaceModel(SettingsModel model)
+        {
+            ArgumentNullException.ThrowIfNull(model);
+            Instance = model;
+            SettingsBinder.Bind(Instance, Save);
+            Save();
+        }
+
+        private static TtsProvider ReadTtsProvider(object? value)
+        {
+            if (value is string name && Enum.TryParse(name, ignoreCase: true, out TtsProvider provider) &&
+                Enum.IsDefined(provider))
+            {
+                return provider;
+            }
+
+            if (value is int numericValue && Enum.IsDefined(typeof(TtsProvider), numericValue))
+            {
+                return (TtsProvider)numericValue;
+            }
+
+            return TtsProvider.None;
         }
     }
     public static class SettingsBinder
@@ -135,6 +200,15 @@ namespace IslandCaller.Models
             // Hover
             model.Hover.PropertyChanged += (_, _) => onChange();
             model.Hover.Position.PropertyChanged += (_, _) => onChange();
+
+            // TTS
+            model.TTS.PropertyChanged += (_, _) => onChange();
+
+            // Call
+            model.Call.PropertyChanged += (_, _) => onChange();
+
+            // Profile
+            model.Profile.PropertyChanged += (_, _) => onChange();
         }
     }
 
