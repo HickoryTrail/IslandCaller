@@ -133,6 +133,19 @@ classisland://plugins/IslandCaller/Simple/1
 classisland://plugins/IslandCaller/Advanced/GUI
 ```
 
+---
+
+## RemoteCI 控制
+
+安装了 [RemoteCI](https://github.com/Edge-HH/RemoteCI) 插件后，IslandCaller 会在RemoteCI手表端“控制”页和webUI控制页注册 **随机点名** 入口，点击即可在ClassIsland端触发一次单人随机抽选。
+
+- 需要 RemoteCI 已成功连接（云端或局域网均可）；
+- 当前账号需要拥有 **发送与清除通知** 权限，手表端才会显示该入口；
+- 抽选结果的展示与通知由 IslandCaller 自身完成，手表端只收到“已开始随机点名”的回执。
+- 若 RemoteCI 未安装或未连接，并**不会**影响IslandCaller正常使用
+
+---
+
 ## 导入文件示例
 
 ### 文本名单（`.txt`）

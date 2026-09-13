@@ -93,6 +93,17 @@ IslandCaller 是一个基于 ClassIsland 2.0 插件 SDK 开发的课堂点名插
 - **`.iscdoc` 数据包**：在设置页可将全部设置、名单与点名历史导出为数据包；换机或重装时导入即可完整恢复；
 - 导入数据包会**完全替换**当前的设置、名单、历史记录及 `%AppData%\IslandCaller` 下的数据，导入完成后需要重启 ClassIsland 生效。
 
+## RemoteCI 控制
+
+安装了 [RemoteCI](https://github.com/Edge-HH/RemoteCI) 插件后，IslandCaller 会在RemoteCI手表端“控制”页和webUI控制页注册 **随机点名** 入口，点击即可在ClassIsland端触发一次单人随机抽选。
+
+- 需要 RemoteCI 已成功连接（云端或局域网均可）；
+- 当前账号需要拥有 **发送与清除通知** 权限，手表端才会显示该入口；
+- 抽选结果的展示与通知由 IslandCaller 自身完成，手表端只收到“已开始随机点名”的回执。
+- 若 RemoteCI 未安装或未连接，并**不会**影响IslandCaller正常使用
+
+---
+
 ## 导入文件示例
 
 ### 文本名单（`.txt`）

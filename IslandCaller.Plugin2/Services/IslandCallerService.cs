@@ -1,3 +1,4 @@
+using Avalonia.Threading;
 using ClassIsland.Core.Abstractions.Services;
 using ClassIsland.Core.Abstractions.Services.SpeechService;
 using ClassIsland.Shared;
@@ -187,6 +188,15 @@ namespace IslandCaller.Services.IslandCallerService
 
         public async void ShowRandomStudent(int stunum)
         {
+            // 点名结果的提醒与结果窗口都依赖 Avalonia UI 对象，只能在 UI 线程上创建与访问，
+            // 而本方法可能被后台线程调用（例如 RemoteCI 手表端远程扩展），
+            // 因此在入口处先切回 UI 线程，再按原有逻辑执行，避免跨线程访问 UI 对象导致 ClassIsland 崩溃并禁用插件。
+            if (!Dispatcher.UIThread.CheckAccess())
+            {
+                Dispatcher.UIThread.Post(() => ShowRandomStudent(stunum));
+                return;
+            }
+
             // 准备点名
             if(Status.IsPluginReady == false) return;
 

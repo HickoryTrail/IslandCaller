@@ -7,6 +7,7 @@ using ClassIsland.Core.Models.Automation;
 using ClassIsland.Shared;
 using IslandCaller.Actions;
 using IslandCaller.Controls;
+using IslandCaller.Extensions;
 using IslandCaller.Helpers;
 using IslandCaller.Models;
 using IslandCaller.Services;
@@ -57,6 +58,15 @@ namespace IslandCaller
                     IAppHost.GetService<ProfileRuntimeService>().Initialize();
                     IAppHost.GetService<IslandCallerService>().Initialize();
                     IAppHost.GetService<WindowsManager>().Initialize();
+                    // 接入 RemoteCI：在手表“控制”页注册“随机点名”远程扩展（RemoteCI 未安装时自动跳过）。
+                    try
+                    {
+                        RemoteCiBridge.RegisterRandomCallExtension(logger);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger?.LogWarning(ex, "注册 RemoteCI 远程扩展失败");
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -65,6 +75,19 @@ namespace IslandCaller
                     throw;
                 }
 
+            };
+
+            // RemoteCI 插件退出时注销远程扩展，避免残留无效入口。
+            AppBase.Current.AppStopping += (_, _) =>
+            {
+                try
+                {
+                    RemoteCiBridge.UnregisterRandomCallExtension(logger);
+                }
+                catch (Exception ex)
+                {
+                    logger?.LogWarning($"注销 RemoteCI 扩展失败：{ex}");
+                }
             };
         }
 
