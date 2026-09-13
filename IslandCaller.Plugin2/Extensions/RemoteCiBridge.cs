@@ -135,8 +135,8 @@ internal class RemoteCiExtensionProxy : DispatchProxy
             case "get_DisplayName":
                 return "随机点名";
             case "get_RequiredPermission":
-                // RemoteCI.Shared.UserPermissions 的 SendNotifications 位（通知类操作）。
-                return Enum.Parse(targetMethod.ReturnType, "SendNotifications");
+                // RemoteCI 扩展统一使用 RunExtensions 权限鉴权。
+                return Enum.Parse(targetMethod.ReturnType, "RunExtensions");
             case "get_Icon":
                 return RemoteCiBridge.WatchIconName;
             case "get_Parameters":
