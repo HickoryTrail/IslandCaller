@@ -8,7 +8,7 @@ namespace IslandCaller.Services
         private ProfileService ProfileService { get; set; }
         private HistoryService HistoryService { get; set; }
         private ILogger<CoreService>? Logger { get; set; }
-        private Status Status {  get; set; }
+        private Status Status { get; set; }
         Random rand = new();
         public CoreService()
         {
@@ -82,8 +82,8 @@ namespace IslandCaller.Services
             // -----------------------------
             const double eps = 1.0;      // 平滑项
             const double gamma = 0.9;    // 补偿强度
-            const double rMin = 0.6;     // 最小补偿
-            const double rMax = 1.6;     // 最大补偿
+            const double rMin = 0.5;     // 最小补偿
+            const double rMax = 1.8;     // 最大补偿
 
             // F_history = clip( ((manualWeight * avgHist + eps)/(nHist + eps))^gamma , rMin, rMax )
             double ratio = (manualWeight * avgHist + eps) / (nHist + eps);
