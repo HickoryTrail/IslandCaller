@@ -17,6 +17,8 @@ using IslandCaller.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using SuperAutoIsland.Interface.Metadata;
+using SuperAutoIsland.Interface.Services;
 
 namespace IslandCaller
 {
@@ -58,6 +60,7 @@ namespace IslandCaller
                     IAppHost.GetService<ProfileRuntimeService>().Initialize();
                     IAppHost.GetService<IslandCallerService>().Initialize();
                     IAppHost.GetService<WindowsManager>().Initialize();
+                    RegisterSuperAutoIslandBlocks(logger);
                     // 接入 RemoteCI：在手表“控制”页注册“随机点名”远程扩展（RemoteCI 未安装时自动跳过）。
                     try
                     {
@@ -102,6 +105,43 @@ namespace IslandCaller
                 new ActionMenuTreeItem("IslandCaller.DisableHover", "禁用悬浮窗", "\uF486"));
             IActionService.ActionMenuTree["IslandCaller 行动"].Add(
                 new ActionMenuTreeItem("IslandCaller.SwitchProfile", "切换档案", "\uE9A8"));
+        }
+
+        private static void RegisterSuperAutoIslandBlocks(ILogger<Plugin>? logger)
+        {
+            if (!IPluginService.LoadedPlugins.Any(info => info.Manifest.Id == "lrs2187.sai"))
+            {
+                return;
+            }
+
+            try
+            {
+                IAppHost.GetService<ISaiServer>().RegisterBlocks("IslandCaller", blocks => blocks
+                    .AddBlock(new BlockMetadata("IslandCaller.Call")
+                    {
+                        Kind = BlockKind.Action,
+                        Name = "随机点名",
+                        Icon = ("点名", "\uECF9"),
+                    })
+                    .AddBlock(new BlockMetadata("IslandCaller.EnableHover")
+                    {
+                        Kind = BlockKind.Action,
+                        Name = "显示悬浮窗",
+                        Icon = ("显示", "\uF484"),
+                    })
+                    .AddBlock(new BlockMetadata("IslandCaller.DisableHover")
+                    {
+                        Kind = BlockKind.Action,
+                        Name = "隐藏悬浮窗",
+                        Icon = ("隐藏", "\uF486"),
+                    }));
+
+                logger?.LogInformation("已注册 SuperAutoIsland 积木：随机点名、显示悬浮窗、隐藏悬浮窗");
+            }
+            catch (Exception ex)
+            {
+                logger?.LogWarning(ex, "注册 SuperAutoIsland 积木失败");
+            }
         }
     }
 }

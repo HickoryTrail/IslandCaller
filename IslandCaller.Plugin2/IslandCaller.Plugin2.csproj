@@ -27,6 +27,7 @@
         <PackageReference Include="ClassIsland.PluginSdk" Version="2.1.1.1">
             <ExcludeAssets>runtime; native</ExcludeAssets>
         </PackageReference>
+        <PackageReference Include="SuperAutoIsland.Interface" Version="0.3.9.1-dev.2" GeneratePathProperty="true" />
         <PackageReference Include="MorerialsAvalonia" Version="1.1.1" />
         <PackageReference Include="OmniTTS.Shared" Version="1.0.0" />
     </ItemGroup>
@@ -58,7 +59,9 @@
                        Or '%(Filename)%(Extension)' == 'Silk.NET.Maths.dll'
                        Or '%(Filename)%(Extension)' == 'Silk.NET.DXGI.dll'
                        Or '%(Filename)%(Extension)' == 'Silk.NET.Direct3D.Compilers.dll'
-                       Or '%(Filename)%(Extension)' == 'Silk.NET.Direct3D11.dll'" />
+                       Or '%(Filename)%(Extension)' == 'Silk.NET.Direct3D11.dll'
+                       Or '%(Filename)%(Extension)' == 'SuperAutoIsland.Interface.dll'" />
+            <_PluginRuntimeDependency Include="$(PkgSuperAutoIsland_Interface)\lib\net10.0\SuperAutoIsland.Interface.dll" />
             <ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)" />
             <ReferenceCopyLocalPaths Include="@(_PluginRuntimeDependency)" />
         </ItemGroup>
