@@ -48,7 +48,7 @@
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">
-                                <Slider Minimum="0" Maximum="2.0"
+                                <Slider Minimum="0" Maximum="4.0"
                                         VerticalAlignment="Center"
                                         Width="160"
                                         TickFrequency="0.05"
