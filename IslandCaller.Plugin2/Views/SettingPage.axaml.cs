@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
 using ClassIsland.Core;
@@ -9,7 +10,7 @@ using ClassIsland.Platforms.Abstraction;
 using ClassIsland.Shared;
 using FluentAvalonia.UI.Controls;
 using IslandCaller.Models;
-using IslandCaller.Plugin2;
+using IslandCaller;
 using IslandCaller.Services;
 using IslandCaller.ViewModels;
 using Microsoft.Extensions.Logging;
@@ -30,7 +31,67 @@ public partial class SettingPage : SettingsPageBase
         vm = (SettingPageViewModel)DataContext!;
         historyService = IAppHost.GetService<HistoryService>();
         logger = IAppHost.GetService<ILogger<SettingPage>>();
+        vm.PasswordSetupRequested += OnPasswordSetupRequested;
         logger.LogInformation("SettingPage 初始化完成");
+    }
+
+    private async void OnPasswordSetupRequested(bool isViewPassword)
+    {
+        // 开启密码开关但未设置密码时，引导设置密码，避免锁定后无法解锁。
+        var passwordBox = new TextBox
+        {
+            PasswordChar = '●',
+            PlaceholderText = isViewPassword ? "输入新查看密码" : "输入新修改密码",
+            Width = 260
+        };
+        var dialog = new FAContentDialog
+        {
+            Title = isViewPassword ? "设置查看密码" : "设置修改密码",
+            Content = passwordBox,
+            VerticalContentAlignment = Avalonia.Layout.VerticalAlignment.Center,
+            PrimaryButtonText = "确定",
+            SecondaryButtonText = "取消",
+            DefaultButton = FAContentDialogButton.Primary
+        };
+        var result = await dialog.ShowAsync(GetOwnerWindow());
+        if (result != FAContentDialogResult.Primary)
+        {
+            // 用户取消：回退开关
+            if (isViewPassword)
+            {
+                vm.IsViewPasswordEnabled = false;
+            }
+            else
+            {
+                vm.IsEditPasswordEnabled = false;
+            }
+            return;
+        }
+
+        var newPassword = passwordBox.Text ?? string.Empty;
+        if (string.IsNullOrEmpty(newPassword))
+        {
+            // 密码为空：回退开关
+            if (isViewPassword)
+            {
+                vm.IsViewPasswordEnabled = false;
+            }
+            else
+            {
+                vm.IsEditPasswordEnabled = false;
+            }
+            await CommonTaskDialogs.ShowDialog("密码为空", "密码不能为空，已取消开启密码保护。", this);
+            return;
+        }
+
+        if (isViewPassword)
+        {
+            vm.SetViewPassword(newPassword);
+        }
+        else
+        {
+            vm.SetEditPassword(newPassword);
+        }
     }
 
     private async void CreateProfileButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
@@ -113,6 +174,7 @@ public partial class SettingPage : SettingsPageBase
         {
             Title = "移除名单",
             Content = $"确定要从档案列表中移除“{profileName}”吗？本地名单文件不会被删除。{rulesDescription}",
+            VerticalContentAlignment = Avalonia.Layout.VerticalAlignment.Center,
             PrimaryButtonText = "移除",
             SecondaryButtonText = "取消",
             DefaultButton = FAContentDialogButton.Secondary
@@ -310,5 +372,247 @@ public partial class SettingPage : SettingsPageBase
     private Window? GetOwnerWindow()
     {
         return TopLevel.GetTopLevel(this) as Window;
+    }
+
+    private void UnlockViewButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        var passwordBox = this.FindControl<TextBox>("UnlockViewPasswordBox");
+        if (passwordBox == null)
+        {
+            return;
+        }
+
+        if (vm.TryUnlockView(passwordBox.Text ?? string.Empty))
+        {
+            passwordBox.Text = string.Empty;
+            logger.LogInformation("设置页查看密码验证通过");
+        }
+        else
+        {
+            passwordBox.Text = string.Empty;
+            _ = CommonTaskDialogs.ShowDialog("密码错误", "输入的查看密码不正确，请重试。", this);
+        }
+    }
+
+    private void UnlockEditButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        var passwordBox = this.FindControl<TextBox>("UnlockEditPasswordBox");
+        if (passwordBox == null)
+        {
+            return;
+        }
+
+        if (vm.TryUnlockEdit(passwordBox.Text ?? string.Empty))
+        {
+            passwordBox.Text = string.Empty;
+            logger.LogInformation("设置页修改密码验证通过，已解锁编辑");
+        }
+        else
+        {
+            passwordBox.Text = string.Empty;
+            _ = CommonTaskDialogs.ShowDialog("密码错误", "输入的修改密码不正确，请重试。", this);
+        }
+    }
+
+    private async void SetViewPasswordButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (GetOwnerWindow() is not Window owner)
+        {
+            return;
+        }
+
+        var passwordBox = new TextBox
+        {
+            PasswordChar = '●',
+            PlaceholderText = "输入新查看密码",
+            Width = 260
+        };
+        var dialog = new FAContentDialog
+        {
+            Title = "设置查看密码",
+            Content = passwordBox,
+            VerticalContentAlignment = Avalonia.Layout.VerticalAlignment.Center,
+            PrimaryButtonText = "确定",
+            SecondaryButtonText = "取消",
+            DefaultButton = FAContentDialogButton.Primary
+        };
+        var result = await dialog.ShowAsync(owner);
+        if (result != FAContentDialogResult.Primary)
+        {
+            return;
+        }
+
+        var newPassword = passwordBox.Text ?? string.Empty;
+        if (string.IsNullOrEmpty(newPassword))
+        {
+            await CommonTaskDialogs.ShowDialog("密码为空", "密码不能为空，请重新设置。", this);
+            return;
+        }
+
+        vm.SetViewPassword(newPassword);
+        await CommonTaskDialogs.ShowDialog("设置成功", "查看密码已设置，下次进入设置页需要输入查看密码。", this);
+    }
+
+    private async void SetEditPasswordButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (GetOwnerWindow() is not Window owner)
+        {
+            return;
+        }
+
+        var passwordBox = new TextBox
+        {
+            PasswordChar = '●',
+            PlaceholderText = "输入新修改密码",
+            Width = 260
+        };
+        var dialog = new FAContentDialog
+        {
+            Title = "设置修改密码",
+            Content = passwordBox,
+            VerticalContentAlignment = Avalonia.Layout.VerticalAlignment.Center,
+            PrimaryButtonText = "确定",
+            SecondaryButtonText = "取消",
+            DefaultButton = FAContentDialogButton.Primary
+        };
+        var result = await dialog.ShowAsync(owner);
+        if (result != FAContentDialogResult.Primary)
+        {
+            return;
+        }
+
+        var newPassword = passwordBox.Text ?? string.Empty;
+        if (string.IsNullOrEmpty(newPassword))
+        {
+            await CommonTaskDialogs.ShowDialog("密码为空", "密码不能为空，请重新设置。", this);
+            return;
+        }
+
+        vm.SetEditPassword(newPassword);
+        await CommonTaskDialogs.ShowDialog("设置成功", "修改密码已设置，修改配置时需要输入修改密码。", this);
+    }
+
+    private async void BrowseHoverImageButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        var path = await PickImagePathAsync("选择抽选悬浮窗图片");
+        if (!string.IsNullOrEmpty(path))
+        {
+            vm.HoverImagePathDraft = path;
+        }
+    }
+
+    private async void BrowseResultImageButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        var path = await PickImagePathAsync("选择结果展示图片");
+        if (!string.IsNullOrEmpty(path))
+        {
+            vm.ResultImagePathDraft = path;
+        }
+    }
+
+    private void SaveAppearanceButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        vm.SaveAppearance();
+        logger.LogInformation("外观设置已保存");
+        _ = ShowCenteredInfoAsync("已保存", "外观修改已生效。", this);
+    }
+
+    private void SaveHotkeyButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (!vm.ValidateHotkeyDraft(out var error))
+        {
+            _ = ShowCenteredInfoAsync("快捷键无效", error, this);
+            return;
+        }
+
+        vm.SaveHotkey();
+        var hotkeyService = IAppHost.TryGetService<HotkeyService>();
+        if (hotkeyService is null)
+        {
+            logger.LogWarning("快捷键服务未注册，快捷键设置已保存但本次未注册。");
+            vm.RefreshHotkeyStatus(HotkeyRegistrationState.Disabled, "服务未就绪");
+            _ = ShowCenteredInfoAsync("已保存", "快捷键设置已保存，但快捷键服务未就绪，重启后生效。", this);
+            return;
+        }
+
+        hotkeyService.Apply(silent: true);
+        vm.RefreshHotkeyStatus(hotkeyService.State, hotkeyService.StateMessage);
+        logger.LogInformation(
+            "快捷键设置已保存：{State} - {Message}", hotkeyService.State, hotkeyService.StateMessage);
+
+        var hotkey = Settings.Instance.Hotkey;
+        if (!hotkey.Enabled)
+        {
+            _ = ShowCenteredInfoAsync("已保存", "已关闭快捷键点名。", this);
+            return;
+        }
+
+        string scopeText = hotkey.Scope == HotkeyScope.ClassIslandForeground ? "仅 ClassIsland 前台" : "全局";
+        switch (hotkeyService.State)
+        {
+            case HotkeyRegistrationState.Registered:
+                _ = ShowCenteredInfoAsync("已保存", $"{hotkey.GestureText} 已生效（触发范围：{scopeText}）。", this);
+                break;
+            case HotkeyRegistrationState.Conflict:
+                _ = ShowCenteredInfoAsync(
+                    "快捷键冲突",
+                    $"{hotkey.GestureText} 已被其它程序占用，请更换组合后重试。",
+                    this);
+                break;
+            case HotkeyRegistrationState.Invalid:
+                _ = ShowCenteredInfoAsync("快捷键无效", hotkeyService.StateMessage, this);
+                break;
+            default:
+                _ = ShowCenteredInfoAsync("注册失败", $"快捷键注册失败：{hotkeyService.StateMessage}", this);
+                break;
+        }
+    }
+
+    private static async Task ShowCenteredInfoAsync(string header, string content, Visual xamlRoot)
+    {
+        var dialog = new FATaskDialog
+        {
+            Header = header,
+            Content = content,
+            VerticalContentAlignment = Avalonia.Layout.VerticalAlignment.Center,
+            XamlRoot = xamlRoot,
+            Buttons =
+            {
+                new FATaskDialogButton("确定", true) { IsDefault = true }
+            }
+        };
+        await dialog.ShowAsync();
+    }
+
+    private async Task<string?> PickImagePathAsync(string title)
+    {
+        var topLevel = TopLevel.GetTopLevel(this) ?? AppBase.Current.GetRootWindow();
+        if (topLevel == null)
+        {
+            return null;
+        }
+
+        var filePaths = await PlatformServices.FilePickerService.OpenFilesPickerAsync(
+            new FilePickerOpenOptions
+            {
+                Title = title,
+                FileTypeFilter =
+                [
+                    new FilePickerFileType("图片")
+                    {
+                        Patterns = ["*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif", "*.webp"]
+                    }
+                ],
+                AllowMultiple = false
+            },
+            topLevel);
+
+        if (filePaths == null || filePaths.Count == 0)
+        {
+            return null;
+        }
+
+        // ClassIsland 的 FilePickerService 直接返回本地路径字符串
+        return filePaths[0];
     }
 }

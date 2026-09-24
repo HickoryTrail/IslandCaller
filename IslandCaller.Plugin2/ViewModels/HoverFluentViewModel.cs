@@ -1,4 +1,6 @@
-﻿using ClassIsland.Shared;
+﻿using Avalonia.Media;
+using ClassIsland.Shared;
+using IslandCaller.Helpers;
 using IslandCaller.Models;
 using IslandCaller.Services;
 using ReactiveUI;
@@ -10,10 +12,10 @@ namespace IslandCaller.ViewModels
     {
         private readonly HoverSetting _hoverSettings;
         private readonly Status _status;
+        private readonly AppearanceSetting _appearanceSettings;
         private readonly PropertyChangedEventHandler _hoverSettingsChangedHandler;
         private readonly PropertyChangedEventHandler _statusChangedHandler;
-        private readonly IDisposable _glyph1Subscription;
-        private readonly IDisposable _glyph2Subscription;
+        private readonly PropertyChangedEventHandler _appearanceChangedHandler;
         private bool _disposed;
 
         private double _windowScalingFactor = 1.0;
@@ -30,8 +32,83 @@ namespace IslandCaller.ViewModels
             set => this.RaiseAndSetIfChanged(ref _isenabled, value);
         }
 
-        public string Glyph1 => IsEnabled ? "\uECF8" : "\uED08";
-        public string Glyph2 => IsEnabled ? "\uED42" : "\uED08";
+        // 个性化外观
+        private string _hoverText = "Call";
+        public string HoverText
+        {
+            get => _hoverText;
+            set => this.RaiseAndSetIfChanged(ref _hoverText, value);
+        }
+
+        private string _hoverImagePath = string.Empty;
+        public string HoverImagePath
+        {
+            get => _hoverImagePath;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _hoverImagePath, value);
+                this.RaisePropertyChanged(nameof(HasHoverImage));
+                LoadHoverImage();
+            }
+        }
+
+        /// <summary>是否已选择抽选时图片（有图片时用图片代替默认图标，文字照常显示）。</summary>
+        public bool HasHoverImage => !string.IsNullOrWhiteSpace(_hoverImagePath);
+
+        private IImage? _hoverImageSource;
+        public IImage? HoverImageSource
+        {
+            get => _hoverImageSource;
+            private set => this.RaiseAndSetIfChanged(ref _hoverImageSource, value);
+        }
+
+        private IBrush? _accentBrush;
+        public IBrush? AccentBrush
+        {
+            get => _accentBrush;
+            private set => this.RaiseAndSetIfChanged(ref _accentBrush, value);
+        }
+
+        private FontFamily? _fontFamily;
+        public FontFamily? FontFamily
+        {
+            get => _fontFamily;
+            private set => this.RaiseAndSetIfChanged(ref _fontFamily, value);
+        }
+
+        private void LoadHoverImage()
+        {
+            // 支持内置图片（builtin:xxx）与本地路径
+            HoverImageSource = BuiltinImages.Load(_hoverImagePath);
+        }
+
+        private void LoadAppearance()
+        {
+            var appearance = Settings.Instance.Appearance;
+            HoverText = appearance.HoverText;
+            HoverImagePath = appearance.HoverImagePath;
+            AccentBrush = ParseBrush(appearance.AccentColor);
+            FontFamily = string.IsNullOrWhiteSpace(appearance.FontFamily)
+                ? null
+                : new FontFamily(appearance.FontFamily);
+        }
+
+        private static IBrush? ParseBrush(string? hex)
+        {
+            if (string.IsNullOrWhiteSpace(hex))
+            {
+                return null;
+            }
+
+            try
+            {
+                return new SolidColorBrush(Color.Parse(hex));
+            }
+            catch
+            {
+                return null;
+            }
+        }
 
         private int _hoverLayout;
         public int HoverLayout
@@ -70,6 +147,12 @@ namespace IslandCaller.ViewModels
             HoverLayout = _hoverSettings.HoverLayout;
             PositionX = _hoverSettings.Position.X;
             PositionY = _hoverSettings.Position.Y;
+            LoadAppearance();
+
+            // 监听外观设置变化
+            _appearanceSettings = Settings.Instance.Appearance;
+            _appearanceChangedHandler = (_, _) => LoadAppearance();
+            _appearanceSettings.PropertyChanged += _appearanceChangedHandler;
 
             // 监听设置变化
             _hoverSettingsChangedHandler = OnHoverSettingsChanged;
@@ -78,10 +161,6 @@ namespace IslandCaller.ViewModels
             IsEnabled = _status.IsPluginReady;
             _statusChangedHandler = OnStatusChanged;
             _status.PropertyChanged += _statusChangedHandler;
-            _glyph1Subscription = this.WhenAnyValue(x => x.IsEnabled)
-                .Subscribe(_ => this.RaisePropertyChanged(nameof(Glyph1)));
-            _glyph2Subscription = this.WhenAnyValue(x => x.IsEnabled)
-                .Subscribe(_ => this.RaisePropertyChanged(nameof(Glyph2)));
         }
 
         private void OnHoverSettingsChanged(object? sender, PropertyChangedEventArgs e)
@@ -112,8 +191,7 @@ namespace IslandCaller.ViewModels
             _disposed = true;
             _hoverSettings.PropertyChanged -= _hoverSettingsChangedHandler;
             _status.PropertyChanged -= _statusChangedHandler;
-            _glyph1Subscription.Dispose();
-            _glyph2Subscription.Dispose();
+            _appearanceSettings.PropertyChanged -= _appearanceChangedHandler;
         }
 
     }

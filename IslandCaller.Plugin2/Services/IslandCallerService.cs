@@ -1,14 +1,14 @@
 using Avalonia.Threading;
 using ClassIsland.Core.Abstractions.Services;
 using ClassIsland.Core.Abstractions.Services.SpeechService;
+using ClassIsland.Core.Controls;
 using ClassIsland.Shared;
 using ClassIsland.Shared.Enums;
 using IslandCaller.Models;
-using IslandCaller.Plugin2.Helpers;
+using IslandCaller.Helpers;
 using IslandCaller.Services.NotificationProvidersNew;
 using IslandCaller.Views;
 using Microsoft.Extensions.Logging;
-using OmniTTS.Shared;
 
 namespace IslandCaller.Services.IslandCallerService
 {
@@ -24,9 +24,12 @@ namespace IslandCaller.Services.IslandCallerService
         private HistoryService HistoryService { get; set; }
         private ProfileService ProfileService { get; set; }
         private ProfileRuntimeService ProfileRuntimeService { get; set; }
-        private IOmniTTS? OmniTTS { get; set; }
+        // 故意用 object 而非 IOmniTTS：避免 IslandCallerService 的其它方法在 JIT 时
+        // 被迫加载可选的 OmniTTS.Shared 程序集（该程序集可能被系统策略拦截）。
+        private object? OmniTTS { get; set; }
         private ISpeechService? ClassIslandTTS { get; set; }
         private WindowsManager WindowsManager { get; set; }
+        private IslandCallerNotificationProviderNew? NotificationProvider { get; set; }
         public Status Status { get; set; }
         public IslandCallerService(ILogger<IslandCallerService> logger)
         {
@@ -42,20 +45,27 @@ namespace IslandCaller.Services.IslandCallerService
             ProfileRuntimeService = IAppHost.GetService<ProfileRuntimeService>();
             Status = IAppHost.GetService<Status>();
             WindowsManager = IAppHost.GetService<WindowsManager>();
+            NotificationProvider = IAppHost.TryGetService<IslandCallerNotificationProviderNew>()
+                ?? new IslandCallerNotificationProviderNew();
             // 获取服务
             LessonsService = IAppHost.TryGetService<ILessonsService>();
             ClassIslandProfileService = IAppHost.TryGetService<IProfileService>();
             UriNavigationService = IAppHost.TryGetService<IUriNavigationService>();
             ClassIslandTTS = IAppHost.TryGetService<ISpeechService>();
-            OmniTTS = IAppHost.TryGetService<IOmniTTS>();
 
             Status.IslandCallerServiceInitialized = false;
             Status.IsTimeStatusAvailable = !(Settings.Instance.General.BreakDisable & (LessonsService?.CurrentState ?? TimeState.OnClass) == TimeState.Breaking);
             Status.InterruptionEnable = Settings.Instance.General.Interruptable;
 
             // 检查设置项是否有效
-            if (Settings.Instance.TTS.Provider == Plugin2.TtsProvider.OmniTTS && !CheckDependences.CheckOmniTTS()) Settings.Instance.TTS.Provider = Plugin2.TtsProvider.None;
-            OmniTTS = IAppHost.TryGetService<IOmniTTS>();
+            // OmniTTS 是可选依赖：用安全桥接获取，未安装 / 文件缺失 / 被系统安全策略
+            // （如 Windows 11「智能应用控制」）拦截时降级处理，而不是让插件初始化直接崩溃。
+            OmniTTS = OmniTtsBridge.TryResolve();
+            if (Settings.Instance.TTS.Provider == IslandCaller.TtsProvider.OmniTTS && OmniTTS is null)
+            {
+                Settings.Instance.TTS.Provider = IslandCaller.TtsProvider.None;
+                Logger?.LogWarning("OmniTTS 不可用（未安装或依赖被系统安全策略拦截），TTS 提供方已自动回退为「无」。");
+            }
 
             if (Settings.Instance.Profile.IsPreferProfile)
             {
@@ -186,19 +196,58 @@ namespace IslandCaller.Services.IslandCallerService
             return ProfileRuntimeService.EnsureLoaded(profileId);
         }
 
-        public async void ShowRandomStudent(int stunum)
+        /// <summary>
+        /// 由全局快捷键触发一次随机点名。
+        /// 与悬浮窗「Call」按钮共用 <see cref="ShowRandomStudent"/>：同一名单档案、同一防重复均衡权重算法、
+        /// 同一展示渠道（通知 / 展示窗口）与 TTS 播报设置。
+        /// </summary>
+        public void TriggerRandomCallFromHotkey()
         {
-            // 点名结果的提醒与结果窗口都依赖 Avalonia UI 对象，只能在 UI 线程上创建与访问，
-            // 而本方法可能被后台线程调用（例如 RemoteCI 手表端远程扩展），
-            // 因此在入口处先切回 UI 线程，再按原有逻辑执行，避免跨线程访问 UI 对象导致 ClassIsland 崩溃并禁用插件。
-            if (!Dispatcher.UIThread.CheckAccess())
+            if (Status.IsPluginReady == false)
             {
-                Dispatcher.UIThread.Post(() => ShowRandomStudent(stunum));
+                Logger?.LogWarning("快捷键触发忽略：插件尚未就绪。");
                 return;
             }
 
+            // 重复触发保护：上一次展示仍在进行且用户未开启「允许打断」时，忽略本次触发，避免结果互相覆盖。
+            if (!Status.OccupationDisable && !Status.InterruptionEnable)
+            {
+                Logger?.LogInformation("快捷键触发忽略：上一次点名仍在展示且未开启打断。");
+                return;
+            }
+
+            Logger?.LogInformation("全局快捷键触发点名。");
+            ShowRandomStudent(1);
+        }
+
+        /// <summary>无可用内容（名单为空 / 无可点名成员）时的统一反馈。</summary>
+        private void ShowCannotCallFeedback()
+        {
+            const string header = "无法点名";
+            const string content = "当前名单为空或没有可点名的学生，请先在设置中导入或选择名单。";
+            void Show() => _ = CommonTaskDialogs.ShowDialog(header, content);
+            if (Dispatcher.UIThread.CheckAccess())
+            {
+                Show();
+            }
+            else
+            {
+                Dispatcher.UIThread.Post(Show);
+            }
+        }
+
+        public async void ShowRandomStudent(int stunum)
+        {
             // 准备点名
             if(Status.IsPluginReady == false) return;
+
+            // 无可用内容保护：名单为空时不再产出 "Error" 文本，而是给出明确反馈。
+            if (CoreService.PersonCount <= 0)
+            {
+                Logger?.LogWarning("点名请求被忽略：当前名单为空或没有可点名的学生。");
+                ShowCannotCallFeedback();
+                return;
+            }
 
             if (Status.InterruptionEnable && (Status.OccupationDisable == false))
             {
@@ -228,9 +277,21 @@ namespace IslandCaller.Services.IslandCallerService
             // 发送结果
             Cts = new CancellationTokenSource();
             var thisCts = Cts;
-            if (Settings.Instance.TTS.Provider == Plugin2.TtsProvider.OmniTTS) OmniTTS?.PlayAudio(speechContent, Cts.Token);
-            else if (Settings.Instance.TTS.Provider == Plugin2.TtsProvider.ClassIsland) ClassIslandTTS?.EnqueueSpeechQueue(speechContent);
-            if ((Settings.Instance.Call.NotifyMethod & 0b01) != 0) _ = new IslandCallerNotificationProviderNew().RandomCall(output, duration, Cts.Token);
+            if (Settings.Instance.TTS.Provider == IslandCaller.TtsProvider.OmniTTS
+                && !OmniTtsBridge.TryPlay(OmniTTS, speechContent, Cts.Token))
+            {
+                Logger?.LogWarning("OmniTTS 播报不可用，本次已跳过语音播报。");
+            }
+            else if (Settings.Instance.TTS.Provider == IslandCaller.TtsProvider.ClassIsland) ClassIslandTTS?.EnqueueSpeechQueue(speechContent);
+            if ((Settings.Instance.Call.NotifyMethod & 0b01) != 0)
+            {
+                // 复用同一个已注册的提醒提供方实例发通知。不能每次 new：
+                // NotificationProviderBase 构造会自动向通知中心重复注册，抽多了会越积越多导致卡死。
+                if (NotificationProvider is not null)
+                {
+                    _ = NotificationProvider.RandomCall(output, duration, Cts.Token);
+                }
+            }
             if ((Settings.Instance.Call.NotifyMethod & 0b10) != 0) _ = WindowsManager.ShowCallWindowAsync(output, duration, Cts.Token);
             try
             {

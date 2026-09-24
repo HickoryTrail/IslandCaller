@@ -22,7 +22,7 @@
     </Window.DataContext>
     <materials:MaterialHost x:Name="Materials"
                             ExcludeWindowFromCapture="True"
-                            EnableOcclusionPause="True"
+                            EnableOcclusionPause="False"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center">
         <controls:HoverLiquidControl x:Name="HoverControl"

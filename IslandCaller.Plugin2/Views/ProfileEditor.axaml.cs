@@ -7,7 +7,7 @@ using IslandCaller.Services;
 using IslandCaller.ViewModels;
 using Microsoft.Extensions.Logging;
 
-namespace IslandCaller.Plugin2;
+namespace IslandCaller;
 
 public partial class ProfileEditor : Window
 {

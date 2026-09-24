@@ -12,6 +12,18 @@
     <Design.DataContext>
         <vm:HoverFluentViewModel />
     </Design.DataContext>
+    <UserControl.Resources>
+        <!-- 「悬停保持原色」用的动态画刷，运行时由 HoverControlBase 按 Call 按钮原色写入 -->
+        <SolidColorBrush x:Key="IslandCallerKeepHoverBrush" Color="#00000000"/>
+    </UserControl.Resources>
+    <UserControl.Styles>
+        <Style Selector="Button.keep-hover-color:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource IslandCallerKeepHoverBrush}"/>
+        </Style>
+        <Style Selector="Button.keep-hover-color:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource IslandCallerKeepHoverBrush}"/>
+        </Style>
+    </UserControl.Styles>
     <StackPanel
         x:Name="DragSurfacePanel"
         HorizontalAlignment="Center"
@@ -25,7 +37,7 @@
             x:Name="Button1"
             Height="56"
             Width="88"
-            Classes="accent"
+            Background="{Binding AccentBrush}"
             Focusable="False"
             IsEnabled="{Binding IsEnabled}">
             <StackPanel
@@ -34,8 +46,11 @@
                 Orientation="Horizontal"
                 Spacing="3"
                 Focusable="False">
-                <ci:FluentIcon Glyph="{Binding Glyph1}" FontSize="28" Focusable="False" Foreground="White"/>
-                <TextBlock x:Name="CallText" Text="Call" FontFamily="HarmonyOS Sans SC" FontWeight="Medium" FontSize="21" VerticalAlignment="Center" Focusable="False" Foreground="White"/>
+                <Image Source="{Binding HoverImageSource}" IsVisible="{Binding HasHoverImage}" Height="36" Width="36" Focusable="False"/>
+                <StackPanel Orientation="Horizontal" Spacing="6" Focusable="False">
+                    <Path Data="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z" IsVisible="{Binding !HasHoverImage}" Width="24" Height="24" Fill="White" Stretch="Uniform" VerticalAlignment="Center" Focusable="False"/>
+                    <TextBlock x:Name="CallText" Text="{Binding HoverText}" FontFamily="{Binding FontFamily}" FontWeight="Medium" FontSize="21" VerticalAlignment="Center" Focusable="False" Foreground="White"/>
+                </StackPanel>
             </StackPanel>
         </Button>
         <Button
@@ -44,7 +59,7 @@
             Width="58"
             IsEnabled="{Binding IsEnabled}"
             Focusable="False">
-            <ci:FluentIcon Glyph="{Binding Glyph2}" FontSize="28" Focusable="False"/>
+            <Path Data="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z" Width="24" Height="24" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Stretch="Uniform" Focusable="False"/>
         </Button>
     </StackPanel>
 </UserControl>

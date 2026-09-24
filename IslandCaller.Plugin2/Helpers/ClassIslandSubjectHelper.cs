@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Reflection;
 
-namespace IslandCaller.Plugin2.Helpers;
+namespace IslandCaller.Helpers;
 
 internal sealed class ClassIslandSubjectItem(Guid subjectId, string name, object subject)
 {

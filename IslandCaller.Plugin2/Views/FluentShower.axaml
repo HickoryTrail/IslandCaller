@@ -20,8 +20,8 @@
         CanResize="False"
         Height="110"
         WindowStartupLocation="CenterScreen"
-        HorizontalContentAlignment="Center"
-        VerticalContentAlignment="Center"
+        HorizontalContentAlignment="Stretch"
+        VerticalContentAlignment="Stretch"
         HorizontalAlignment="Center"
         VerticalAlignment="Center">		
 </Window>

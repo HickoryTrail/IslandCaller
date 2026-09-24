@@ -41,6 +41,9 @@ namespace IslandCaller
             services.AddSingleton<WindowSizeHelper>();
             services.AddSingleton<WindowTopmostHelper>();
             services.AddSingleton<ScreenBrightnessHelper>();
+            services.AddSingleton(Settings.Instance.Topmost);
+            services.AddSingleton<TopmostEnhancerService>();
+            services.AddSingleton<HotkeyService>();
             services.AddSettingsPage<SettingPage>();
             BuildActionMenu();
             services.AddAction<DisableHoverAction>();
@@ -60,6 +63,9 @@ namespace IslandCaller
                     IAppHost.GetService<ProfileRuntimeService>().Initialize();
                     IAppHost.GetService<IslandCallerService>().Initialize();
                     IAppHost.GetService<WindowsManager>().Initialize();
+                    IAppHost.GetService<TopmostEnhancerService>().Start();
+                    // 设置加载完成后按配置注册全局快捷键（默认关闭，不会主动抢占组合键）。
+                    IAppHost.GetService<HotkeyService>().Apply();
                     // SuperAutoIsland 积木：仅在 SAI 插件确实已加载时才注册。
                     // 注意：这个判断必须留在方法【外部】。RegisterSuperAutoIslandBlocks 的方法签名引用了
                     // SuperAutoIsland.Interface 程序集，而该程序集不在本插件的 deps.json 中（由
@@ -89,9 +95,11 @@ namespace IslandCaller
 
             };
 
-            // RemoteCI 插件退出时注销远程扩展，避免残留无效入口。
             AppBase.Current.AppStopping += (_, _) =>
             {
+                IAppHost.GetService<TopmostEnhancerService>().Dispose();
+                IAppHost.GetService<HotkeyService>().Dispose();
+                // RemoteCI 插件退出时注销远程扩展，避免残留无效入口。
                 try
                 {
                     RemoteCiBridge.UnregisterRandomCallExtension(logger);

@@ -17,7 +17,7 @@
         VerticalContentAlignment="Center">
     <materials:MaterialHost x:Name="Materials"
                             ExcludeWindowFromCapture="True"
-                            EnableOcclusionPause="True">
+                            EnableOcclusionPause="False">
         <liquid:LiquidGlassContainer x:Name="GlassContainer"
                                      CornerRadius="55"
                                      HighlightIntensity="0.5"
