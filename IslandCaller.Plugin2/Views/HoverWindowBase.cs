@@ -16,6 +16,9 @@ namespace IslandCaller.Views;
 public abstract class HoverWindowBase : Window, IHoverWindow
 {
     private const double MinimumMeasuredContentExtent = 16;
+
+    /// <summary>吸附屏幕边缘的触发阈值（逻辑像素，实际按渲染缩放换算）。</summary>
+    private const int SnapThresholdPx = 24;
     private readonly ILogger<HoverWindowBase> _logger = IAppHost.GetService<ILogger<HoverWindowBase>>();
     private readonly WindowTopmostHelper _windowTopmostHelper = IAppHost.GetService<WindowTopmostHelper>();
     private readonly WindowSizeHelper _windowSizeHelper = IAppHost.GetService<WindowSizeHelper>();
@@ -264,6 +267,11 @@ public abstract class HoverWindowBase : Window, IHoverWindow
     private void ApplyPositionClampIfNeeded()
     {
         var clamped = ClampPositionToScreenBounds(Position);
+        if (Settings.Instance.Hover.SnapToScreenEdge)
+        {
+            clamped = SnapPositionToScreenEdge(clamped);
+        }
+
         if (clamped != Position)
         {
             Position = clamped;
@@ -294,6 +302,44 @@ public abstract class HoverWindowBase : Window, IHoverWindow
         int height = (int)Math.Round(Bounds.Height * _scaling);
         int x = Math.Clamp(current.X, screen.X, Math.Max(screen.X, screen.Right - width));
         int y = Math.Clamp(current.Y, screen.Y, Math.Max(screen.Y, screen.Bottom - height));
+        return new PixelPoint(x, y);
+    }
+
+    /// <summary>
+    /// 贴近屏幕边缘时吸附贴边：左右、上下两个方向各自独立判断，
+    /// 因此靠近屏幕角落时会同时吸附到两条边。
+    /// </summary>
+    private PixelPoint SnapPositionToScreenEdge(PixelPoint current)
+    {
+        var screen = Screens.ScreenFromWindow(this)?.Bounds
+            ?? Screens.Primary?.Bounds
+            ?? new PixelRect(0, 0, 1920, 1080);
+        _scaling = RenderScaling > 0 ? RenderScaling : 1.0;
+        int width = (int)Math.Round(Bounds.Width * _scaling);
+        int height = (int)Math.Round(Bounds.Height * _scaling);
+        int threshold = (int)Math.Round(SnapThresholdPx * _scaling);
+
+        int x = current.X;
+        int y = current.Y;
+
+        if (x - screen.X <= threshold)
+        {
+            x = screen.X;
+        }
+        else if (screen.Right - (x + width) <= threshold)
+        {
+            x = screen.Right - width;
+        }
+
+        if (y - screen.Y <= threshold)
+        {
+            y = screen.Y;
+        }
+        else if (screen.Bottom - (y + height) <= threshold)
+        {
+            y = screen.Bottom - height;
+        }
+
         return new PixelPoint(x, y);
     }
 }

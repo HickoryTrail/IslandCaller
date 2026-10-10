@@ -11,15 +11,30 @@ namespace IslandCaller.Services.NotificationProvidersNew;
     "用于为IslandCaller提供通知接口")]
 public class IslandCallerNotificationProviderNew() : NotificationProviderBase
 {
+    private static readonly object SyncRoot = new();
+    private static NotificationRequest? _activeRequest;
+
     public NotificationRequest? Request { get; set; }
 
     public async Task RandomCall(string name, float second, CancellationToken token)
     {
-        using var registration = token.Register(() =>
+        // 最新优先：先收起上一条还没消失的提醒（可能在排队等待播放，也可能正在播放），
+        // 避免连续点名时旧提醒排队堆积，造成"提醒一直不消失、抽多了卡死"。
+        NotificationRequest? previous;
+        lock (SyncRoot)
         {
-            Request?.Cancel();
-        });
-        Request = new NotificationRequest()
+            previous = _activeRequest;
+            _activeRequest = null;
+        }
+        try
+        {
+            previous?.Cancel();
+        }
+        catch
+        {
+        }
+
+        var request = new NotificationRequest()
         {
             MaskContent = NotificationContent.CreateTwoIconsMask(name, factory: x =>
             {
@@ -27,11 +42,55 @@ public class IslandCallerNotificationProviderNew() : NotificationProviderBase
                 x.IsSpeechEnabled = false;
             })
         };
-        ShowNotification(Request);
+        lock (SyncRoot)
+        {
+            _activeRequest = request;
+        }
+
+        using var registration = token.Register(() =>
+        {
+            lock (SyncRoot)
+            {
+                if (ReferenceEquals(_activeRequest, request))
+                {
+                    _activeRequest = null;
+                }
+            }
+            try
+            {
+                request.Cancel();
+            }
+            catch
+            {
+            }
+        });
+        Request = request;
+        ShowNotification(request);
         try
         {
             await Task.Delay((int)(second * 1000), token);
         }
-        catch { }
+        catch
+        {
+        }
+        finally
+        {
+            // 展示时长结束（或被点名打断）后主动收起提醒，
+            // 不依赖 ClassIsland 内部计时，确保横幅一定消失、不残留。
+            lock (SyncRoot)
+            {
+                if (ReferenceEquals(_activeRequest, request))
+                {
+                    _activeRequest = null;
+                }
+            }
+            try
+            {
+                request.Cancel();
+            }
+            catch
+            {
+            }
+        }
     }
 }

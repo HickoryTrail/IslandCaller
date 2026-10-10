@@ -1,4 +1,4 @@
-namespace IslandCaller.Plugin2
+namespace IslandCaller
 {
     public enum TtsProvider
     {

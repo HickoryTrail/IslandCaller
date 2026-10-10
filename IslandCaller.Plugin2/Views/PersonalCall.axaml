@@ -64,15 +64,15 @@
         Description="指定本次抽取的总人数">
             <fa:FASettingsExpander.Footer>
                 <Slider
+                x:Name="CountSlider"
                 Minimum="1"
-                Maximum="5"
+                Maximum="{Binding MaxCount}"
                 TabIndex="1"
                 Width="250"
                 IsSnapToTickEnabled="True"
                 Classes="auto-tooltip"
                 TickFrequency="1"
                 Value="{Binding Num ,Mode=TwoWay}"
-                Ticks="1,2,3,4,5"
                 TickPlacement="Outside"/>
             </fa:FASettingsExpander.Footer>
         </fa:FASettingsExpander>

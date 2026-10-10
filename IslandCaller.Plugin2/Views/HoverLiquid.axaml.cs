@@ -22,6 +22,21 @@ public partial class HoverLiquid : HoverWindowBase
         TransparencyLevelHint = [Avalonia.Controls.WindowTransparencyLevel.Transparent];
     }
 
+    protected override void OnClosed(EventArgs e)
+    {
+        // 反注册诊断订阅，避免关闭后 MaterialHost 的后台渲染线程通过诊断回调
+        // 访问已销毁窗口（use-after-free），并解除窗口与 MaterialHost 的相互引用。
+        Materials.Diagnostics.PropertyChanged -= OnMaterialDiagnosticsChanged;
+        base.OnClosed(e);
+
+        // 主动把 MaterialHost 从视觉树分离，确保 StopHostSession 被调用，
+        // 及时释放 D3D11 渲染器、Desktop Duplication 捕获与合成表面等 GPU 资源。
+        if (ReferenceEquals(Content, Materials))
+        {
+            Content = null;
+        }
+    }
+
     private void OnMaterialDiagnosticsChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(MaterialRenderDiagnostics.Error) &&

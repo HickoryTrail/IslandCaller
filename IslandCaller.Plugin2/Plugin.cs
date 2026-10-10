@@ -41,6 +41,9 @@ namespace IslandCaller
             services.AddSingleton<WindowSizeHelper>();
             services.AddSingleton<WindowTopmostHelper>();
             services.AddSingleton<ScreenBrightnessHelper>();
+            services.AddSingleton(Settings.Instance.Topmost);
+            services.AddSingleton<TopmostEnhancerService>();
+            services.AddSingleton<HotkeyService>();
             services.AddSettingsPage<SettingPage>();
             BuildActionMenu();
             services.AddAction<DisableHoverAction>();
@@ -60,7 +63,19 @@ namespace IslandCaller
                     IAppHost.GetService<ProfileRuntimeService>().Initialize();
                     IAppHost.GetService<IslandCallerService>().Initialize();
                     IAppHost.GetService<WindowsManager>().Initialize();
-                    RegisterSuperAutoIslandBlocks(logger);
+                    IAppHost.GetService<TopmostEnhancerService>().Start();
+                    // 设置加载完成后按配置注册全局快捷键（默认关闭，不会主动抢占组合键）。
+                    IAppHost.GetService<HotkeyService>().Apply();
+                    // SuperAutoIsland 积木：仅在 SAI 插件确实已加载时才注册。
+                    // 注意：这个判断必须留在方法【外部】。RegisterSuperAutoIslandBlocks 的方法签名引用了
+                    // SuperAutoIsland.Interface 程序集，而该程序集不在本插件的 deps.json 中（由
+                    // AssemblyDependencyResolver 解析），只能通过清单 dependencies 委托给 SAI 插件的
+                    // 加载上下文。若在 SAI 未安装时调用它，JIT 阶段解析方法签名就会抛
+                    // FileNotFoundException，导致整个插件初始化失败。
+                    if (IsSuperAutoIslandLoaded())
+                    {
+                        RegisterSuperAutoIslandBlocks(logger);
+                    }
                     // 接入 RemoteCI：在手表“控制”页注册“随机点名”远程扩展（RemoteCI 未安装时自动跳过）。
                     try
                     {
@@ -80,9 +95,11 @@ namespace IslandCaller
 
             };
 
-            // RemoteCI 插件退出时注销远程扩展，避免残留无效入口。
             AppBase.Current.AppStopping += (_, _) =>
             {
+                IAppHost.GetService<TopmostEnhancerService>().Dispose();
+                IAppHost.GetService<HotkeyService>().Dispose();
+                // RemoteCI 插件退出时注销远程扩展，避免残留无效入口。
                 try
                 {
                     RemoteCiBridge.UnregisterRandomCallExtension(logger);
@@ -107,13 +124,12 @@ namespace IslandCaller
                 new ActionMenuTreeItem("IslandCaller.SwitchProfile", "切换档案", "\uE9A8"));
         }
 
+        /// <summary>SuperAutoIsland（SAI）插件是否已加载。</summary>
+        private static bool IsSuperAutoIslandLoaded() =>
+            IPluginService.LoadedPlugins.Any(info => info.Manifest.Id == "lrs2187.sai");
+
         private static void RegisterSuperAutoIslandBlocks(ILogger<Plugin>? logger)
         {
-            if (!IPluginService.LoadedPlugins.Any(info => info.Manifest.Id == "lrs2187.sai"))
-            {
-                return;
-            }
-
             try
             {
                 IAppHost.GetService<ISaiServer>().RegisterBlocks("IslandCaller", blocks => blocks

@@ -7,9 +7,13 @@
              xmlns:ci2="clr-namespace:ClassIsland.Core.Abstractions.Controls;assembly=ClassIsland.Core"
              xmlns:vm="using:IslandCaller.ViewModels"
              xmlns:ci3="http://classisland.tech/schemas/xaml/core"
+             xmlns:conv="using:IslandCaller.Converters"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="IslandCaller.Views.SettingPage"
              x:DataType="vm:SettingPageViewModel">
+    <ci2:SettingsPageBase.Resources>
+        <conv:CallButtonWidthConverter x:Key="CallButtonWidthConverter"/>
+    </ci2:SettingsPageBase.Resources>
     <ci2:SettingsPageBase.DataContext>
         <vm:SettingPageViewModel />
     </ci2:SettingsPageBase.DataContext>
@@ -18,312 +22,703 @@
     </Design.DataContext>
     <ScrollViewer>
         <StackPanel Classes="settings-container animated-intro">
-            <fa:FAInfoBar
-            IsEnabled="True"
-            IsOpen="True"
-            IsVisible="True"
-            IsClosable="False"
-            Severity="Warning"
-            Message="LiquidGlass 效果目前仅供个人测试使用，存在严重的内存泄漏和 use-after-free 问题，会导致 ClassIsland 崩溃或 Windows BSOD，严禁在教学或生产环境下使用！"/>
-        <!-- 基本设置 -->
-        <ci:IconText Glyph="&#xEF27;" Text="基本设置" Margin="0,0,0,4"/>
-        <!-- 下课禁用 -->
-        <fa:FASettingsExpander
-        IconSource="{ci:FluentIconSource &#xE4CE;}"
-        Header="下课禁用"
-        Description="在课间禁用所有点名功能">
-            <fa:FASettingsExpander.Footer>
-                <ToggleSwitch
-                IsChecked="{Binding IsBreakDisable, Mode=TwoWay}"/>
-            </fa:FASettingsExpander.Footer>
-        </fa:FASettingsExpander>
-        <!-- 打断点名-->
-        <fa:FASettingsExpander
-        IconSource="{ci:FluentIconSource &#xEE67;}"
-        Header="打断点名"
-        Description="打断上一次点名，并触发新的点名">
-            <fa:FASettingsExpander.Footer>
-                <ToggleSwitch
-                IsChecked="{Binding Interruptable, Mode=TwoWay}"/>
-            </fa:FASettingsExpander.Footer>
-        </fa:FASettingsExpander>
-
-        <!-- 悬浮窗设置 -->
-        <Separator Margin="0 12 0 4" />
-        <ci:IconText Glyph="&#xF485;" Text="悬浮窗设置" Margin="0,0,0,4"/>
-        <!-- 启用悬浮窗 -->
-        <fa:FASettingsExpander
-        IconSource="{ci:FluentIconSource &#xF485;}"
-        Header="启用悬浮窗"
-        Description="是否显示点名悬浮窗">
-            <fa:FASettingsExpander.Footer>
-                <ToggleSwitch 
-                IsChecked="{Binding IsHoverEnable, Mode=TwoWay}"/>
-            </fa:FASettingsExpander.Footer>
-        </fa:FASettingsExpander>
-        <!-- 悬浮窗缩放系数 -->
-        <fa:FASettingsExpander
-        IconSource="{ci:FluentIconSource &#xEE83;}"
-        Header="悬浮窗缩放系数"
-        Description="调整悬浮窗大小，以适配不同的屏幕">
-            <fa:FASettingsExpander.Footer>
-                <Slider Minimum="0.5" Maximum="2"
-                        VerticalAlignment="Center"
-                        TickFrequency="0.05"
-                        Width="180"
-                        IsSnapToTickEnabled="True"
-                        Classes="auto-tooltip"
-                        ci3:SliderDragTooltipAssist.StringFormat="F2"
-                        Value="{Binding HoverScalingFactor, Mode=TwoWay}"/>
-            </fa:FASettingsExpander.Footer>
-        </fa:FASettingsExpander>
-        <fa:FASettingsExpander
-        IconSource="{ci:FluentIconSource &#xEFBD;}"
-        Header="悬浮窗布局"
-        Description="选择完整、紧凑或 Mini 悬浮窗布局">
-            <fa:FASettingsExpander.Footer>
-                <ComboBox SelectedIndex="{Binding HoverLayout, Mode=TwoWay}" Width="180">
-                    <ComboBoxItem Content="完整"/>
-                    <ComboBoxItem Content="紧凑"/>
-                    <ComboBoxItem Content="Mini"/>
-                </ComboBox>
-            </fa:FASettingsExpander.Footer>
-        </fa:FASettingsExpander>
-        <fa:FASettingsExpander
-        IconSource="{ci:FluentIconSource &#xE7C3;}"
-        Header="悬浮窗主题"
-        Description="选择悬浮窗的 Fluent 或 LiquidGlass 外观 (悬浮窗和展示窗口只有一个能为LiquidGlass)">
-            <fa:FASettingsExpander.Footer>
-                <ComboBox SelectedIndex="{Binding HoverTheme, Mode=TwoWay}" Width="180">
-                    <ComboBoxItem Content="Fluent"/>
-                    <ComboBoxItem Content="LiquidGlass (Dev)"/>
-                </ComboBox>
-            </fa:FASettingsExpander.Footer>
-        </fa:FASettingsExpander>
-
-        <!-- 点名设置 -->
-        <Separator Margin="0 12 0 4" />
-        <ci:IconText Glyph="&#xECF9;" Text="点名设置" Margin="0,0,0,4"/>
-        <fa:FASettingsExpander
-        IconSource="{ci:FluentIconSource &#xECEF;}"
-        Header="点名结果展示渠道"
-        Description="选择展示点名结果的提醒渠道，可多选">
-            <fa:FASettingsExpanderItem IsClickEnabled="false">
-                <StackPanel Orientation="Horizontal" Spacing="16">
-                    <CheckBox Content="ClassIsland 提醒"
-                              IsChecked="{Binding IsClassIslandNotificationEnabled, Mode=TwoWay}" />
-                    <CheckBox Content="IslandCaller 提醒"
-                              IsChecked="{Binding IsIslandCallerNotificationEnabled, Mode=TwoWay}" />
+            <!-- 查看密码：未通过时显示锁定面板 -->
+            <StackPanel IsVisible="{Binding IsViewLocked}">
+                <fa:FAInfoBar Severity="Warning" Title="设置已锁定"
+                              Message="已启用查看密码，请输入查看密码后才能查看设置。"
+                              IsClosable="False" IsOpen="True"/>
+                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,12">
+                    <TextBox Name="UnlockViewPasswordBox" PasswordChar="●" PlaceholderText="查看密码" Width="200" VerticalAlignment="Center"/>
+                    <Button Content="解锁查看" Click="UnlockViewButton_OnClick"/>
                 </StackPanel>
-            </fa:FASettingsExpanderItem>
-        </fa:FASettingsExpander>
-        <fa:FASettingsExpander
-        IconSource="{ci:FluentIconSource &#xE7C3;}"
-        Header="点名展示主题"
-        Description="选择 IslandCaller 展示窗口的 Fluent 或 LiquidGlass 外观 (悬浮窗和展示窗口只有一个能为LiquidGlass)">
-            <fa:FASettingsExpander.Footer>
-                <ComboBox SelectedIndex="{Binding ShowerTheme, Mode=TwoWay}" Width="180">
-                    <ComboBoxItem Content="Fluent"/>
-                    <ComboBoxItem Content="LiquidGlass (Dev)"/>
-                </ComboBox>
-            </fa:FASettingsExpander.Footer>
-        </fa:FASettingsExpander>
-        <fa:FASettingsExpander
-        IconSource="{ci:FluentIconSource &#xE4C4;}"
-        Header="点名提醒时长"
-        Description="调整单次点名提醒的持续时间，总时长为 {人数 * 基础时间 + 附加时间}">
-            <fa:FASettingsExpanderItem IsClickEnabled="false" >
-                <ci:IconText Glyph="&#xED07;" Text="基础时间"/>
-                <fa:FASettingsExpanderItem.Footer>
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{Binding BaseTime, StringFormat={}{0:F2}}" FontSize="15" VerticalAlignment="Center" Margin="8,0"/>
-                        <Slider Minimum="0" Maximum="5"
-                            VerticalAlignment="Center"
-                            TickFrequency="0.05"
-                            Width="180"
-                            IsSnapToTickEnabled="True"
-                            Value="{Binding BaseTime, Mode=TwoWay}"/>
-                    </StackPanel>
-                </fa:FASettingsExpanderItem.Footer>
-            </fa:FASettingsExpanderItem>
-            <fa:FASettingsExpanderItem IsClickEnabled="false" >
-                <ci:IconText Glyph="&#xE00F;" Text="附加时间"/>
-                <fa:FASettingsExpanderItem.Footer>
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{Binding AdditionalTime, StringFormat={}{0:F1}}" FontSize="15" VerticalAlignment="Center" Margin="8,0"/>
-                        <Slider Minimum="-5" Maximum="8"
-                                VerticalAlignment="Center"
-                                TickFrequency="0.1"
-                                Width="180"
-                                IsSnapToTickEnabled="True"
-                                Value="{Binding AdditionalTime, Mode=TwoWay}"/>
-                    </StackPanel>
-                </fa:FASettingsExpanderItem.Footer>
-            </fa:FASettingsExpanderItem>
-        </fa:FASettingsExpander>
+            </StackPanel>
 
-        <!-- TTS 设置 -->
-        <Separator Margin="0 12 0 4" />
-        <ci:IconText Glyph="&#xED53;" Text="TTS 设置" Margin="0,0,0,4"/>
-        <fa:FASettingsExpander
-        IconSource="{ci:FluentIconSource &#xECD9;}"
-        Header="TTS 提供方"
-        Description="选择用于播报点名结果的 TTS 提供方">
-            <fa:FASettingsExpander.Footer>
-                <ComboBox ItemsSource="{Binding TtsProviders}"
-                              SelectedItem="{Binding Provider, Mode=TwoWay}"
-                              Width="180"/>
-            </fa:FASettingsExpander.Footer>
-        </fa:FASettingsExpander>
+            <!-- 通过查看密码后可见 -->
+            <StackPanel IsVisible="{Binding IsViewUnlocked}">
+                <!-- 修改密码：未通过时提示只读 + 解锁编辑 -->
+                <StackPanel IsVisible="{Binding IsEditLocked}">
+                    <fa:FAInfoBar Severity="Informational" Title="只读模式"
+                                  Message="已启用修改密码，当前仅可查看。输入修改密码解锁后才能修改配置。"
+                                  IsClosable="False" IsOpen="True"/>
+                    <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,12">
+                        <TextBox Name="UnlockEditPasswordBox" PasswordChar="●" PlaceholderText="修改密码" Width="200" VerticalAlignment="Center"/>
+                        <Button Content="解锁编辑" Click="UnlockEditButton_OnClick"/>
+                    </StackPanel>
+                </StackPanel>
 
-        <fa:FASettingsExpander
-        IconSource="{ci:FluentIconSource &#xE55F;}"
-        Header="TTS 前后文"
-        Description="在TTS播报前后添加自定义文本">
-            <fa:FASettingsExpanderItem IsClickEnabled="false" >
-                <ci:IconText Glyph="&#xF1C0;" Text="播报前文本"/>
-                <fa:FASettingsExpanderItem.Footer>
-                    <TextBox Text="{Binding BeforeText}" Width="500"/>
-                </fa:FASettingsExpanderItem.Footer>
-            </fa:FASettingsExpanderItem>
-            <fa:FASettingsExpanderItem IsClickEnabled="false" >
-                <ci:IconText Glyph="&#xF1C2;" Text="播报后文本"/>
-                <fa:FASettingsExpanderItem.Footer>
-                    <TextBox Text="{Binding AfterText}" Width="500"/>
-                </fa:FASettingsExpanderItem.Footer>
-            </fa:FASettingsExpanderItem>
-            <fa:FASettingsExpanderItem IsClickEnabled="false" >
-                <ci:IconText Glyph="&#xE55D;" Text="播报文本示例"/>
-                <fa:FASettingsExpanderItem.Footer>
-                    <TextBlock Text="{Binding ExampleText}" Width="500" TextWrapping="Wrap"/>
-                </fa:FASettingsExpanderItem.Footer>
-            </fa:FASettingsExpanderItem>
-        </fa:FASettingsExpander>
-        <!-- 档案设置 -->
-        <Separator Margin="0 12 0 4" />
-        <ci:IconText Glyph="&#xF1F4;" Text="档案设置" Margin="0,0,0,4"/>
-        <fa:FASettingsExpander
-            IconSource="{ci:FluentIconSource &#xF20C;}"
-            Header="档案编辑"
-            Description="导入、编辑或移除点名名单"
-            ItemsSource="{Binding ProfileItems}">
-            <fa:FASettingsExpander.Footer>
-                <Button Click="CreateProfileButton_OnClick">
-                    <ci:IconText Glyph="&#xE00D;" Text="新建名单"/>
-                </Button>
-            </fa:FASettingsExpander.Footer>
-            <fa:FASettingsExpander.ItemTemplate>
-                <DataTemplate x:CompileBindings="False">
-                    <fa:FASettingsExpanderItem Description="编辑此名单中的学生信息">
-                        <TextBlock Text="{Binding Name}"/>
-                        <fa:FASettingsExpanderItem.Footer>
-                            <StackPanel Orientation="Horizontal">
-                                <Button Tag="{Binding ProfileId}" Click="EditButton_OnClick" Margin="0,0,8,0">
-                                    <ci:IconText Glyph="&#xE70F;" Text="编辑"/>
-                                </Button>
-                                <Button Tag="{Binding ProfileId}"
-                                        IsEnabled="{Binding CanDelete}"
-                                        Background="Red"
-                                        Click="DeleteButton_OnClick">
-                                    <ci:IconText Glyph="&#xE61D;" Text="删除"/>
-                                </Button>
+                <!-- 配置内容：修改密码未通过时整体只读 -->
+                <StackPanel IsEnabled="{Binding IsEditUnlocked}">
+                    <fa:FAInfoBar Severity="Informational" Title="液态玻璃（实验性）"
+                                  Message="悬浮窗与展示窗口的液态玻璃主题互斥（悬浮窗优先）；该效果依赖 GPU 捕获，频繁点名时可能有少量内存开销。"
+                                  IsClosable="False" IsOpen="True"/>
+
+                    <!-- ============ 常用设置 ============ -->
+                    <ci:IconText Glyph="&#xEF27;" Text="基本设置" Margin="0,0,0,4"/>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xE4CE;}"
+                    Header="下课禁用"
+                    Description="在课间禁用所有点名功能">
+                        <fa:FASettingsExpander.Footer>
+                            <ToggleSwitch IsChecked="{Binding IsBreakDisable, Mode=TwoWay}"/>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xEE67;}"
+                    Header="打断点名"
+                    Description="打断上一次点名，并触发新的点名">
+                        <fa:FASettingsExpander.Footer>
+                            <ToggleSwitch IsChecked="{Binding Interruptable, Mode=TwoWay}"/>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+
+                    <Separator Margin="0 12 0 4" />
+                    <ci:IconText Glyph="&#xF485;" Text="悬浮窗设置" Margin="0,0,0,4"/>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xF485;}"
+                    Header="启用悬浮窗"
+                    Description="是否显示点名悬浮窗">
+                        <fa:FASettingsExpander.Footer>
+                            <ToggleSwitch IsChecked="{Binding IsHoverEnable, Mode=TwoWay}"/>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xEE83;}"
+                    Header="悬浮窗缩放系数"
+                    Description="调整悬浮窗大小，以适配不同的屏幕">
+                        <fa:FASettingsExpander.Footer>
+                            <Slider Minimum="0.5" Maximum="2"
+                                    VerticalAlignment="Center" TickFrequency="0.05" Width="180"
+                                    IsSnapToTickEnabled="True" Classes="auto-tooltip"
+                                    ci3:SliderDragTooltipAssist.StringFormat="F2"
+                                    Value="{Binding HoverScalingFactor, Mode=TwoWay}"/>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xEFBD;}"
+                    Header="悬浮窗布局"
+                    Description="选择完整、紧凑、Mini 或简约悬浮窗布局">
+                        <fa:FASettingsExpander.Footer>
+                            <ComboBox SelectedIndex="{Binding HoverLayout, Mode=TwoWay}" Width="180">
+                                <ComboBoxItem Content="完整"/>
+                                <ComboBoxItem Content="紧凑"/>
+                                <ComboBoxItem Content="Mini"/>
+                                <ComboBoxItem Content="简约（隐藏多人抽选）"/>
+                            </ComboBox>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xEFBD;}"
+                    Header="布局方向"
+                    Description="横版为水平排列，竖版为垂直排列">
+                        <fa:FASettingsExpander.Footer>
+                            <ComboBox SelectedIndex="{Binding LayoutDirection, Mode=TwoWay}" Width="180">
+                                <ComboBoxItem Content="横版（水平排列）"/>
+                                <ComboBoxItem Content="竖版（垂直排列）"/>
+                            </ComboBox>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xEFBD;}"
+                    Header="Call 按钮宽度"
+                    Description="悬浮窗主按钮宽度（像素），0 表示自动">
+                        <fa:FASettingsExpander.Footer>
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <Slider Minimum="0" Maximum="240" VerticalAlignment="Center" TickFrequency="1" Width="180"
+                                        IsSnapToTickEnabled="True" Value="{Binding CallButtonWidth, Mode=TwoWay}"/>
+                                <TextBlock Text="{Binding CallButtonWidth, Converter={StaticResource CallButtonWidthConverter}}"
+                                           FontWeight="Bold" FontSize="16" VerticalAlignment="Center" MinWidth="48"/>
                             </StackPanel>
-                        </fa:FASettingsExpanderItem.Footer>
-                    </fa:FASettingsExpanderItem>
-                </DataTemplate>
-            </fa:FASettingsExpander.ItemTemplate>
-        </fa:FASettingsExpander>
-        <fa:FASettingsExpander
-            IconSource="{ci:FluentIconSource &#xE6A7;}"
-            Header="默认名单"
-            Description="选择点名时使用的默认名单">
-            <fa:FASettingsExpander.Footer>
-                <ComboBox ItemsSource="{Binding ProfileItems}"
-                          SelectedItem="{Binding SelectedProfile, Mode=TwoWay}"
-                          Width="260">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate x:CompileBindings="False">
-                            <TextBlock Text="{Binding Name}"/>
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
-            </fa:FASettingsExpander.Footer>
-        </fa:FASettingsExpander>
-        <fa:FASettingsExpander
-            IconSource="{ci:FluentIconSource &#xE6F9;}"
-            Header="按科目切换名单"
-            Description="上课时根据当前科目自动选择名单"
-            ItemsSource="{Binding ProfilePreferenceItems}">
-            <fa:FASettingsExpander.Footer>
-                <ToggleSwitch IsChecked="{Binding IsPreferProfile, Mode=TwoWay}"/>
-            </fa:FASettingsExpander.Footer>
-            <fa:FASettingsExpander.ItemTemplate>
-                <DataTemplate x:CompileBindings="False">
-                    <fa:FASettingsExpanderItem IsClickEnabled="false">
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xEFBD;}"
+                    Header="自动吸附屏幕边缘"
+                    Description="开启后，拖动悬浮窗靠近屏幕边缘时会自动贴边对齐">
+                        <fa:FASettingsExpander.Footer>
+                            <ToggleSwitch IsChecked="{Binding SnapToScreenEdge, Mode=TwoWay}"/>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xE7C3;}"
+                    Header="悬浮窗主题"
+                    Description="选择悬浮窗的 Fluent 或 LiquidGlass 外观。悬浮窗优先：启用液态玻璃后，点名展示窗口会自动回退到 Fluent">
+                        <fa:FASettingsExpander.Footer>
+                            <ComboBox SelectedIndex="{Binding HoverTheme, Mode=TwoWay}" Width="180">
+                                <ComboBoxItem Content="Fluent"/>
+                                <ComboBoxItem Content="LiquidGlass (Dev)"/>
+                            </ComboBox>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+
+                    <Separator Margin="0 12 0 4" />
+                    <ci:IconText Glyph="&#xE7B7;" Text="置顶增强" Margin="0,0,0,4"/>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xE7B7;}"
+                    Header="启用置顶增强"
+                    Description="把悬浮窗与点名结果窗口的置顶优先级提升到用户态最高级，任何窗口抢前台都会立即夺回">
+                        <fa:FASettingsExpander.Footer>
+                            <ToggleSwitch IsChecked="{Binding Topmost.Enabled, Mode=TwoWay}"/>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xE8A9;}"
+                    Header="Z 序重推周期"
+                    Description="多久重新置顶一次（毫秒）。越小越霸道，建议 100~500">
+                        <fa:FASettingsExpander.Footer>
+                            <Slider Minimum="50" Maximum="1000" VerticalAlignment="Center" TickFrequency="50" Width="180"
+                                    IsSnapToTickEnabled="True" Classes="auto-tooltip"
+                                    ci3:SliderDragTooltipAssist.StringFormat="F0"
+                                    Value="{Binding Topmost.IntervalMs, Mode=TwoWay}"/>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xE8A9;}"
+                    Header="前台事件钩子"
+                    Description="监听全局前台切换，任何窗口抢焦点都立即重新置顶">
+                        <fa:FASettingsExpander.Footer>
+                            <ToggleSwitch IsChecked="{Binding Topmost.EnableForegroundHook, Mode=TwoWay}"/>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xE8A9;}"
+                    Header="强化置顶样式"
+                    Description="追加 WS_EX_TOPMOST 扩展样式">
+                        <fa:FASettingsExpander.Footer>
+                            <ToggleSwitch IsChecked="{Binding Topmost.EnableTopmostStyle, Mode=TwoWay}"/>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xE8A9;}"
+                    Header="从 Alt+Tab 隐藏"
+                    Description="追加 WS_EX_TOOLWINDOW，任务切换时不显示">
+                        <fa:FASettingsExpander.Footer>
+                            <ToggleSwitch IsChecked="{Binding Topmost.EnableToolWindow, Mode=TwoWay}"/>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xE8A9;}"
+                    Header="避免抢焦点"
+                    Description="追加 WS_EX_NOACTIVATE，窗口不会抢输入焦点">
+                        <fa:FASettingsExpander.Footer>
+                            <ToggleSwitch IsChecked="{Binding Topmost.EnableNoActivate, Mode=TwoWay}"/>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xE8A9;}"
+                    Header="UIA 增强检测"
+                    Description="用 DWM cloaked 识别被系统隐藏的窗口，避免误判遮挡者">
+                        <fa:FASettingsExpander.Footer>
+                            <ToggleSwitch IsChecked="{Binding Topmost.EnableUiaDetection, Mode=TwoWay}"/>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+
+                    <Separator Margin="0 12 0 4" />
+                    <ci:IconText Glyph="&#xECF9;" Text="点名设置" Margin="0,0,0,4"/>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xECEF;}"
+                    Header="点名结果展示渠道"
+                    Description="选择展示点名结果的提醒渠道，可多选">
+                        <fa:FASettingsExpanderItem IsClickEnabled="false">
+                            <StackPanel Orientation="Horizontal" Spacing="16">
+                                <CheckBox Content="ClassIsland 提醒"
+                                          IsChecked="{Binding IsClassIslandNotificationEnabled, Mode=TwoWay}" />
+                                <CheckBox Content="IslandCaller 提醒"
+                                          IsChecked="{Binding IsIslandCallerNotificationEnabled, Mode=TwoWay}" />
+                            </StackPanel>
+                        </fa:FASettingsExpanderItem>
+                    </fa:FASettingsExpander>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xE7C3;}"
+                    Header="点名展示主题"
+                    Description="选择展示窗口的 Fluent 或 LiquidGlass 外观。当悬浮窗已启用液态玻璃时，此处会自动回退到 Fluent（二者互斥）">
+                        <fa:FASettingsExpander.Footer>
+                            <ComboBox SelectedIndex="{Binding ShowerTheme, Mode=TwoWay}" Width="180">
+                                <ComboBoxItem Content="Fluent"/>
+                                <ComboBoxItem Content="LiquidGlass (Dev)"/>
+                            </ComboBox>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xE4C4;}"
+                    Header="点名提醒时长"
+                    Description="调整单次点名提醒的持续时间，总时长为 {人数 * 基础时间 + 附加时间}">
+                        <fa:FASettingsExpanderItem IsClickEnabled="false" >
+                            <ci:IconText Glyph="&#xED07;" Text="基础时间"/>
+                            <fa:FASettingsExpanderItem.Footer>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding BaseTime, StringFormat={}{0:F2}}" FontSize="15" VerticalAlignment="Center" Margin="8,0"/>
+                                    <Slider Minimum="0" Maximum="5" VerticalAlignment="Center" TickFrequency="0.05" Width="180"
+                                            IsSnapToTickEnabled="True" Value="{Binding BaseTime, Mode=TwoWay}"/>
+                                </StackPanel>
+                            </fa:FASettingsExpanderItem.Footer>
+                        </fa:FASettingsExpanderItem>
+                        <fa:FASettingsExpanderItem IsClickEnabled="false" >
+                            <ci:IconText Glyph="&#xE00F;" Text="附加时间"/>
+                            <fa:FASettingsExpanderItem.Footer>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding AdditionalTime, StringFormat={}{0:F1}}" FontSize="15" VerticalAlignment="Center" Margin="8,0"/>
+                                    <Slider Minimum="-5" Maximum="8" VerticalAlignment="Center" TickFrequency="0.1" Width="180"
+                                            IsSnapToTickEnabled="True" Value="{Binding AdditionalTime, Mode=TwoWay}"/>
+                                </StackPanel>
+                            </fa:FASettingsExpanderItem.Footer>
+                        </fa:FASettingsExpanderItem>
+                    </fa:FASettingsExpander>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xECB8;}"
+                    Header="最大抽取人数"
+                    Description="「自定义抽取」窗口里最多能选几个人（1–10）">
+                        <fa:FASettingsExpander.Footer>
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <Slider Minimum="1" Maximum="10" VerticalAlignment="Center" TickFrequency="1" Width="180"
+                                        IsSnapToTickEnabled="True" Value="{Binding MaxDrawCount, Mode=TwoWay}"/>
+                                <TextBlock Text="{Binding MaxDrawCount}" FontWeight="Bold" FontSize="16"
+                                           VerticalAlignment="Center" MinWidth="28"/>
+                            </StackPanel>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+
+                    <Separator Margin="0 12 0 4" />
+                    <ci:IconText Glyph="&#xE790;" Text="外观设置" Margin="0,0,0,4"/>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xE790;}"
+                    Header="强调色"
+                    Description="悬浮窗主按钮的背景色">
+                        <fa:FASettingsExpander.Footer>
+                            <ColorPicker Color="{Binding AccentColorDraft, Mode=TwoWay}" Width="220"/>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xE8A5;}"
+                    Header="悬浮窗文字"
+                    Description="显示在「Call」之前的文字，留空则不显示">
+                        <fa:FASettingsExpander.Footer>
+                            <TextBox Text="{Binding HoverTextDraft}" Width="220"/>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xE91B;}"
+                    Header="抽选时图片"
+                    Description="抽选悬浮窗上显示的图片，可选内置图标或浏览本地图片">
+                        <fa:FASettingsExpander.Footer>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <ComboBox ItemsSource="{Binding ImageOptions}"
+                                          SelectedValue="{Binding HoverImagePathDraft, Mode=TwoWay}"
+                                          SelectedValueBinding="{Binding Key}"
+                                          Width="180">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate x:CompileBindings="False">
+                                            <TextBlock Text="{Binding DisplayName}"/>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <Button Content="浏览" Click="BrowseHoverImageButton_OnClick"/>
+                            </StackPanel>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xE91B;}"
+                    Header="结果展示图片"
+                    Description="抽选结果展示时显示在名字前面的图片，可选内置图标或浏览本地图片">
+                        <fa:FASettingsExpander.Footer>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <ComboBox ItemsSource="{Binding ImageOptions}"
+                                          SelectedValue="{Binding ResultImagePathDraft, Mode=TwoWay}"
+                                          SelectedValueBinding="{Binding Key}"
+                                          Width="180">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate x:CompileBindings="False">
+                                            <TextBlock Text="{Binding DisplayName}"/>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <Button Content="浏览" Click="BrowseResultImageButton_OnClick"/>
+                            </StackPanel>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xE8D2;}"
+                    Header="字体"
+                    Description="悬浮窗与抽选结果使用的字体">
+                        <fa:FASettingsExpander.Footer>
+                            <ComboBox ItemsSource="{Binding FontFamilies}"
+                                      SelectedItem="{Binding FontFamilyDraft, Mode=TwoWay}"
+                                      Width="220"/>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xE8A9;}"
+                    Header="结果字号"
+                    Description="抽选结果文字的大小（默认 60）">
+                        <fa:FASettingsExpander.Footer>
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <Slider Minimum="20" Maximum="120" VerticalAlignment="Center" TickFrequency="5" Width="180"
+                                        IsSnapToTickEnabled="True" Value="{Binding ResultFontSizeDraft, Mode=TwoWay}"/>
+                                <TextBlock Text="{Binding ResultFontSizeDraft, StringFormat={}{0:F0}}"
+                                           FontWeight="Bold" FontSize="16" VerticalAlignment="Center" MinWidth="36"/>
+                            </StackPanel>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xE790;}"
+                    Header="结果文字色"
+                    Description="抽选结果文字颜色（关闭则按屏幕亮度自动选黑白）">
+                        <fa:FASettingsExpander.Footer>
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <ToggleSwitch IsChecked="{Binding HasResultTextColorDraft, Mode=TwoWay}"/>
+                                <ColorPicker Color="{Binding ResultTextColorDraft, Mode=TwoWay}" Width="220"
+                                             IsEnabled="{Binding HasResultTextColorDraft}"/>
+                            </StackPanel>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xE790;}"
+                    Header="结果背景色"
+                    Description="抽选结果窗口背景色（关闭则透明）">
+                        <fa:FASettingsExpander.Footer>
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <ToggleSwitch IsChecked="{Binding HasResultBackgroundDraft, Mode=TwoWay}"/>
+                                <ColorPicker Color="{Binding ResultBackgroundDraft, Mode=TwoWay}" Width="220"
+                                             IsEnabled="{Binding HasResultBackgroundDraft}"/>
+                            </StackPanel>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xE790;}"
+                    Header="界面圆角"
+                    Description="悬浮窗与结果窗口的圆角大小（0 为直角，数值受元素高度限制，过大不会超过元素半高）">
+                        <fa:FASettingsExpander.Footer>
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <Slider Minimum="0" Maximum="60" VerticalAlignment="Center" TickFrequency="1" Width="180"
+                                        IsSnapToTickEnabled="True" Value="{Binding CornerRadiusDraft, Mode=TwoWay}"/>
+                                <TextBlock Text="{Binding CornerRadiusDraft, StringFormat={}{0:F0}}"
+                                           FontWeight="Bold" FontSize="16" VerticalAlignment="Center" MinWidth="36"/>
+                            </StackPanel>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xE790;}"
+                    Header="悬停保持原色"
+                    Description="开启后，光标移到或按住悬浮窗「Call」按钮时保持其原本背景色，不做高亮或变透明">
+                        <fa:FASettingsExpander.Footer>
+                            <ToggleSwitch IsChecked="{Binding KeepHoverColorDraft, Mode=TwoWay}"/>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                    <Button HorizontalAlignment="Right" Margin="0,8,0,0" Classes="accent"
+                            Click="SaveAppearanceButton_OnClick">
+                        <ci:IconText Glyph="&#xE74E;" Text="保存修改"/>
+                    </Button>
+
+                    <!-- ============ 快捷键点名 ============ -->
+                    <Separator Margin="0 12 0 4" />
+                    <ci:IconText Glyph="&#xE765;" Text="快捷键点名" Margin="0,0,0,4"/>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xE765;}"
+                    Header="启用快捷键点名"
+                    Description="按下组合键即可触发一次随机点名；与悬浮窗「Call」按钮同源（同一名单、同一防重复均衡算法）">
+                        <fa:FASettingsExpander.Footer>
+                            <ToggleSwitch IsChecked="{Binding HotkeyEnabledDraft, Mode=TwoWay}"/>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xE765;}"
+                    Header="修饰键"
+                    Description="至少选择一个修饰键；仅功能键（F1–F24）允许不带修饰键单独使用">
+                        <fa:FASettingsExpander.Footer>
+                            <StackPanel Orientation="Horizontal" Spacing="14">
+                                <CheckBox Content="Ctrl" IsChecked="{Binding HotkeyCtrlDraft, Mode=TwoWay}"/>
+                                <CheckBox Content="Alt" IsChecked="{Binding HotkeyAltDraft, Mode=TwoWay}"/>
+                                <CheckBox Content="Shift" IsChecked="{Binding HotkeyShiftDraft, Mode=TwoWay}"/>
+                                <CheckBox Content="Win" IsChecked="{Binding HotkeyWinDraft, Mode=TwoWay}"/>
+                            </StackPanel>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xE765;}"
+                    Header="主键"
+                    Description="快捷键中的主键：字母、数字、F1–F12 或常用特殊键">
+                        <fa:FASettingsExpander.Footer>
+                            <ComboBox ItemsSource="{Binding HotkeyKeys}"
+                                      SelectedItem="{Binding HotkeyKeyDraft, Mode=TwoWay}"
+                                      Width="180"/>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                    <fa:FASettingsExpander
+                    IconSource="{ci:FluentIconSource &#xE765;}"
+                    Header="触发范围"
+                    Description="全局＝任意前台窗口均触发；仅 ClassIsland 前台＝仅在 ClassIsland 窗口活动时触发">
+                        <fa:FASettingsExpander.Footer>
+                            <ComboBox SelectedIndex="{Binding HotkeyScopeIndexDraft, Mode=TwoWay}" Width="220">
+                                <ComboBoxItem Content="全局（任意前台窗口）"/>
+                                <ComboBoxItem Content="仅 ClassIsland 前台"/>
+                            </ComboBox>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,8,0,0">
+                        <TextBlock Text="{Binding HotkeyStatusText}" VerticalAlignment="Center"
+                                   FontSize="13" Opacity="0.7"/>
+                        <Button Classes="accent" Click="SaveHotkeyButton_OnClick">
+                            <ci:IconText Glyph="&#xE74E;" Text="保存快捷键"/>
+                        </Button>
+                    </StackPanel>
+
+                    <!-- ============ 高级设置（默认折叠） ============ -->
+                    <Expander Margin="0 16 0 4">
+                        <Expander.Header>
+                            <ci:IconText Glyph="&#xE8A9;" Text="高级设置"/>
+                        </Expander.Header>
                         <StackPanel>
-                            <StackPanel IsVisible="{Binding IsAddAction}">
-                                <Button Click="AddProfilePreferenceRuleButton_OnClick"
-                                        IsEnabled="{Binding CanAddRule}">
-                                    <ci:IconText Glyph="&#xE00D;" Text="添加规则"/>
-                                </Button>
-                            </StackPanel>
-                            <StackPanel IsVisible="{Binding IsRule}" Orientation="Horizontal" Spacing="8">
-                                <ComboBox ItemsSource="{Binding AvailableSubjects}"
-                                          SelectedValue="{Binding SubjectId, Mode=TwoWay}"
-                                          SelectedValueBinding="{Binding SubjectId}"
-                                          Width="180">
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate x:CompileBindings="False">
+                            <ci:IconText Glyph="&#xED53;" Text="TTS 设置" Margin="0,4,0,4"/>
+                            <fa:FASettingsExpander
+                            IconSource="{ci:FluentIconSource &#xECD9;}"
+                            Header="TTS 提供方"
+                            Description="选择用于播报点名结果的 TTS 提供方">
+                                <fa:FASettingsExpander.Footer>
+                                    <ComboBox ItemsSource="{Binding TtsProviders}"
+                                              SelectedItem="{Binding Provider, Mode=TwoWay}"
+                                              Width="180"/>
+                                </fa:FASettingsExpander.Footer>
+                            </fa:FASettingsExpander>
+                            <fa:FASettingsExpander
+                            IconSource="{ci:FluentIconSource &#xE55F;}"
+                            Header="TTS 前后文"
+                            Description="在TTS播报前后添加自定义文本">
+                                <fa:FASettingsExpanderItem IsClickEnabled="false" >
+                                    <ci:IconText Glyph="&#xF1C0;" Text="播报前文本"/>
+                                    <fa:FASettingsExpanderItem.Footer>
+                                        <TextBox Text="{Binding BeforeText}" Width="500"/>
+                                    </fa:FASettingsExpanderItem.Footer>
+                                </fa:FASettingsExpanderItem>
+                                <fa:FASettingsExpanderItem IsClickEnabled="false" >
+                                    <ci:IconText Glyph="&#xF1C2;" Text="播报后文本"/>
+                                    <fa:FASettingsExpanderItem.Footer>
+                                        <TextBox Text="{Binding AfterText}" Width="500"/>
+                                    </fa:FASettingsExpanderItem.Footer>
+                                </fa:FASettingsExpanderItem>
+                                <fa:FASettingsExpanderItem IsClickEnabled="false" >
+                                    <ci:IconText Glyph="&#xE55D;" Text="播报文本示例"/>
+                                    <fa:FASettingsExpanderItem.Footer>
+                                        <TextBlock Text="{Binding ExampleText}" Width="500" TextWrapping="Wrap"/>
+                                    </fa:FASettingsExpanderItem.Footer>
+                                </fa:FASettingsExpanderItem>
+                            </fa:FASettingsExpander>
+
+                            <Separator Margin="0 12 0 4" />
+                            <ci:IconText Glyph="&#xE943;" Text="算法设置" Margin="0,0,0,4"/>
+                            <fa:FASettingsExpander
+                            IconSource="{ci:FluentIconSource &#xE8A9;}"
+                            Header="防重复强度"
+                            Description="半恢复距离：值越大，短时间内越不容易再次抽到同一名学生（默认 5）">
+                                <fa:FASettingsExpander.Footer>
+                                    <Slider Minimum="1" Maximum="20" VerticalAlignment="Center" TickFrequency="1" Width="180"
+                                            IsSnapToTickEnabled="True" Classes="auto-tooltip"
+                                            ci3:SliderDragTooltipAssist.StringFormat="F0"
+                                            Value="{Binding HalfRecoveryDistance, Mode=TwoWay}"/>
+                                </fa:FASettingsExpander.Footer>
+                            </fa:FASettingsExpander>
+                            <fa:FASettingsExpander
+                            IconSource="{ci:FluentIconSource &#xE8A9;}"
+                            Header="防重复曲线陡峭度"
+                            Description="S 曲线幂：值越大曲线越陡，权重恢复越快（默认 6）">
+                                <fa:FASettingsExpander.Footer>
+                                    <Slider Minimum="1" Maximum="12" VerticalAlignment="Center" TickFrequency="1" Width="180"
+                                            IsSnapToTickEnabled="True" Classes="auto-tooltip"
+                                            ci3:SliderDragTooltipAssist.StringFormat="F0"
+                                            Value="{Binding CurvePower, Mode=TwoWay}"/>
+                                </fa:FASettingsExpander.Footer>
+                            </fa:FASettingsExpander>
+                            <fa:FASettingsExpander
+                            IconSource="{ci:FluentIconSource &#xE8A9;}"
+                            Header="历史均衡强度"
+                            Description="补偿强度：值越大，被点次数少的学生权重补偿越明显（默认 0.9）">
+                                <fa:FASettingsExpander.Footer>
+                                    <Slider Minimum="0.1" Maximum="3" VerticalAlignment="Center" TickFrequency="0.1" Width="180"
+                                            IsSnapToTickEnabled="True" Classes="auto-tooltip"
+                                            ci3:SliderDragTooltipAssist.StringFormat="F1"
+                                            Value="{Binding Gamma, Mode=TwoWay}"/>
+                                </fa:FASettingsExpander.Footer>
+                            </fa:FASettingsExpander>
+                            <fa:FASettingsExpander
+                            IconSource="{ci:FluentIconSource &#xE8A9;}"
+                            Header="补偿系数下限"
+                            Description="历史均衡因子最小补偿系数（默认 0.6）">
+                                <fa:FASettingsExpander.Footer>
+                                    <Slider Minimum="0.1" Maximum="1.5" VerticalAlignment="Center" TickFrequency="0.05" Width="180"
+                                            IsSnapToTickEnabled="True" Classes="auto-tooltip"
+                                            ci3:SliderDragTooltipAssist.StringFormat="F2"
+                                            Value="{Binding RMin, Mode=TwoWay}"/>
+                                </fa:FASettingsExpander.Footer>
+                            </fa:FASettingsExpander>
+                            <fa:FASettingsExpander
+                            IconSource="{ci:FluentIconSource &#xE8A9;}"
+                            Header="补偿系数上限"
+                            Description="历史均衡因子最大补偿系数（默认 1.6）">
+                                <fa:FASettingsExpander.Footer>
+                                    <Slider Minimum="0.5" Maximum="3" VerticalAlignment="Center" TickFrequency="0.05" Width="180"
+                                            IsSnapToTickEnabled="True" Classes="auto-tooltip"
+                                            ci3:SliderDragTooltipAssist.StringFormat="F2"
+                                            Value="{Binding RMax, Mode=TwoWay}"/>
+                                </fa:FASettingsExpander.Footer>
+                            </fa:FASettingsExpander>
+
+                            <Separator Margin="0 12 0 4" />
+                            <ci:IconText Glyph="&#xF1F4;" Text="档案设置" Margin="0,0,0,4"/>
+                            <fa:FASettingsExpander
+                            IconSource="{ci:FluentIconSource &#xF20C;}"
+                            Header="档案编辑"
+                            Description="导入、编辑或移除点名名单"
+                            ItemsSource="{Binding ProfileItems}">
+                                <fa:FASettingsExpander.Footer>
+                                    <Button Click="CreateProfileButton_OnClick">
+                                        <ci:IconText Glyph="&#xE00D;" Text="新建名单"/>
+                                    </Button>
+                                </fa:FASettingsExpander.Footer>
+                                <fa:FASettingsExpander.ItemTemplate>
+                                    <DataTemplate x:CompileBindings="False">
+                                        <fa:FASettingsExpanderItem Description="编辑此名单中的学生信息">
                                             <TextBlock Text="{Binding Name}"/>
-                                        </DataTemplate>
-                                    </ComboBox.ItemTemplate>
-                                </ComboBox>
-                                <ComboBox ItemsSource="{Binding AvailableProfiles}"
-                                          SelectedValue="{Binding ProfileId, Mode=TwoWay}"
-                                          SelectedValueBinding="{Binding ProfileId}"
-                                          Width="180">
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate x:CompileBindings="False">
-                                            <TextBlock Text="{Binding Name}"/>
-                                        </DataTemplate>
-                                    </ComboBox.ItemTemplate>
-                                </ComboBox>
-                                <Button Tag="{Binding}"
-                                        Click="DeleteProfilePreferenceRuleButton_OnClick"
-                                        ToolTip.Tip="删除规则">
-                                    <ci:IconText Glyph="&#xE61D;"/>
-                                </Button>
-                            </StackPanel>
+                                            <fa:FASettingsExpanderItem.Footer>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Button Tag="{Binding ProfileId}" Click="EditButton_OnClick" Margin="0,0,8,0">
+                                                        <ci:IconText Glyph="&#xE70F;" Text="编辑"/>
+                                                    </Button>
+                                                    <Button Tag="{Binding ProfileId}" IsEnabled="{Binding CanDelete}" Background="Red" Click="DeleteButton_OnClick">
+                                                        <ci:IconText Glyph="&#xE61D;" Text="删除"/>
+                                                    </Button>
+                                                </StackPanel>
+                                            </fa:FASettingsExpanderItem.Footer>
+                                        </fa:FASettingsExpanderItem>
+                                    </DataTemplate>
+                                </fa:FASettingsExpander.ItemTemplate>
+                            </fa:FASettingsExpander>
+                            <fa:FASettingsExpander
+                            IconSource="{ci:FluentIconSource &#xE6A7;}"
+                            Header="默认名单"
+                            Description="选择点名时使用的默认名单">
+                                <fa:FASettingsExpander.Footer>
+                                    <ComboBox ItemsSource="{Binding ProfileItems}"
+                                              SelectedItem="{Binding SelectedProfile, Mode=TwoWay}"
+                                              Width="260">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate x:CompileBindings="False">
+                                                <TextBlock Text="{Binding Name}"/>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </fa:FASettingsExpander.Footer>
+                            </fa:FASettingsExpander>
+                            <fa:FASettingsExpander
+                            IconSource="{ci:FluentIconSource &#xE6F9;}"
+                            Header="按科目切换名单"
+                            Description="上课时根据当前科目自动选择名单"
+                            ItemsSource="{Binding ProfilePreferenceItems}">
+                                <fa:FASettingsExpander.Footer>
+                                    <ToggleSwitch IsChecked="{Binding IsPreferProfile, Mode=TwoWay}"/>
+                                </fa:FASettingsExpander.Footer>
+                                <fa:FASettingsExpander.ItemTemplate>
+                                    <DataTemplate x:CompileBindings="False">
+                                        <fa:FASettingsExpanderItem IsClickEnabled="false">
+                                            <StackPanel>
+                                                <StackPanel IsVisible="{Binding IsAddAction}">
+                                                    <Button Click="AddProfilePreferenceRuleButton_OnClick" IsEnabled="{Binding CanAddRule}">
+                                                        <ci:IconText Glyph="&#xE00D;" Text="添加规则"/>
+                                                    </Button>
+                                                </StackPanel>
+                                                <StackPanel IsVisible="{Binding IsRule}" Orientation="Horizontal" Spacing="8">
+                                                    <ComboBox ItemsSource="{Binding AvailableSubjects}"
+                                                              SelectedValue="{Binding SubjectId, Mode=TwoWay}"
+                                                              SelectedValueBinding="{Binding SubjectId}" Width="180">
+                                                        <ComboBox.ItemTemplate>
+                                                            <DataTemplate x:CompileBindings="False">
+                                                                <TextBlock Text="{Binding Name}"/>
+                                                            </DataTemplate>
+                                                        </ComboBox.ItemTemplate>
+                                                    </ComboBox>
+                                                    <ComboBox ItemsSource="{Binding AvailableProfiles}"
+                                                              SelectedValue="{Binding ProfileId, Mode=TwoWay}"
+                                                              SelectedValueBinding="{Binding ProfileId}" Width="180">
+                                                        <ComboBox.ItemTemplate>
+                                                            <DataTemplate x:CompileBindings="False">
+                                                                <TextBlock Text="{Binding Name}"/>
+                                                            </DataTemplate>
+                                                        </ComboBox.ItemTemplate>
+                                                    </ComboBox>
+                                                    <Button Tag="{Binding}" Click="DeleteProfilePreferenceRuleButton_OnClick" ToolTip.Tip="删除规则">
+                                                        <ci:IconText Glyph="&#xE61D;"/>
+                                                    </Button>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </fa:FASettingsExpanderItem>
+                                    </DataTemplate>
+                                </fa:FASettingsExpander.ItemTemplate>
+                            </fa:FASettingsExpander>
+                            <fa:FASettingsExpander
+                            IconSource="{ci:FluentIconSource &#xE2C2;}"
+                            Header="清除点名历史"
+                            Description="清除当前使用名单的长期和本节课点名记录">
+                                <fa:FASettingsExpander.Footer>
+                                    <Button Click="ClearButton_OnClick">
+                                        <ci:IconText Glyph="&#xE2C2;" Text="清除历史记录"/>
+                                    </Button>
+                                </fa:FASettingsExpander.Footer>
+                            </fa:FASettingsExpander>
+                            <fa:FASettingsExpander
+                            IconSource="{ci:FluentIconSource &#xE89D;}"
+                            Header="档案数据导入与导出"
+                            Description="完整导入或导出 IslandCaller 设置及 AppData 数据">
+                                <fa:FASettingsExpander.Footer>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Button Click="ImportSettingsButton_OnClick">
+                                            <ci:IconText Glyph="&#xE879;" Text="导入数据包"/>
+                                        </Button>
+                                        <Button Click="ExportSettingsButton_OnClick">
+                                            <ci:IconText Glyph="&#xE87B;" Text="导出数据包"/>
+                                        </Button>
+                                    </StackPanel>
+                                </fa:FASettingsExpander.Footer>
+                            </fa:FASettingsExpander>
+
+                            <Separator Margin="0 12 0 4" />
+                            <ci:IconText Glyph="&#xE72E;" Text="安全设置" Margin="0,0,0,4"/>
+                            <fa:FASettingsExpander
+                            IconSource="{ci:FluentIconSource &#xE72E;}"
+                            Header="启用查看密码"
+                            Description="开启后，进入设置页需输入查看密码才能查看">
+                                <fa:FASettingsExpander.Footer>
+                                    <ToggleSwitch IsChecked="{Binding IsViewPasswordEnabled, Mode=TwoWay}"/>
+                                </fa:FASettingsExpander.Footer>
+                            </fa:FASettingsExpander>
+                            <fa:FASettingsExpander
+                            IconSource="{ci:FluentIconSource &#xE8A7;}"
+                            Header="设置查看密码"
+                            Description="设置或修改查看密码">
+                                <fa:FASettingsExpander.Footer>
+                                    <Button Click="SetViewPasswordButton_OnClick">
+                                        <ci:IconText Glyph="&#xE8A7;" Text="设置查看密码"/>
+                                    </Button>
+                                </fa:FASettingsExpander.Footer>
+                            </fa:FASettingsExpander>
+                            <fa:FASettingsExpander
+                            IconSource="{ci:FluentIconSource &#xE72E;}"
+                            Header="启用修改密码"
+                            Description="开启后，修改配置需输入修改密码（与查看密码独立）">
+                                <fa:FASettingsExpander.Footer>
+                                    <ToggleSwitch IsChecked="{Binding IsEditPasswordEnabled, Mode=TwoWay}"/>
+                                </fa:FASettingsExpander.Footer>
+                            </fa:FASettingsExpander>
+                            <fa:FASettingsExpander
+                            IconSource="{ci:FluentIconSource &#xE8A7;}"
+                            Header="设置修改密码"
+                            Description="设置或修改修改密码">
+                                <fa:FASettingsExpander.Footer>
+                                    <Button Click="SetEditPasswordButton_OnClick">
+                                        <ci:IconText Glyph="&#xE8A7;" Text="设置修改密码"/>
+                                    </Button>
+                                </fa:FASettingsExpander.Footer>
+                            </fa:FASettingsExpander>
                         </StackPanel>
-                    </fa:FASettingsExpanderItem>
-                </DataTemplate>
-            </fa:FASettingsExpander.ItemTemplate>
-        </fa:FASettingsExpander>
-        <fa:FASettingsExpander
-            IconSource="{ci:FluentIconSource &#xE2C2;}"
-            Header="清除点名历史"
-            Description="清除当前使用名单的长期和本节课点名记录">
-            <fa:FASettingsExpander.Footer>
-                <Button Click="ClearButton_OnClick">
-                    <ci:IconText Glyph="&#xE2C2;" Text="清除历史记录"/>
-                </Button>
-            </fa:FASettingsExpander.Footer>
-        </fa:FASettingsExpander>
-        <fa:FASettingsExpander
-            IconSource="{ci:FluentIconSource &#xE89D;}"
-            Header="档案数据导入与导出"
-            Description="完整导入或导出 IslandCaller 设置及 AppData 数据">
-            <fa:FASettingsExpander.Footer>
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Button Click="ImportSettingsButton_OnClick">
-                        <ci:IconText Glyph="&#xE879;" Text="导入数据包"/>
-                    </Button>
-                    <Button Click="ExportSettingsButton_OnClick">
-                        <ci:IconText Glyph="&#xE87B;" Text="导出数据包"/>
-                    </Button>
+                    </Expander>
                 </StackPanel>
-            </fa:FASettingsExpander.Footer>
-        </fa:FASettingsExpander>
-  </StackPanel>
+            </StackPanel>
+        </StackPanel>
     </ScrollViewer>
 </ci2:SettingsPageBase>

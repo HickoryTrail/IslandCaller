@@ -40,24 +40,44 @@ internal sealed class LiquidGlassRuntime(ILogger<LiquidGlassRuntime> logger)
 
     public bool CanUseHoverTheme()
     {
-        if (Settings.Instance.Hover.HoverTheme != 1 || IsReady)
+        if (Settings.Instance.Hover.HoverTheme != 1)
         {
-            return Settings.Instance.Hover.HoverTheme == 1;
+            return false;
         }
 
-        RevertUnavailableThemes();
-        return false;
+        if (!IsReady)
+        {
+            RevertUnavailableThemes();
+            return false;
+        }
+
+        return true;
     }
 
     public bool CanUseShowerTheme()
     {
-        if (Settings.Instance.Call.ShowerTheme != 1 || IsReady)
+        if (Settings.Instance.Call.ShowerTheme != 1)
         {
-            return Settings.Instance.Call.ShowerTheme == 1;
+            return false;
         }
 
-        RevertUnavailableThemes();
-        return false;
+        if (!IsReady)
+        {
+            RevertUnavailableThemes();
+            return false;
+        }
+
+        // Desktop Duplication 捕获会话互斥：同一时间只能有一个活跃的 GPU 捕获会话。
+        // 悬浮窗是常驻窗口、优先级更高，当其已启用液态玻璃时，
+        // 展示窗口无法再建立第二个捕获会话，必须回退到 Fluent。
+        if (Settings.Instance.Hover.HoverTheme == 1)
+        {
+            _logger.LogInformation(
+                "悬浮窗已占用液态玻璃捕获会话，展示窗口本次回退至 Fluent 主题。");
+            return false;
+        }
+
+        return true;
     }
 
     private static void RevertUnavailableThemes()

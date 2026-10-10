@@ -1,4 +1,5 @@
 using ClassIsland.Shared;
+using IslandCaller.Models;
 using Microsoft.Extensions.Logging;
 
 namespace IslandCaller.Services
@@ -8,7 +9,7 @@ namespace IslandCaller.Services
         private ProfileService ProfileService { get; set; }
         private HistoryService HistoryService { get; set; }
         private ILogger<CoreService>? Logger { get; set; }
-        private Status Status { get; set; }
+        private Status Status {  get; set; }
         Random rand = new();
         public CoreService()
         {
@@ -25,6 +26,9 @@ namespace IslandCaller.Services
         }
         // 计算学生被点名的权重
         internal List<Person> Persons { get; set; } = new List<Person>();
+
+        /// <summary>当前名单中的可点名人数（0 表示无可用内容）。</summary>
+        internal int PersonCount => Persons.Count;
 
         internal void Initialize()
         {
@@ -58,8 +62,9 @@ namespace IslandCaller.Services
             // -----------------------------
             // 1. 本节课防重复因子（Hill 型 S 曲线）
             // -----------------------------
-            const double halfRecoveryDistance = 5.0;
-            const double curvePower = 6.0;
+            var algorithm = Settings.Instance.Algorithm;
+            double halfRecoveryDistance = algorithm.HalfRecoveryDistance;
+            double curvePower = algorithm.CurvePower;
 
             // 不在短期历史中的学生不应低于已在历史末尾的学生。
             double F_session;
@@ -81,9 +86,9 @@ namespace IslandCaller.Services
             // 2. 历史均衡因子
             // -----------------------------
             const double eps = 1.0;      // 平滑项
-            const double gamma = 0.9;    // 补偿强度
-            const double rMin = 0.5;     // 最小补偿
-            const double rMax = 1.8;     // 最大补偿
+            double gamma = algorithm.Gamma;    // 补偿强度
+            double rMin = algorithm.RMin;      // 最小补偿
+            double rMax = algorithm.RMax;      // 最大补偿
 
             // F_history = clip( ((manualWeight * avgHist + eps)/(nHist + eps))^gamma , rMin, rMax )
             double ratio = (manualWeight * avgHist + eps) / (nHist + eps);

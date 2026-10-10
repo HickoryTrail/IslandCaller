@@ -33,6 +33,16 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Compile Update="Views\CsvImport.axaml.cs">
+        <DependentUpon>CsvImport.axaml</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+        <AvaloniaResource Include="Assets\*.png" />
+    </ItemGroup>
+
+    <ItemGroup>
         <None Update="Icon.ico">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
