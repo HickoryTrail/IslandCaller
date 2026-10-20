@@ -54,7 +54,7 @@ namespace IslandCaller
                     logger = IAppHost.TryGetService<ILogger<Plugin>>();
                     IAppHost.GetService<Status>();
                     logger?.LogInformation("插件状态初始化完成，正在加载设置...");
-                    new Settings(IAppHost.GetService<ProfileService>()).Load();
+                    await new Settings(IAppHost.GetService<ProfileService>()).LoadAsync();
                     await IAppHost.GetService<LiquidGlassRuntime>().PrewarmAsync();
                     logger?.LogDebug("设置加载完成，正在加载默认配置...");
                     IAppHost.GetService<ProfileRuntimeService>().Initialize();

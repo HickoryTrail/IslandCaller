@@ -47,6 +47,7 @@ namespace IslandCaller.Models
             RegistryKey IsC_TTSKey = IsC_RootKey?.CreateSubKey("TTS", writable: true);
             RegistryKey IsC_CallKey = IsC_RootKey?.CreateSubKey("Call", writable: true);
 
+            IsC_GeneralKey?.SetValue("Version", Instance.General.Version.ToString());
             IsC_GeneralKey?.SetValue("BreakDisable", Instance.General.BreakDisable);
             IsC_GeneralKey?.SetValue("Interruptable", Instance.General.Interruptable);
             IsC_ProfileKey?.SetValue("ProfileNum", Instance.Profile.ProfileNum);
@@ -72,7 +73,7 @@ namespace IslandCaller.Models
             ClassIsland.Core.Controls.CommonTaskDialogs.ShowDialog("Welcome", "欢迎使用IslandCaller2.0");
         }
 
-        public void Load()
+        public async Task LoadAsync()
         {
             RegistryKey IsC_RootKey = Registry.CurrentUser.OpenSubKey(@"Software\IslandCaller", writable: true);
             RegistryKey IsC_GeneralKey;
@@ -88,6 +89,13 @@ namespace IslandCaller.Models
             }
             else
             {
+                // 已保存版本小于当前版本或版本号缺失时先执行迁移占位，成功后才继续加载并写入新版本号。
+                Version? savedVersion = ReadSavedVersion(IsC_RootKey);
+                if (savedVersion == null || savedVersion < Instance.General.Version)
+                {
+                    await MigrateAsync();
+                }
+
                 if (HasLegacyDefaultProfileFile())
                 {
                     CleanupLegacyInstall();
@@ -131,6 +139,31 @@ namespace IslandCaller.Models
             SettingsBinder.Bind(Instance, Save);
         }
 
+        /// <summary>
+        /// 迁移占位函数：预留新版自动迁移配置功能，目前不做任何实际迁移。
+        /// 成功（不抛出异常）后调用方才会继续加载并写入新版本号；
+        /// 抛出异常则终止加载且不会写入新版本号。
+        /// </summary>
+        private static Task MigrateAsync()
+        {
+            return Task.CompletedTask;
+        }
+
+        private static Version? ReadSavedVersion(RegistryKey? IsC_RootKey)
+        {
+            if (IsC_RootKey == null)
+            {
+                return null;
+            }
+
+            using RegistryKey IsC_GeneralKey = IsC_RootKey.OpenSubKey("General");
+            object? savedValue = IsC_GeneralKey?.GetValue("Version");
+            return savedValue is string versionString &&
+                   Version.TryParse(versionString, out Version? parsedVersion)
+                   ? parsedVersion
+                   : null;
+        }
+
         public void Save()
         {
             RegistryKey IsC_RootKey = Registry.CurrentUser.OpenSubKey(@"Software\IslandCaller", writable: true);
@@ -141,6 +174,7 @@ namespace IslandCaller.Models
             RegistryKey IsC_TTSKey = IsC_RootKey?.OpenSubKey("TTS", writable: true) ?? IsC_RootKey?.CreateSubKey("TTS", writable: true);
             RegistryKey IsC_CallKey = IsC_RootKey?.OpenSubKey("Call", writable: true) ?? IsC_RootKey?.CreateSubKey("Call", writable: true);
 
+            IsC_GeneralKey?.SetValue("Version", Instance.General.Version.ToString());
             IsC_GeneralKey?.SetValue("BreakDisable", Instance.General.BreakDisable);
             IsC_GeneralKey?.SetValue("Interruptable", Instance.General.Interruptable);
             IsC_ProfileKey?.SetValue("ProfileNum", Instance.Profile.ProfileNum);
