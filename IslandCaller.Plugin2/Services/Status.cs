@@ -6,49 +6,49 @@ namespace IslandCaller.Services
     {
         public bool ProfileServiceInitialized
         {
-            get => field;
+            get;
             set => this.RaiseAndSetIfChanged(ref field, value);
         }
 
         public bool HistoryServiceInitialized
         {
-            get => field;
+            get;
             set => this.RaiseAndSetIfChanged(ref field, value);
         }
 
         public bool CoreServiceInitialized
         {
-            get => field;
+            get;
             set => this.RaiseAndSetIfChanged(ref field, value);
         }
 
         public bool IslandCallerServiceInitialized
         {
-            get => field;
+            get;
             set => this.RaiseAndSetIfChanged(ref field, value);
         }
 
         public bool IsTimeStatusAvailable
         {
-            get => field;
+            get;
             set => this.RaiseAndSetIfChanged(ref field, value);
         }
 
         public bool OccupationDisable
         {
-            get => field;
+            get;
             set => this.RaiseAndSetIfChanged(ref field, value);
         }
 
         public bool InterruptionEnable
         {
-            get => field;
+            get;
             set => this.RaiseAndSetIfChanged(ref field, value);
         }
 
         public bool IsPluginReady
         {
-            get => field;
+            get;
             private set => this.RaiseAndSetIfChanged(ref field, value);
         }
 

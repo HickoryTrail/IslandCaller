@@ -14,45 +14,45 @@ public class SettingPageViewModel : ReactiveObject
     // 基本设置
     public bool IsBreakDisable
     {
-        get => field;
+        get;
         set => this.RaiseAndSetIfChanged(ref field, value);
     }
 
     public bool Interruptable
     {
-        get => field;
+        get;
         set => this.RaiseAndSetIfChanged(ref field, value);
     }
 
     // 悬浮窗设置
     public bool IsHoverEnable
     {
-        get => field;
+        get;
         set => this.RaiseAndSetIfChanged(ref field, value);
     }
 
     public double HoverScalingFactor
     {
-        get => field;
+        get;
         set => this.RaiseAndSetIfChanged(ref field, value);
     }
 
     public int HoverLayout
     {
-        get => field;
+        get;
         set => this.RaiseAndSetIfChanged(ref field, Math.Clamp(value, 0, 2));
     }
 
     public int HoverTheme
     {
-        get => field;
+        get;
         set => this.RaiseAndSetIfChanged(ref field, Math.Clamp(value, 0, 1));
     }
 
     // 点名设置
     public int NotifyMethod
     {
-        get => field;
+        get;
         set
         {
             int notifyMethod = value & 0b11;
@@ -81,26 +81,26 @@ public class SettingPageViewModel : ReactiveObject
 
     public int ShowerTheme
     {
-        get => field;
+        get;
         set => this.RaiseAndSetIfChanged(ref field, Math.Clamp(value, 0, 1));
     }
 
     public float BaseTime
     {
-        get => field;
+        get;
         set => this.RaiseAndSetIfChanged(ref field, value);
     } = 2.0f;
 
     public float AdditionalTime
     {
-        get => field;
+        get;
         set => this.RaiseAndSetIfChanged(ref field, value);
     } = 1.0f;
 
     // TTS 设置
     public TtsProvider Provider
     {
-        get => field;
+        get;
         set => this.RaiseAndSetIfChanged(ref field, value);
     }
 
@@ -108,32 +108,32 @@ public class SettingPageViewModel : ReactiveObject
 
     public string BeforeText
     {
-        get => field;
+        get;
         set => this.RaiseAndSetIfChanged(ref field, value);
     } = string.Empty;
 
     public string AfterText
     {
-        get => field;
+        get;
         set => this.RaiseAndSetIfChanged(ref field, value);
     } = string.Empty;
 
     public string ExampleText
     {
-        get => field;
+        get;
         set => this.RaiseAndSetIfChanged(ref field, value);
     } = "{学生姓名}";
 
     // 档案设置
     public ObservableCollection<ProfileItemViewModel> ProfileItems
     {
-        get => field;
+        get;
         private set => this.RaiseAndSetIfChanged(ref field, value);
     } = new();
 
     public ProfileItemViewModel? SelectedProfile
     {
-        get => field;
+        get;
         set
         {
             this.RaiseAndSetIfChanged(ref field, value);
@@ -160,14 +160,14 @@ public class SettingPageViewModel : ReactiveObject
 
     public bool IsPreferProfile
     {
-        get => field;
+        get;
         set => this.RaiseAndSetIfChanged(ref field, value);
     }
 
     private IReadOnlyList<SubjectItemViewModel> _subjectItems = [];
     public ObservableCollection<ProfilePreferenceItemViewModel> ProfilePreferenceItems
     {
-        get => field;
+        get;
         private set => this.RaiseAndSetIfChanged(ref field, value);
     } = new();
 
@@ -440,13 +440,13 @@ public class SettingPageViewModel : ReactiveObject
 
         public bool CanAddRule
         {
-            get => field;
+            get;
             internal set => this.RaiseAndSetIfChanged(ref field, value);
         }
 
         public Guid SubjectId
         {
-            get => field;
+            get;
             set
             {
                 if (field == value)
@@ -461,7 +461,7 @@ public class SettingPageViewModel : ReactiveObject
 
         public Guid ProfileId
         {
-            get => field;
+            get;
             set
             {
                 if (field == value)
@@ -476,13 +476,13 @@ public class SettingPageViewModel : ReactiveObject
 
         public IReadOnlyList<SubjectItemViewModel> AvailableSubjects
         {
-            get => field;
+            get;
             internal set => this.RaiseAndSetIfChanged(ref field, value);
         } = [];
 
         public IReadOnlyList<ProfileItemViewModel> AvailableProfiles
         {
-            get => field;
+            get;
             internal set => this.RaiseAndSetIfChanged(ref field, value);
         } = [];
 

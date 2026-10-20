@@ -17,18 +17,18 @@ namespace IslandCaller.Models
     {
         public Version Version
         {
-            get => field;
+            get;
         } = new Version(2, 0, 1, 3);
 
         public bool BreakDisable
         {
-            get => field;
+            get;
             set { if (field != value) { field = value; OnPropertyChanged(nameof(BreakDisable)); } }
         } = true;
 
         public bool Interruptable
         {
-            get => field;
+            get;
             set { if (field != value) { field = value; OnPropertyChanged(nameof(Interruptable)); } }
         }
 
@@ -46,31 +46,31 @@ namespace IslandCaller.Models
 
         public int ProfileNum
         {
-            get => field;
+            get;
             set { if (field != value) { field = value; OnPropertyChanged(nameof(ProfileNum)); } }
         } = 1;
 
         public Guid DefaultProfile
         {
-            get => field;
+            get;
             set { if (field != value) { field = value; OnPropertyChanged(nameof(DefaultProfile)); } }
         } = NewGuid();
 
         public Dictionary<Guid, string> ProfileList
         {
-            get => field;
+            get;
             set { if (field != value) { field = value; OnPropertyChanged(nameof(ProfileList)); } }
         } = new Dictionary<Guid, string>();
 
         public bool IsPreferProfile
         {
-            get => field;
+            get;
             set { if (field != value) { field = value; OnPropertyChanged(nameof(IsPreferProfile)); } }
         }
 
         public Dictionary<Guid, Guid> ProfilePrefer
         {
-            get => field;
+            get;
             set { if (field != value) { field = value; OnPropertyChanged(nameof(ProfilePrefer)); } }
         } = new Dictionary<Guid, Guid>();
 
@@ -83,19 +83,19 @@ namespace IslandCaller.Models
     {
         public TtsProvider Provider
         {
-            get => field;
+            get;
             set { if (field != value) { field = value; OnPropertyChanged(nameof(Provider)); } }
         } = TtsProvider.None;
 
         public string BeforeText
         {
-            get => field;
+            get;
             set { if (field != value) { field = value; OnPropertyChanged(nameof(BeforeText)); } }
         } = string.Empty;
 
         public string AfterText
         {
-            get => field;
+            get;
             set { if (field != value) { field = value; OnPropertyChanged(nameof(AfterText)); } }
         } = string.Empty;
 
@@ -108,7 +108,7 @@ namespace IslandCaller.Models
     {
         public int ShowerTheme
         {
-            get => field;
+            get;
             set
             {
                 int showerTheme = Math.Clamp(value, 0, 1);
@@ -122,7 +122,7 @@ namespace IslandCaller.Models
 
         public int NotifyMethod
         {
-            get => field;
+            get;
             set
             {
                 int notifyMethod = value & 0b11;
@@ -136,13 +136,13 @@ namespace IslandCaller.Models
 
         public float BaseTime
         {
-            get => field;
+            get;
             set { if (field != value) { field = value; OnPropertyChanged(nameof(BaseTime)); } }
         } = 1.0f;
 
         public float AdditionalTime
         {
-            get => field;
+            get;
             set { if (field != value) { field = value; OnPropertyChanged(nameof(AdditionalTime)); } }
         } = 2.0f;
 
@@ -155,19 +155,19 @@ namespace IslandCaller.Models
     {
         public bool IsEnable
         {
-            get => field;
+            get;
             set { if (field != value) { field = value; OnPropertyChanged(nameof(IsEnable)); } }
         } = true;
 
         public double ScalingFactor
         {
-            get => field;
+            get;
             set { if (field != value) { field = value; OnPropertyChanged(nameof(ScalingFactor)); } }
         } = 1.0;
 
         public int HoverLayout
         {
-            get => field;
+            get;
             set
             {
                 int hoverLayout = Math.Clamp(value, 0, 2);
@@ -181,7 +181,7 @@ namespace IslandCaller.Models
 
         public int HoverTheme
         {
-            get => field;
+            get;
             set
             {
                 int hoverTheme = Math.Clamp(value, 0, 1);
@@ -204,13 +204,13 @@ namespace IslandCaller.Models
     {
         public double X
         {
-            get => field;
+            get;
             set { if (field != value) { field = value; OnPropertyChanged(nameof(X)); } }
         } = 200.0;
 
         public double Y
         {
-            get => field;
+            get;
             set { if (field != value) { field = value; OnPropertyChanged(nameof(Y)); } }
         } = 200.0;
 

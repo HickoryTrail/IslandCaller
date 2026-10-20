@@ -18,13 +18,13 @@ namespace IslandCaller.ViewModels
 
         public double WindowScalingFactor
         {
-            get => field;
+            get;
             set => this.RaiseAndSetIfChanged(ref field, value);
         } = 1.0;
 
         public bool IsEnabled
         {
-            get => field;
+            get;
             set => this.RaiseAndSetIfChanged(ref field, value);
         }
 
@@ -33,13 +33,13 @@ namespace IslandCaller.ViewModels
 
         public int HoverLayout
         {
-            get => field;
+            get;
             private set => this.RaiseAndSetIfChanged(ref field, value);
         }
 
         public double PositionX
         {
-            get => field;
+            get;
             set
             {
                 this.RaiseAndSetIfChanged(ref field, value);
@@ -49,7 +49,7 @@ namespace IslandCaller.ViewModels
 
         public double PositionY
         {
-            get => field;
+            get;
             set
             {
                 this.RaiseAndSetIfChanged(ref field, value);

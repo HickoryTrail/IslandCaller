@@ -15,15 +15,15 @@ public class ProfileEditorViewModel : ReactiveObject
 
     public string ProfileName
     {
-        get => field;
+        get;
         set => this.RaiseAndSetIfChanged(ref field, value);
     } = string.Empty;
 
     public ObservableCollection<StudentModel> ProfileList
     {
-        get => field;
+        get;
         private set => this.RaiseAndSetIfChanged(ref field, value);
-    } = new();
+    } = [];
 
     public ICommand RowCommand { get; }
 
@@ -97,25 +97,25 @@ public class ProfileEditorViewModel : ReactiveObject
     {
         public int ID
         {
-            get => field;
+            get;
             set => this.RaiseAndSetIfChanged(ref field, value);
         }
 
         public string Name
         {
-            get => field;
+            get;
             set => this.RaiseAndSetIfChanged(ref field, value);
         } = string.Empty;
 
         public int Gender
         {
-            get => field;
+            get;
             set => this.RaiseAndSetIfChanged(ref field, value);
         }
 
         public double ManualWeight
         {
-            get => field;
+            get;
             set => this.RaiseAndSetIfChanged(ref field, value);
         }
     }
