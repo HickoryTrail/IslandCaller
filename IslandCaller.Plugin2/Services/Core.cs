@@ -31,6 +31,8 @@ namespace IslandCaller.Services
             ProfileService = IAppHost.GetService<ProfileService>();
             HistoryService = IAppHost.GetService<HistoryService>();
             Status = IAppHost.GetService<Status>();
+            // 公平模式下忽略名单文件中的手动权重，确保所有学生基础权重一致。
+            bool isFairMode = IAppHost.GetService<RemotePolicyService>().IsFairModeActive;
             Status.CoreServiceInitialized = false;
             Persons.Clear();
             foreach (var person in ProfileService.Members)
@@ -40,7 +42,7 @@ namespace IslandCaller.Services
                     Id = person.Id,
                     Name = person.Name,
                     Gender = person.Gender,
-                    ManualWeight = person.ManualWeight,
+                    ManualWeight = isFairMode ? 1.0 : person.ManualWeight,
                     Weight = 0.0
                 });
             }

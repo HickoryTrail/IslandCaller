@@ -30,11 +30,33 @@ public partial class SettingPage : SettingsPageBase
         vm = (SettingPageViewModel)DataContext!;
         historyService = IAppHost.GetService<HistoryService>();
         logger = IAppHost.GetService<ILogger<SettingPage>>();
+        // 页面显示期间跟踪 RemoteCI 的锁定、公平模式与远程设置修改。
+        AttachedToVisualTree += (_, _) => vm.Attach();
+        DetachedFromVisualTree += (_, _) => vm.Detach();
         logger.LogInformation("SettingPage 初始化完成");
+    }
+
+    /// <summary>
+    /// 锁定时界面已整体置灰；这里再在事件入口拦截一次，防止锁定生效前已弹出的操作继续执行。
+    /// </summary>
+    private bool IsLocked()
+    {
+        if (!vm.IsSettingsLocked)
+        {
+            return false;
+        }
+
+        logger.LogInformation("设置页已被 RemoteCI 锁定，忽略本次操作");
+        return true;
     }
 
     private async void CreateProfileButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
+        if (IsLocked())
+        {
+            return;
+        }
+
         if (GetOwnerWindow() is not Window owner)
         {
             logger.LogError("新建名单失败：无法获取窗口上下文");
@@ -46,6 +68,12 @@ public partial class SettingPage : SettingsPageBase
         if (string.IsNullOrWhiteSpace(profileName))
         {
             logger.LogInformation("用户取消了新档案命名");
+            return;
+        }
+
+        // 对话框期间 RemoteCI 可能已启用锁定，需要再检查一次。
+        if (IsLocked())
+        {
             return;
         }
 
@@ -74,7 +102,7 @@ public partial class SettingPage : SettingsPageBase
 
     private async void EditButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        if (sender is not Button { Tag: Guid profileId } || GetOwnerWindow() is not Window owner)
+        if (IsLocked() || sender is not Button { Tag: Guid profileId } || GetOwnerWindow() is not Window owner)
         {
             return;
         }
@@ -93,7 +121,7 @@ public partial class SettingPage : SettingsPageBase
 
     private async void DeleteButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        if (sender is not Button { Tag: Guid profileId } || GetOwnerWindow() is not Window owner)
+        if (IsLocked() || sender is not Button { Tag: Guid profileId } || GetOwnerWindow() is not Window owner)
         {
             return;
         }
@@ -118,13 +146,20 @@ public partial class SettingPage : SettingsPageBase
             DefaultButton = FAContentDialogButton.Secondary
         };
         var result = await dialog.ShowAsync(owner);
-        if (result != FAContentDialogResult.Primary)
+        if (result != FAContentDialogResult.Primary || IsLocked())
+        {
+            return;
+        }
+
+        // 对话框期间 RemoteCI 可能已改动名单列表（如重命名默认名单），必须基于最新内容删除，不能写回旧快照。
+        var latestProfiles = Settings.Instance.Profile.ProfileList;
+        if (profileId == Settings.Instance.Profile.DefaultProfile || !latestProfiles.ContainsKey(profileId))
         {
             return;
         }
 
         vm.RemoveProfilePreferenceRulesForProfile(profileId);
-        var profileList = new Dictionary<Guid, string>(profile);
+        var profileList = new Dictionary<Guid, string>(latestProfiles);
         profileList.Remove(profileId);
         Settings.Instance.Profile.ProfileList = profileList;
         Settings.Instance.Profile.ProfileNum = profileList.Count;
@@ -134,12 +169,17 @@ public partial class SettingPage : SettingsPageBase
 
     private void AddProfilePreferenceRuleButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
+        if (IsLocked())
+        {
+            return;
+        }
+
         vm.AddProfilePreferenceRule();
     }
 
     private void DeleteProfilePreferenceRuleButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        if (sender is Button { Tag: SettingPageViewModel.ProfilePreferenceItemViewModel item })
+        if (!IsLocked() && sender is Button { Tag: SettingPageViewModel.ProfilePreferenceItemViewModel item })
         {
             vm.RemoveProfilePreferenceRule(item);
         }
@@ -147,6 +187,11 @@ public partial class SettingPage : SettingsPageBase
 
     private void ClearButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
+        if (IsLocked())
+        {
+            return;
+        }
+
         logger.LogInformation("清空点名历史记录");
         historyService.ClearThisLessonHistory();
         historyService.ClearLongTermHistory();
@@ -154,6 +199,11 @@ public partial class SettingPage : SettingsPageBase
 
     private async void ExportSettingsButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
+        if (IsLocked())
+        {
+            return;
+        }
+
         var topLevel = TopLevel.GetTopLevel(this) ?? AppBase.Current.GetRootWindow();
         if (topLevel == null)
         {
@@ -205,6 +255,11 @@ public partial class SettingPage : SettingsPageBase
 
     private async void ImportSettingsButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
+        if (IsLocked())
+        {
+            return;
+        }
+
         var topLevel = TopLevel.GetTopLevel(this) ?? AppBase.Current.GetRootWindow();
         if (topLevel == null)
         {
@@ -249,7 +304,7 @@ public partial class SettingPage : SettingsPageBase
                 }
             };
 
-            if (!Equals(await confirmation.ShowAsync(), true))
+            if (!Equals(await confirmation.ShowAsync(), true) || IsLocked())
             {
                 return;
             }
@@ -280,7 +335,7 @@ public partial class SettingPage : SettingsPageBase
                     FileShare.Read,
                     bufferSize: 81920,
                     useAsync: true);
-                await transferService.ImportAsync(packageStream);
+                await transferService.ImportAsync(packageStream, isBlocked: () => vm.IsSettingsLocked);
             }
             finally
             {
@@ -299,6 +354,11 @@ public partial class SettingPage : SettingsPageBase
 
             await CommonTaskDialogs.ShowDialog("导入完成", "数据包已成功导入，应用将重新启动以应用设置。", this);
             RequestRestart();
+        }
+        catch (OperationCanceledException)
+        {
+            logger.LogInformation("导入过程中设置页被 RemoteCI 锁定，已取消导入");
+            await CommonTaskDialogs.ShowDialog("导入已取消", "管理员已通过 RemoteCI 锁定 IslandCaller 设置，未导入任何数据。", this);
         }
         catch (Exception ex)
         {

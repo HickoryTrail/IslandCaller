@@ -1,3 +1,4 @@
+using Avalonia.Threading;
 using ClassIsland.Core.Abstractions.Services;
 using ClassIsland.Shared;
 using IslandCaller.Models;
@@ -6,11 +7,21 @@ using IslandCaller.Plugin2.Helpers;
 using IslandCaller.Services;
 using ReactiveUI;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 
 namespace IslandCaller.ViewModels;
 
 public class SettingPageViewModel : ReactiveObject
 {
+    // RemoteCI 管控
+    /// <summary>设置页是否被 RemoteCI 锁定；锁定后除说明信息外的所有选项只读。</summary>
+    public bool IsSettingsLocked => RemotePolicy.IsSettingsLocked;
+
+    public bool IsSettingsEditable => !IsSettingsLocked;
+
+    /// <summary>RemoteCI 公平模式是否生效；生效时手动权重固定为 1 且不可编辑。</summary>
+    public bool IsFairModeActive => RemotePolicy.IsFairModeActive;
+
     // 基本设置
     public bool IsBreakDisable
     {
@@ -174,28 +185,19 @@ public class SettingPageViewModel : ReactiveObject
     public ProfileService ProfileService { get; }
     private ProfileRuntimeService ProfileRuntimeService { get; }
     private IProfileService? ClassIslandProfileService { get; }
+    private RemotePolicyService RemotePolicy { get; }
+    private RemoteSettingsService RemoteSettings { get; }
+    private bool _isAttached;
 
     public SettingPageViewModel()
     {
         ProfileService = IAppHost.GetService<ProfileService>();
         ProfileRuntimeService = IAppHost.GetService<ProfileRuntimeService>();
         ClassIslandProfileService = IAppHost.TryGetService<IProfileService>();
+        RemotePolicy = IAppHost.GetService<RemotePolicyService>();
+        RemoteSettings = IAppHost.GetService<RemoteSettingsService>();
 
-        IsBreakDisable = Settings.Instance.General.BreakDisable;
-        Interruptable = Settings.Instance.General.Interruptable;
-        IsHoverEnable = Settings.Instance.Hover.IsEnable;
-        HoverScalingFactor = Settings.Instance.Hover.ScalingFactor;
-        HoverLayout = Settings.Instance.Hover.HoverLayout;
-        HoverTheme = Settings.Instance.Hover.HoverTheme;
-        NotifyMethod = Settings.Instance.Call.NotifyMethod;
-        ShowerTheme = Settings.Instance.Call.ShowerTheme;
-        BaseTime = Settings.Instance.Call.BaseTime;
-        AdditionalTime = Settings.Instance.Call.AdditionalTime;
-        Provider = Settings.Instance.TTS.Provider;
-        BeforeText = Settings.Instance.TTS.BeforeText;
-        AfterText = Settings.Instance.TTS.AfterText;
-        IsPreferProfile = Settings.Instance.Profile.IsPreferProfile;
-        ExampleText = $"{BeforeText}{{学生姓名}}{AfterText}";
+        LoadFromSettings();
         ReloadProfiles();
 
         this.PropertyChanged += (_, args) =>
@@ -259,6 +261,78 @@ public class SettingPageViewModel : ReactiveObject
                 Settings.Instance.Profile.IsPreferProfile = IsPreferProfile;
             }
         };
+    }
+
+    /// <summary>设置页显示时开始跟踪 RemoteCI 管控策略与远程设置修改，并刷新为最新值。</summary>
+    public void Attach()
+    {
+        if (_isAttached)
+        {
+            return;
+        }
+
+        _isAttached = true;
+        RemotePolicy.PropertyChanged += RemotePolicyOnPropertyChanged;
+        RemoteSettings.SettingsApplied += RemoteSettingsOnApplied;
+        RaisePolicyPropertiesChanged();
+        LoadFromSettings();
+        ReloadProfiles();
+    }
+
+    /// <summary>设置页隐藏时停止跟踪，避免已关闭的页面继续持有事件订阅。</summary>
+    public void Detach()
+    {
+        if (!_isAttached)
+        {
+            return;
+        }
+
+        _isAttached = false;
+        RemotePolicy.PropertyChanged -= RemotePolicyOnPropertyChanged;
+        RemoteSettings.SettingsApplied -= RemoteSettingsOnApplied;
+    }
+
+    private void LoadFromSettings()
+    {
+        IsBreakDisable = Settings.Instance.General.BreakDisable;
+        Interruptable = Settings.Instance.General.Interruptable;
+        IsHoverEnable = Settings.Instance.Hover.IsEnable;
+        HoverScalingFactor = Settings.Instance.Hover.ScalingFactor;
+        HoverLayout = Settings.Instance.Hover.HoverLayout;
+        HoverTheme = Settings.Instance.Hover.HoverTheme;
+        NotifyMethod = Settings.Instance.Call.NotifyMethod;
+        ShowerTheme = Settings.Instance.Call.ShowerTheme;
+        BaseTime = Settings.Instance.Call.BaseTime;
+        AdditionalTime = Settings.Instance.Call.AdditionalTime;
+        Provider = Settings.Instance.TTS.Provider;
+        BeforeText = Settings.Instance.TTS.BeforeText;
+        AfterText = Settings.Instance.TTS.AfterText;
+        IsPreferProfile = Settings.Instance.Profile.IsPreferProfile;
+        ExampleText = $"{BeforeText}{{学生姓名}}{AfterText}";
+    }
+
+    private void RemotePolicyOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(RemotePolicyService.IsSettingsLocked) or nameof(RemotePolicyService.IsFairModeActive))
+        {
+            Dispatcher.UIThread.Post(RaisePolicyPropertiesChanged);
+        }
+    }
+
+    private void RemoteSettingsOnApplied(object? sender, EventArgs e)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            LoadFromSettings();
+            ReloadProfiles();
+        });
+    }
+
+    private void RaisePolicyPropertiesChanged()
+    {
+        this.RaisePropertyChanged(nameof(IsSettingsLocked));
+        this.RaisePropertyChanged(nameof(IsSettingsEditable));
+        this.RaisePropertyChanged(nameof(IsFairModeActive));
     }
 
     public void ReloadProfiles()

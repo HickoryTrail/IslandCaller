@@ -50,7 +50,14 @@ public sealed class SettingsTransferService
     /// <summary>
     /// 从数据包导入设置和完整 AppData。任何失败都会恢复导入前状态。
     /// </summary>
-    public async Task ImportAsync(Stream source, CancellationToken cancellationToken = default)
+    /// <param name="isBlocked">
+    /// 在替换现有数据之前（解包完成后）再检查一次的拦截条件，返回 true 时放弃导入并抛出
+    /// <see cref="OperationCanceledException"/>。用于覆盖读取、解包期间才生效的 RemoteCI 锁定。
+    /// </param>
+    public async Task ImportAsync(
+        Stream source,
+        CancellationToken cancellationToken = default,
+        Func<bool>? isBlocked = null)
     {
         ArgumentNullException.ThrowIfNull(source);
 
@@ -69,6 +76,13 @@ public sealed class SettingsTransferService
             Directory.CreateDirectory(stagingAppData);
             importedSettings = await ReadAndExtractAsync(source, stagingAppData, cancellationToken);
             ValidateRequiredData(importedSettings, stagingAppData);
+
+            // 文件读取期间策略可能刚刚启用锁定，提交目录和设置模型前再拦截一次；
+            // 此后到提交完成之间没有 await，不会再被异步修改的策略打断。
+            if (isBlocked?.Invoke() == true)
+            {
+                throw new OperationCanceledException("导入已被取消。");
+            }
         }
         catch
         {

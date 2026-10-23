@@ -25,6 +25,22 @@
             IsClosable="False"
             Severity="Warning"
             Message="LiquidGlass 效果目前仅供个人测试使用，存在严重的内存泄漏和 use-after-free 问题，会导致 ClassIsland 崩溃或 Windows BSOD，严禁在教学或生产环境下使用！"/>
+        <!-- RemoteCI 管控提示：不随锁定置灰，保证说明始终可读 -->
+        <fa:FAInfoBar
+            IsOpen="{Binding IsSettingsLocked}"
+            IsVisible="{Binding IsSettingsLocked}"
+            IsClosable="False"
+            Severity="Informational"
+            Title="设置已锁定"
+            Message="管理员已通过 RemoteCI 锁定 IslandCaller 设置页，当前只能查看。如需修改，请联系管理员在 RemoteCI 插件设置中调整。"/>
+        <fa:FAInfoBar
+            IsOpen="{Binding IsFairModeActive}"
+            IsVisible="{Binding IsFairModeActive}"
+            IsClosable="False"
+            Severity="Informational"
+            Title="公平模式"
+            Message="管理员已通过 RemoteCI 开启公平模式：所有名单的手动权重已重置为 1 并锁定，点名概率仅由防重复与历史均衡算法决定。"/>
+        <StackPanel Spacing="4" IsEnabled="{Binding IsSettingsEditable}">
         <!-- 基本设置 -->
         <ci:IconText Glyph="&#xEF27;" Text="基本设置" Margin="0,0,0,4"/>
         <!-- 下课禁用 -->
@@ -324,6 +340,7 @@
                 </StackPanel>
             </fa:FASettingsExpander.Footer>
         </fa:FASettingsExpander>
+        </StackPanel>
   </StackPanel>
     </ScrollViewer>
 </ci2:SettingsPageBase>

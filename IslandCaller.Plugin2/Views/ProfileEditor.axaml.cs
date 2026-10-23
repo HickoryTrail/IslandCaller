@@ -25,6 +25,7 @@ public partial class ProfileEditor : Window
         profileService = IAppHost.GetService<ProfileService>();
         profileRuntimeService = IAppHost.GetService<ProfileRuntimeService>();
         logger = IAppHost.GetService<ILogger<ProfileEditor>>();
+        Closed += (_, _) => vm.Detach();
     }
 
     private void AddButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
@@ -34,8 +35,13 @@ public partial class ProfileEditor : Window
 
     private async void ImportButton_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
+        if (vm.IsSettingsLocked)
+        {
+            return;
+        }
+
         var members = await ProfileImportHelper.ImportAsync(this, logger);
-        if (members is not null)
+        if (members is not null && !vm.IsSettingsLocked)
         {
             vm.ReplaceMembers(members);
         }
@@ -48,7 +54,8 @@ public partial class ProfileEditor : Window
 
     private async void ProfileEditor_OnClosing(object? sender, WindowClosingEventArgs e)
     {
-        if (isClosingAfterSave)
+        // 设置被 RemoteCI 锁定后直接关闭，不再自动保存。
+        if (isClosingAfterSave || vm.IsSettingsLocked)
         {
             return;
         }
@@ -63,6 +70,12 @@ public partial class ProfileEditor : Window
 
     private async Task<bool> SaveAsync()
     {
+        if (vm.IsSettingsLocked)
+        {
+            await CommonTaskDialogs.ShowDialog("设置已锁定", "管理员已通过 RemoteCI 锁定 IslandCaller 设置，本次修改不会被保存。", this);
+            return false;
+        }
+
         var profileName = vm.ProfileName.Trim();
         if (string.IsNullOrWhiteSpace(profileName))
         {

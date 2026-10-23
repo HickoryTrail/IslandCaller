@@ -3,6 +3,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:ci="clr-namespace:ClassIsland.Core.Controls;assembly=ClassIsland.Core"
+        xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
         xmlns:cvt="using:IslandCaller.Converters"
         xmlns:vm="using:IslandCaller.ViewModels"
         mc:Ignorable="d"
@@ -21,18 +22,32 @@
         <cvt:GenderConverter x:Key="GenderConverter"/>
     </Window.Resources>
 
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
     <StackPanel Margin="20" Spacing="12">
         <StackPanel Orientation="Horizontal">
             <ci:FluentIcon Glyph="&#xF20C;" FontSize="24" VerticalAlignment="Center"/>
             <TextBlock Text="编辑档案" FontSize="22" Margin="8,0,0,0" VerticalAlignment="Center"/>
         </StackPanel>
 
-        <StackPanel Orientation="Horizontal">
+        <!-- RemoteCI 管控提示：锁定或公平模式生效时显示 -->
+        <fa:FAInfoBar IsOpen="{Binding IsSettingsLocked}"
+                      IsVisible="{Binding IsSettingsLocked}"
+                      IsClosable="False"
+                      Severity="Warning"
+                      Title="设置已锁定"
+                      Message="管理员已通过 RemoteCI 锁定 IslandCaller 设置，本次修改不会被保存。"/>
+        <fa:FAInfoBar IsOpen="{Binding IsFairModeActive}"
+                      IsVisible="{Binding IsFairModeActive}"
+                      IsClosable="False"
+                      Severity="Informational"
+                      Title="公平模式"
+                      Message="管理员已通过 RemoteCI 开启公平模式，所有学生的手动权重固定为 1，无法修改。"/>
+        <StackPanel Orientation="Horizontal" IsEnabled="{Binding !IsSettingsLocked}">
             <TextBlock Text="名单名称" VerticalAlignment="Center" Margin="0,0,12,0"/>
             <TextBox Text="{Binding ProfileName, Mode=TwoWay}" Width="420"/>
         </StackPanel>
 
-        <DataGrid ItemsSource="{Binding ProfileList}" RowHeight="45" Height="470">
+        <DataGrid ItemsSource="{Binding ProfileList}" RowHeight="45" Height="{Binding GridHeight}" IsEnabled="{Binding !IsSettingsLocked}">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="序号" Binding="{Binding ID}" />
                 <DataGridTextColumn Header="姓名" Binding="{Binding Name}" />
@@ -46,8 +61,10 @@
                 </DataGridTemplateColumn>
                 <DataGridTemplateColumn Header="手动权重">
                     <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal">
+                        <DataTemplate x:CompileBindings="False">
+                            <!-- 公平模式下权重固定为 1，滑块置灰不可拖动 -->
+                            <StackPanel Orientation="Horizontal"
+                                        IsEnabled="{Binding DataContext.IsWeightEditable, RelativeSource={RelativeSource AncestorType=DataGrid}}">
                                 <Slider Minimum="0" Maximum="4.0"
                                         VerticalAlignment="Center"
                                         Width="160"
@@ -74,7 +91,7 @@
             </DataGrid.Columns>
         </DataGrid>
 
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" IsEnabled="{Binding !IsSettingsLocked}">
             <Button Click="AddButton_OnClick" Margin="0,0,8,0">
                 <ci:IconText Glyph="&#xE00D;" Text="添加人员"/>
             </Button>
@@ -86,4 +103,5 @@
             </Button>
         </StackPanel>
     </StackPanel>
+    </ScrollViewer>
 </Window>
