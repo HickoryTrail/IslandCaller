@@ -12,7 +12,7 @@
         Background="Transparent"
         Title=""
         TransparencyLevelHint="Mica"
-        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaToDecorationsHint="False"
         Width="900"
         Height="650"
         Closing="ProfileEditor_OnClosing">
@@ -35,12 +35,20 @@
         <DataGrid ItemsSource="{Binding ProfileList}" RowHeight="45" Height="470">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="序号" Binding="{Binding ID}" />
-                <DataGridTextColumn Header="姓名" Binding="{Binding Name}" />
+                <DataGridTemplateColumn Header="姓名">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBox Text="{Binding Name, Mode=TwoWay}" MinWidth="90" VerticalAlignment="Center"
+                                     Margin="3,0"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
                 <DataGridTemplateColumn Header="性别">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <ToggleButton IsChecked="{Binding Gender, Mode=TwoWay, Converter={StaticResource IntToBoolConverter}}"
-                                          Content="{Binding Gender, Converter={StaticResource GenderConverter}}"/>
+                                          Content="{Binding Gender, Converter={StaticResource GenderConverter}}"
+                                          HorizontalAlignment="Center"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
