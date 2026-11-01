@@ -12,63 +12,56 @@ namespace IslandCaller.ViewModels;
 public class SettingPageViewModel : ReactiveObject
 {
     // 基本设置
-    private bool _isBreakDisable;
     public bool IsBreakDisable
     {
-        get => _isBreakDisable;
-        set => this.RaiseAndSetIfChanged(ref _isBreakDisable, value);
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
     }
 
-    private bool _interruptable;
     public bool Interruptable
     {
-        get => _interruptable;
-        set => this.RaiseAndSetIfChanged(ref _interruptable, value);
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
     }
 
     // 悬浮窗设置
-    private bool _isHoverEnable;
     public bool IsHoverEnable
     {
-        get => _isHoverEnable;
-        set => this.RaiseAndSetIfChanged(ref _isHoverEnable, value);
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
     }
 
-    private double _hoverScalingFactor;
     public double HoverScalingFactor
     {
-        get => _hoverScalingFactor;
-        set => this.RaiseAndSetIfChanged(ref _hoverScalingFactor, value);
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
     }
 
-    private int _hoverLayout;
     public int HoverLayout
     {
-        get => _hoverLayout;
-        set => this.RaiseAndSetIfChanged(ref _hoverLayout, Math.Clamp(value, 0, 2));
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, Math.Clamp(value, 0, 2));
     }
 
-    private int _hoverTheme;
     public int HoverTheme
     {
-        get => _hoverTheme;
-        set => this.RaiseAndSetIfChanged(ref _hoverTheme, Math.Clamp(value, 0, 1));
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, Math.Clamp(value, 0, 1));
     }
 
     // 点名设置
-    private int _notifyMethod;
     public int NotifyMethod
     {
-        get => _notifyMethod;
+        get;
         set
         {
             int notifyMethod = value & 0b11;
-            if (_notifyMethod == notifyMethod)
+            if (field == notifyMethod)
             {
                 return;
             }
 
-            this.RaiseAndSetIfChanged(ref _notifyMethod, notifyMethod);
+            this.RaiseAndSetIfChanged(ref field, notifyMethod);
             this.RaisePropertyChanged(nameof(IsClassIslandNotificationEnabled));
             this.RaisePropertyChanged(nameof(IsIslandCallerNotificationEnabled));
         }
@@ -86,73 +79,64 @@ public class SettingPageViewModel : ReactiveObject
         set => NotifyMethod = value ? NotifyMethod | 0b10 : NotifyMethod & ~0b10;
     }
 
-    private int _showerTheme;
     public int ShowerTheme
     {
-        get => _showerTheme;
-        set => this.RaiseAndSetIfChanged(ref _showerTheme, Math.Clamp(value, 0, 1));
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, Math.Clamp(value, 0, 1));
     }
 
-    private float _baseTime = 2.0f;
     public float BaseTime
     {
-        get => _baseTime;
-        set => this.RaiseAndSetIfChanged(ref _baseTime, value);
-    }
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
+    } = 2.0f;
 
-    private float _additionalTime = 1.0f;
     public float AdditionalTime
     {
-        get => _additionalTime;
-        set => this.RaiseAndSetIfChanged(ref _additionalTime, value);
-    }
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
+    } = 1.0f;
 
     // TTS 设置
-    private TtsProvider _provider;
     public TtsProvider Provider
     {
-        get => _provider;
-        set => this.RaiseAndSetIfChanged(ref _provider, value);
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
     }
 
     public IReadOnlyList<TtsProvider> TtsProviders { get; } = Enum.GetValues<TtsProvider>();
 
-    private string _beforeText = string.Empty;
     public string BeforeText
     {
-        get => _beforeText;
-        set => this.RaiseAndSetIfChanged(ref _beforeText, value);
-    }
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
+    } = string.Empty;
 
-    private string _afterText = string.Empty;
     public string AfterText
     {
-        get => _afterText;
-        set => this.RaiseAndSetIfChanged(ref _afterText, value);
-    }
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
+    } = string.Empty;
 
-    private string _exampleText = "{学生姓名}";
     public string ExampleText
     {
-        get => _exampleText;
-        set => this.RaiseAndSetIfChanged(ref _exampleText, value);
-    }
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
+    } = "{学生姓名}";
 
     // 档案设置
-    private ObservableCollection<ProfileItemViewModel> _profileItems = new();
     public ObservableCollection<ProfileItemViewModel> ProfileItems
     {
-        get => _profileItems;
-        private set => this.RaiseAndSetIfChanged(ref _profileItems, value);
-    }
+        get;
+        private set => this.RaiseAndSetIfChanged(ref field, value);
+    } = new();
 
-    private ProfileItemViewModel? _selectedProfile;
     public ProfileItemViewModel? SelectedProfile
     {
-        get => _selectedProfile;
+        get;
         set
         {
-            this.RaiseAndSetIfChanged(ref _selectedProfile, value);
+            this.RaiseAndSetIfChanged(ref field, value);
             if (value is null || value.ProfileId == Settings.Instance.Profile.DefaultProfile)
             {
                 return;
@@ -174,20 +158,18 @@ public class SettingPageViewModel : ReactiveObject
         }
     }
 
-    private bool _isPreferProfile;
     public bool IsPreferProfile
     {
-        get => _isPreferProfile;
-        set => this.RaiseAndSetIfChanged(ref _isPreferProfile, value);
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
     }
 
     private IReadOnlyList<SubjectItemViewModel> _subjectItems = [];
-    private ObservableCollection<ProfilePreferenceItemViewModel> _profilePreferenceItems = new();
     public ObservableCollection<ProfilePreferenceItemViewModel> ProfilePreferenceItems
     {
-        get => _profilePreferenceItems;
-        private set => this.RaiseAndSetIfChanged(ref _profilePreferenceItems, value);
-    }
+        get;
+        private set => this.RaiseAndSetIfChanged(ref field, value);
+    } = new();
 
     public ProfileService ProfileService { get; }
     private ProfileRuntimeService ProfileRuntimeService { get; }
@@ -443,15 +425,13 @@ public class SettingPageViewModel : ReactiveObject
     public sealed class ProfilePreferenceItemViewModel : ReactiveObject
     {
         private readonly Action? _onRuleChanged;
-        private Guid _subjectId;
-        private Guid _profileId;
-        private bool _canAddRule;
-        private IReadOnlyList<SubjectItemViewModel> _availableSubjects = [];
-        private IReadOnlyList<ProfileItemViewModel> _availableProfiles = [];
 
-        private ProfilePreferenceItemViewModel(bool isAddAction, Action? onRuleChanged = null)
+        private ProfilePreferenceItemViewModel(bool isAddAction, Guid? subjectId = null, Guid? profileId = null, Action? onRuleChanged = null)
         {
             IsAddAction = isAddAction;
+            // 在绑定回调前赋值，使构造期间不会触发规则变更回调。
+            if (subjectId is { } subject) SubjectId = subject;
+            if (profileId is { } profile) ProfileId = profile;
             _onRuleChanged = onRuleChanged;
         }
 
@@ -460,51 +440,51 @@ public class SettingPageViewModel : ReactiveObject
 
         public bool CanAddRule
         {
-            get => _canAddRule;
-            internal set => this.RaiseAndSetIfChanged(ref _canAddRule, value);
+            get;
+            internal set => this.RaiseAndSetIfChanged(ref field, value);
         }
 
         public Guid SubjectId
         {
-            get => _subjectId;
+            get;
             set
             {
-                if (_subjectId == value)
+                if (field == value)
                 {
                     return;
                 }
 
-                this.RaiseAndSetIfChanged(ref _subjectId, value);
+                this.RaiseAndSetIfChanged(ref field, value);
                 _onRuleChanged?.Invoke();
             }
         }
 
         public Guid ProfileId
         {
-            get => _profileId;
+            get;
             set
             {
-                if (_profileId == value)
+                if (field == value)
                 {
                     return;
                 }
 
-                this.RaiseAndSetIfChanged(ref _profileId, value);
+                this.RaiseAndSetIfChanged(ref field, value);
                 _onRuleChanged?.Invoke();
             }
         }
 
         public IReadOnlyList<SubjectItemViewModel> AvailableSubjects
         {
-            get => _availableSubjects;
-            internal set => this.RaiseAndSetIfChanged(ref _availableSubjects, value);
-        }
+            get;
+            internal set => this.RaiseAndSetIfChanged(ref field, value);
+        } = [];
 
         public IReadOnlyList<ProfileItemViewModel> AvailableProfiles
         {
-            get => _availableProfiles;
-            internal set => this.RaiseAndSetIfChanged(ref _availableProfiles, value);
-        }
+            get;
+            internal set => this.RaiseAndSetIfChanged(ref field, value);
+        } = [];
 
         public static ProfilePreferenceItemViewModel CreateAddAction()
         {
@@ -513,11 +493,7 @@ public class SettingPageViewModel : ReactiveObject
 
         public static ProfilePreferenceItemViewModel CreateRule(Guid subjectId, Guid profileId, Action onRuleChanged)
         {
-            return new ProfilePreferenceItemViewModel(isAddAction: false, onRuleChanged)
-            {
-                _subjectId = subjectId,
-                _profileId = profileId
-            };
+            return new ProfilePreferenceItemViewModel(isAddAction: false, subjectId, profileId, onRuleChanged);
         }
     }
 }

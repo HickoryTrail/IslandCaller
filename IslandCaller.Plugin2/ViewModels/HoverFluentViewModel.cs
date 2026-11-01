@@ -16,48 +16,43 @@ namespace IslandCaller.ViewModels
         private readonly IDisposable _glyph2Subscription;
         private bool _disposed;
 
-        private double _windowScalingFactor = 1.0;
         public double WindowScalingFactor
         {
-            get => _windowScalingFactor;
-            set => this.RaiseAndSetIfChanged(ref _windowScalingFactor, value);
-        }
+            get;
+            set => this.RaiseAndSetIfChanged(ref field, value);
+        } = 1.0;
 
-        private bool _isenabled;
         public bool IsEnabled
         {
-            get => _isenabled;
-            set => this.RaiseAndSetIfChanged(ref _isenabled, value);
+            get;
+            set => this.RaiseAndSetIfChanged(ref field, value);
         }
 
         public string Glyph1 => IsEnabled ? "\uECF8" : "\uED08";
         public string Glyph2 => IsEnabled ? "\uED42" : "\uED08";
 
-        private int _hoverLayout;
         public int HoverLayout
         {
-            get => _hoverLayout;
-            private set => this.RaiseAndSetIfChanged(ref _hoverLayout, value);
+            get;
+            private set => this.RaiseAndSetIfChanged(ref field, value);
         }
 
-        private double _positionX;
         public double PositionX
         {
-            get => _positionX;
+            get;
             set
             {
-                this.RaiseAndSetIfChanged(ref _positionX, value);
+                this.RaiseAndSetIfChanged(ref field, value);
                 Settings.Instance.Hover.Position.X = value;
             }
         }
 
-        private double _positionY;
         public double PositionY
         {
-            get => _positionY;
+            get;
             set
             {
-                this.RaiseAndSetIfChanged(ref _positionY, value);
+                this.RaiseAndSetIfChanged(ref field, value);
                 Settings.Instance.Hover.Position.Y = value;
             }
         }

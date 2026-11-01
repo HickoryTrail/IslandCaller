@@ -20,3 +20,7 @@ tagPattern: 2.*.**
 dependencies:
   - id: HickoryTrail.OmniTTS
     isRequired: false
+  - id: lrs2187.sai
+    isRequired: false
+  - id: RemoteCI.Plugin
+    isRequired: false

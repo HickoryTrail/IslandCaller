@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using ClassIsland.Core;
 using ClassIsland.Core.Abstractions;
 using ClassIsland.Core.Abstractions.Services;
@@ -54,21 +55,30 @@ namespace IslandCaller
                     logger = IAppHost.TryGetService<ILogger<Plugin>>();
                     IAppHost.GetService<Status>();
                     logger?.LogInformation("插件状态初始化完成，正在加载设置...");
-                    new Settings(IAppHost.GetService<ProfileService>()).Load();
+                    await new Settings(IAppHost.GetService<ProfileService>()).LoadAsync();
                     await IAppHost.GetService<LiquidGlassRuntime>().PrewarmAsync();
                     logger?.LogDebug("设置加载完成，正在加载默认配置...");
                     IAppHost.GetService<ProfileRuntimeService>().Initialize();
                     IAppHost.GetService<IslandCallerService>().Initialize();
                     IAppHost.GetService<WindowsManager>().Initialize();
-                    RegisterSuperAutoIslandBlocks(logger);
-                    // 接入 RemoteCI：在手表“控制”页注册“随机点名”远程扩展（RemoteCI 未安装时自动跳过）。
-                    try
+
+                    // 注册 SuperAutoIsland 积木（SuperAutoIsland 未安装时自动跳过）。
+                    if (IsPluginInstalled("lrs2187.sai"))
                     {
-                        RemoteCiBridge.RegisterRandomCallExtension(logger);
+                        RegisterSuperAutoIslandBlocks(logger);
                     }
-                    catch (Exception ex)
+
+                    // 接入 RemoteCI：在手表“控制”页注册“随机点名”远程扩展（RemoteCI 未安装时自动跳过）。
+                    if (IsPluginInstalled("RemoteCI.Plugin"))
                     {
-                        logger?.LogWarning(ex, "注册 RemoteCI 远程扩展失败");
+                        try
+                        {
+                            RemoteCiBridge.RegisterRandomCallExtension(logger);
+                        }
+                        catch (Exception ex)
+                        {
+                            logger?.LogWarning(ex, "注册 RemoteCI 远程扩展失败");
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -107,13 +117,9 @@ namespace IslandCaller
                 new ActionMenuTreeItem("IslandCaller.SwitchProfile", "切换档案", "\uE9A8"));
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         private static void RegisterSuperAutoIslandBlocks(ILogger<Plugin>? logger)
         {
-            if (!IPluginService.LoadedPlugins.Any(info => info.Manifest.Id == "lrs2187.sai"))
-            {
-                return;
-            }
-
             try
             {
                 IAppHost.GetService<ISaiServer>().RegisterBlocks("IslandCaller", blocks => blocks
@@ -142,6 +148,15 @@ namespace IslandCaller
             {
                 logger?.LogWarning(ex, "注册 SuperAutoIsland 积木失败");
             }
+        }
+
+        private static bool IsPluginInstalled(string pluginId)
+        {
+            if (!IPluginService.LoadedPlugins.Any(info => info.Manifest.Id == pluginId))
+            {
+                return false;
+            }
+            return true;
         }
     }
 }

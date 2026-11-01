@@ -11,22 +11,19 @@ namespace IslandCaller.ViewModels;
 
 public class ProfileEditorViewModel : ReactiveObject
 {
-    private string _profileName = string.Empty;
-    private ObservableCollection<StudentModel> _profileList = new();
-
     public Guid ProfileId { get; }
 
     public string ProfileName
     {
-        get => _profileName;
-        set => this.RaiseAndSetIfChanged(ref _profileName, value);
-    }
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
+    } = string.Empty;
 
     public ObservableCollection<StudentModel> ProfileList
     {
-        get => _profileList;
-        private set => this.RaiseAndSetIfChanged(ref _profileList, value);
-    }
+        get;
+        private set => this.RaiseAndSetIfChanged(ref field, value);
+    } = [];
 
     public ICommand RowCommand { get; }
 
@@ -98,33 +95,28 @@ public class ProfileEditorViewModel : ReactiveObject
 
     public class StudentModel : ReactiveObject
     {
-        private int _id;
-        private string _name = string.Empty;
-        private int _gender;
-        private double _manualWeight;
-
         public int ID
         {
-            get => _id;
-            set => this.RaiseAndSetIfChanged(ref _id, value);
+            get;
+            set => this.RaiseAndSetIfChanged(ref field, value);
         }
 
         public string Name
         {
-            get => _name;
-            set => this.RaiseAndSetIfChanged(ref _name, value);
-        }
+            get;
+            set => this.RaiseAndSetIfChanged(ref field, value);
+        } = string.Empty;
 
         public int Gender
         {
-            get => _gender;
-            set => this.RaiseAndSetIfChanged(ref _gender, value);
+            get;
+            set => this.RaiseAndSetIfChanged(ref field, value);
         }
 
         public double ManualWeight
         {
-            get => _manualWeight;
-            set => this.RaiseAndSetIfChanged(ref _manualWeight, value);
+            get;
+            set => this.RaiseAndSetIfChanged(ref field, value);
         }
     }
 }
