@@ -12,6 +12,7 @@ namespace IslandCaller.Controls;
 public partial class HoverFluentControl : HoverControlBase
 {
     private const double PressScale = 0.88;
+    private const double PressFeedbackScale = 0.92;
     private const double SpringOvershoot = 1.35;
     private readonly ScaleTransform _miniPressScale = new();
     private DispatcherTimer? _pressAnimationTimer;
@@ -45,7 +46,10 @@ public partial class HoverFluentControl : HoverControlBase
 
     private void OnMiniPointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (_isMiniLayout) AnimateMiniPress(PressScale);
+        if (!_isMiniLayout) return;
+        _miniPressScale.ScaleX = PressFeedbackScale;
+        _miniPressScale.ScaleY = PressFeedbackScale;
+        AnimateMiniPress(PressScale);
     }
 
     private void OnMiniPointerReleased(object? sender, PointerReleasedEventArgs e)

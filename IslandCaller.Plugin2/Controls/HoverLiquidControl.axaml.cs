@@ -15,6 +15,7 @@ public partial class HoverLiquidControl : HoverControlBase
     private const double BaseMiniButtonMargin = 12;
     private const double BaseMiniIconFontSize = 28;
     private const double PressScale = 0.88;
+    private const double PressFeedbackScale = 0.92;
     private const double SpringOvershoot = 1.35;
     private bool _isMiniLayout;
     private readonly ScaleTransform _miniButtonPressScale = new();
@@ -38,7 +39,12 @@ public partial class HoverLiquidControl : HoverControlBase
         InitializeHoverControl();
     }
 
-    private void OnMiniPointerPressed(object? sender, PointerPressedEventArgs e) => AnimateMiniPress(PressScale);
+    private void OnMiniPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        _miniButtonPressScale.ScaleX = PressFeedbackScale;
+        _miniButtonPressScale.ScaleY = PressFeedbackScale;
+        AnimateMiniPress(PressScale);
+    }
 
     private void OnMiniPointerReleased(object? sender, PointerReleasedEventArgs e) => AnimateMiniPress(1);
 

@@ -22,7 +22,7 @@ public abstract class HoverControlBase : UserControl
 {
     private const int TouchDragIgnoreDurationMs = 75;
     private const int ClickMoveThresholdPx = 10;
-    private const int MiniMouseLongPressDurationMs = 1600;
+    private const int MiniLongPressDurationMs = 1200;
     private const int TouchMoveDeadZonePx = 2;
     private readonly IslandCallerService _islandCallerService;
     private readonly ILogger<HoverControlBase> _logger;
@@ -42,12 +42,11 @@ public abstract class HoverControlBase : UserControl
     private bool _touchDragThresholdElapsed;
     private Color? _secondaryButtonForeground;
     private Color? _primaryButtonForeground;
-    private Point _miniMousePressPosition;
-    private long _miniMousePressTime;
-    private bool _miniMouseLongPressPending;
-    private bool _miniMouseLongPressTriggered;
+    private Point _miniPressPosition;
+    private DispatcherTimer? _miniLongPressTimer;
+    private bool _miniLongPressPending;
+    private bool _miniLongPressTriggered;
     private bool _isMiniPointerInteraction;
-    private PointerType _miniPointerType;
 
     protected abstract Button PrimaryButton { get; }
     protected abstract Button SecondaryButton { get; }
@@ -67,16 +66,30 @@ public abstract class HoverControlBase : UserControl
         Settings.Instance.Hover.PropertyChanged += HoverSettingOnPropertyChanged;
         DetachedFromVisualTree += OnDetachedFromVisualTree;
         ApplyHoverLayout();
-        DragSurface.AddHandler(InputElement.PointerPressedEvent, DragSurfaceOnPointerPressed, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, true);
+        DragSurface.AddHandler(InputElement.PointerPressedEvent, DragSurfaceOnPointerPressed, RoutingStrategies.Tunnel, true);
         DragSurface.AddHandler(InputElement.PointerMovedEvent, DragPointerMoved, RoutingStrategies.Tunnel, true);
-        DragSurface.AddHandler(InputElement.PointerReleasedEvent, DragPointerReleased, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, true);
+        DragSurface.AddHandler(InputElement.PointerReleasedEvent, DragPointerReleased, RoutingStrategies.Tunnel, true);
         DragSurface.AddHandler(InputElement.PointerCaptureLostEvent, DragPointerCaptureLost, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, true);
+        DragSurface.AddHandler(Control.ContextRequestedEvent, DragSurfaceOnContextRequested, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, true);
     }
 
     protected abstract void ApplyThemeLayout(int hoverLayout);
 
+    private static void DragSurfaceOnContextRequested(object? sender, ContextRequestedEventArgs e)
+    {
+        if (Settings.Instance.Hover.HoverLayout == 2)
+        {
+            e.Handled = true;
+        }
+    }
+
     private void OnDetachedFromVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
     {
+        if (_dragPointer is not null)
+        {
+            _ = EndManualDragAsync(_dragPointer, invokeClick: false);
+        }
+        CancelMiniLongPress();
         Settings.Instance.Hover.PropertyChanged -= HoverSettingOnPropertyChanged;
         SecondaryButton.PropertyChanged -= SecondaryButtonOnPropertyChanged;
         DetachedFromVisualTree -= OnDetachedFromVisualTree;
@@ -93,6 +106,10 @@ public abstract class HoverControlBase : UserControl
 
     private void ApplyHoverLayout()
     {
+        if (_isMiniPointerInteraction && _dragPointer is not null)
+        {
+            _ = EndManualDragAsync(_dragPointer, invokeClick: false);
+        }
         ApplyThemeLayout(Settings.Instance.Hover.HoverLayout);
         if (TopLevel.GetTopLevel(this) is IHoverWindow hoverWindow)
         {
@@ -183,9 +200,17 @@ public abstract class HoverControlBase : UserControl
     private async void DragSurfaceOnPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         e.Handled = true;
-        _miniMouseLongPressTriggered = false;
+        if (_isManualDragging || (Settings.Instance.Hover.HoverLayout == 2
+            && e.Pointer.Type == PointerType.Mouse && !e.GetCurrentPoint(this).Properties.IsLeftButtonPressed))
+        {
+            return;
+        }
+
+        _miniLongPressTriggered = false;
         var isMiniPrimaryPress = Settings.Instance.Hover.HoverLayout == 2
-            && PrimaryButton.IsEnabled && IsPointerWithin(PrimaryButton, e);
+            && PrimaryButton.IsEnabled
+            && (e.Pointer.Type != PointerType.Mouse || e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            && IsPointerWithin(PrimaryButton, e);
         if (!isMiniPrimaryPress && Environment.TickCount64 - _lastDragTime < 50)
         {
             _lastDragTime = Environment.TickCount64;
@@ -205,13 +230,10 @@ public abstract class HoverControlBase : UserControl
         if (isMiniPrimaryPress)
         {
             _isMiniPointerInteraction = true;
-            _miniPointerType = e.Pointer.Type;
-            _miniMouseLongPressPending = e.Pointer.Type is PointerType.Mouse or PointerType.Touch or PointerType.Pen;
-            _miniMousePressPosition = e.GetPosition(this);
-            _miniMousePressTime = Environment.TickCount64;
+            _miniPressPosition = e.GetPosition(this);
             _isManualDragging = true;
             _dragPointer = e.Pointer;
-            _manualDragStartTime = _miniMousePressTime;
+            _manualDragStartTime = Environment.TickCount64;
             _touchDragDelayElapsed = e.Pointer.Type == PointerType.Mouse;
             _touchDragThresholdElapsed = false;
             _pendingClickAction = DragClickAction.Primary;
@@ -221,6 +243,14 @@ public abstract class HoverControlBase : UserControl
                 miniHoverWindow.BeginDrag();
             }
             e.Pointer.Capture(PrimaryButton);
+            _miniLongPressPending = true;
+            _miniLongPressTimer ??= new DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(MiniLongPressDurationMs)
+            };
+            _miniLongPressTimer.Tick -= MiniLongPressTimerOnTick;
+            _miniLongPressTimer.Tick += MiniLongPressTimerOnTick;
+            _miniLongPressTimer.Start();
             return;
         }
 
@@ -240,7 +270,7 @@ public abstract class HoverControlBase : UserControl
             completedHoverWindow.EndDragAndClamp();
         }
 
-        if (clickAction != DragClickAction.None && !_miniMouseLongPressTriggered && IsWithinClickThreshold(_parentWindow.Position, _lastWindowPosition))
+        if (clickAction != DragClickAction.None && IsWithinClickThreshold(_parentWindow.Position, _lastWindowPosition))
         {
             await InvokeClickActionAsync(clickAction, _parentWindow);
         }
@@ -303,22 +333,30 @@ public abstract class HoverControlBase : UserControl
 
     private void DragPointerMoved(object? sender, PointerEventArgs e)
     {
-        if (_miniMouseLongPressPending && _isMiniPointerInteraction && e.Pointer.Type == _miniPointerType)
-        {
-            var position = e.GetPosition(this);
-            if (Math.Abs(position.X - _miniMousePressPosition.X) >= ClickMoveThresholdPx
-                || Math.Abs(position.Y - _miniMousePressPosition.Y) >= ClickMoveThresholdPx)
-            {
-                _miniMouseLongPressPending = false;
-                _touchDragThresholdElapsed = true;
-                if (_parentWindow is not null)
-                {
-                    ResetManualDragAnchor(_parentWindow, e.GetPosition(_parentWindow));
-                }
-            }
-        }
         if (!_isManualDragging || _dragPointer is null || e.Pointer != _dragPointer || _parentWindow is null)
         {
+            return;
+        }
+
+        if (_miniLongPressTriggered)
+        {
+            e.Handled = true;
+            return;
+        }
+
+        if (_miniLongPressPending)
+        {
+            var position = e.GetPosition(this);
+            if (Math.Abs(position.X - _miniPressPosition.X) >= ClickMoveThresholdPx
+                || Math.Abs(position.Y - _miniPressPosition.Y) >= ClickMoveThresholdPx)
+            {
+                CancelMiniLongPress();
+                _pendingClickAction = DragClickAction.None;
+                _touchDragThresholdElapsed = true;
+                ResetManualDragAnchor(_parentWindow, e.GetPosition(_parentWindow));
+            }
+
+            // Keep the window still while deciding between a tap and a hold.
             return;
         }
 
@@ -367,41 +405,49 @@ public abstract class HoverControlBase : UserControl
         }
     }
 
-    private async void DragPointerReleased(object? sender, PointerReleasedEventArgs e)
+    private async void MiniLongPressTimerOnTick(object? sender, EventArgs e)
     {
-        bool invokeLongPressAction = false;
-        if (_miniMouseLongPressPending && _isMiniPointerInteraction && e.Pointer.Type == _miniPointerType
-            && Environment.TickCount64 - _miniMousePressTime > MiniMouseLongPressDurationMs)
+        bool canInvoke = _miniLongPressPending && _isMiniPointerInteraction && _isManualDragging
+            && _dragPointer?.Captured == PrimaryButton && _parentWindow is not null
+            && Settings.Instance.Hover.HoverLayout == 2 && PrimaryButton.IsEffectivelyEnabled;
+        CancelMiniLongPress();
+        if (!canInvoke)
         {
-            var position = e.GetPosition(this);
-            if (Math.Abs(position.X - _miniMousePressPosition.X) < ClickMoveThresholdPx
-                && Math.Abs(position.Y - _miniMousePressPosition.Y) < ClickMoveThresholdPx)
-            {
-                _miniMouseLongPressTriggered = true;
-                _miniMouseLongPressPending = false;
-                _pendingClickAction = DragClickAction.None;
-                invokeLongPressAction = true;
-            }
+            return;
         }
 
-        await EndManualDragAsync(e.Pointer);
-        _miniMouseLongPressPending = false;
-        _isMiniPointerInteraction = false;
-        if (invokeLongPressAction && _parentWindow is not null)
-        {
-            await InvokeClickActionAsync(DragClickAction.Secondary, _parentWindow);
-        }
+        // Consume the primary action before opening a window. Keep capture until
+        // release so the same contact cannot also click or start dragging.
+        _miniLongPressTriggered = true;
+        _pendingClickAction = DragClickAction.None;
+        await InvokeClickActionAsync(DragClickAction.Secondary, _parentWindow!);
     }
 
-    private async void DragPointerCaptureLost(object? sender, PointerCaptureLostEventArgs e) => await EndManualDragAsync(e.Pointer);
+    private void CancelMiniLongPress()
+    {
+        _miniLongPressTimer?.Stop();
+        _miniLongPressPending = false;
+    }
 
-    private async Task EndManualDragAsync(IPointer pointer)
+    private async void DragPointerReleased(object? sender, PointerReleasedEventArgs e) => await EndManualDragAsync(e.Pointer);
+
+    private async void DragPointerCaptureLost(object? sender, PointerCaptureLostEventArgs e) => await EndManualDragAsync(e.Pointer, invokeClick: false);
+
+    private async Task EndManualDragAsync(IPointer pointer, bool invokeClick = true)
     {
         if (!_isManualDragging || _dragPointer is null || pointer != _dragPointer)
         {
             return;
         }
 
+        var owner = _parentWindow;
+        var clickAction = invokeClick && !_miniLongPressTriggered ? _pendingClickAction : DragClickAction.None;
+        CancelMiniLongPress();
+        _pendingClickAction = DragClickAction.None;
+        _miniLongPressTriggered = false;
+        _isMiniPointerInteraction = false;
+        _touchDragDelayElapsed = false;
+        _touchDragThresholdElapsed = false;
         _isManualDragging = false;
         _dragPointer = null;
         pointer.Capture(null);
@@ -410,17 +456,13 @@ public abstract class HoverControlBase : UserControl
             hoverWindow.EndDragAndClamp();
         }
 
-        if (_parentWindow is not null && _pendingClickAction != DragClickAction.None &&
-            IsWithinClickThreshold(_parentWindow.Position, _lastWindowPosition))
+        bool isActionEnabled = clickAction == DragClickAction.Primary
+            ? PrimaryButton.IsEffectivelyEnabled : SecondaryButton.IsEffectivelyEnabled;
+        if (owner is not null && clickAction != DragClickAction.None && isActionEnabled &&
+            IsWithinClickThreshold(owner.Position, _lastWindowPosition))
         {
-            await InvokeClickActionAsync(_pendingClickAction, _parentWindow);
+            await InvokeClickActionAsync(clickAction, owner);
         }
-
-        _pendingClickAction = DragClickAction.None;
-        _miniMouseLongPressTriggered = false;
-        _isMiniPointerInteraction = false;
-        _touchDragDelayElapsed = false;
-        _touchDragThresholdElapsed = false;
     }
 
     private void ResetManualDragAnchor(Window window, Point pointerPosition)

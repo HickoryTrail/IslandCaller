@@ -28,6 +28,7 @@ public abstract class HoverWindowBase : Window, IHoverWindow
     private bool _isContentSizeUpdatePending;
     private long _lastPositionLogTime;
     private CancellationTokenSource? _topmostCts;
+    private WindowContextMenuSuppressor? _contextMenuSuppressor;
 
     protected void InitializeHoverWindow(Control hoverControl, Control measuredContent)
     {
@@ -45,6 +46,7 @@ public abstract class HoverWindowBase : Window, IHoverWindow
         TransparencyLevelHint = isMiniLayout
             ? [Avalonia.Controls.WindowTransparencyLevel.Transparent]
             : [Avalonia.Controls.WindowTransparencyLevel.AcrylicBlur, Avalonia.Controls.WindowTransparencyLevel.Transparent];
+        _contextMenuSuppressor?.UpdateLayout(hoverLayout);
     }
 
     protected virtual void ApplyThemeTopmost()
@@ -62,6 +64,7 @@ public abstract class HoverWindowBase : Window, IHoverWindow
 
         _viewModel = DataContext as HoverFluentViewModel
             ?? throw new InvalidOperationException("悬浮窗缺少 HoverFluentViewModel 数据上下文。");
+        _contextMenuSuppressor = new WindowContextMenuSuppressor(this);
         _scaling = RenderScaling;
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
         UpdateWindowChrome(_viewModel.HoverLayout);
@@ -95,6 +98,9 @@ public abstract class HoverWindowBase : Window, IHoverWindow
         {
             _hoverControl.SizeChanged -= OnHoverContentSizeChanged;
         }
+
+        _contextMenuSuppressor?.Dispose();
+        _contextMenuSuppressor = null;
 
         if (_measuredContent is not null)
         {
