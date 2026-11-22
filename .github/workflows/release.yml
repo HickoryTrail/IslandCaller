@@ -10,9 +10,11 @@ permissions:
   contents: read
 
 jobs:
-  build:
-    name: Build release artifact
+  validate:
+    name: Validate release tag
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
     steps:
       - name: Check out the release tag
         uses: actions/checkout@v4
@@ -39,19 +41,91 @@ jobs:
 
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
+  publish-url-handler:
+    name: Publish UrlHandler AOT executable
+    needs: validate
+    runs-on: windows-latest
+    steps:
+      - name: Check out the release tag
+        uses: actions/checkout@v4
+
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: 11.0.x
+
+      - name: Check NativeAOT MSVC toolchain
+        shell: pwsh
+        run: |
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+          if (-not (Test-Path -LiteralPath $vswhere -PathType Leaf)) {
+            throw 'NativeAOT requires Visual Studio 2022 or later with the Desktop development with C++ workload.'
+          }
+          $installation = & $vswhere -latest -products '*' `
+            -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($installation)) {
+            throw 'NativeAOT requires the Visual Studio C++ x64/x86 build tools.'
+          }
+
+      - name: Publish UrlHandler for win-x64
+        shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ needs.validate.outputs.tag }}
+        run: |
+          dotnet publish IslandCaller.UrlHandler/IslandCaller.UrlHandler.csproj `
+            --configuration Release --runtime win-x64 --self-contained true --nologo `
+            -p:PublishAot=true "-p:Version=$env:RELEASE_VERSION" `
+            --output artifacts/urlhandler
+          if ($LASTEXITCODE -ne 0) {
+            throw 'Failed to publish IslandCaller.UrlHandler for win-x64.'
+          }
+
+          $executable = 'artifacts/urlhandler/IslandCaller.UrlHandler.exe'
+          if (-not (Test-Path -LiteralPath $executable -PathType Leaf)) {
+            throw "AOT-published UrlHandler executable not found: $executable"
+          }
+          if ((Get-Item -LiteralPath $executable).Length -eq 0) {
+            throw "AOT-published UrlHandler executable is empty: $executable"
+          }
+
+      - name: Upload UrlHandler executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: urlhandler-aot
+          if-no-files-found: error
+          path: artifacts/urlhandler/IslandCaller.UrlHandler.exe
+
+  build:
+    name: Build release artifact
+    needs:
+      - validate
+      - publish-url-handler
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the release tag
+        uses: actions/checkout@v4
+
+      - name: Download UrlHandler executable
+        uses: actions/download-artifact@v4
+        with:
+          name: urlhandler-aot
+          path: artifacts/urlhandler
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 11.0.x
 
       - name: Restore dependencies
         run: dotnet restore IslandCaller.slnx -p:EnableWindowsTargeting=true
 
-      - name: Build plugin
+      - name: Build plugin and package cipx
         shell: bash
+        env:
+          RELEASE_VERSION: ${{ needs.validate.outputs.tag }}
         run: |
           set -euo pipefail
-          TAG="${{ steps.version.outputs.tag }}"
+          TAG="$RELEASE_VERSION"
           sed -i -E "s/^version: .*/version: ${TAG}/" IslandCaller.Plugin2/manifest.yml
           grep -Fx "version: ${TAG}" IslandCaller.Plugin2/manifest.yml
           dotnet build IslandCaller.Plugin2/IslandCaller.Plugin2.csproj \
@@ -66,6 +140,11 @@ jobs:
 
           mkdir -p artifacts/plugin
           find "$PLUGIN_OUTPUT" -maxdepth 1 -type f ! -name '*.pdb' -exec cp {} artifacts/plugin/ \;
+          cp artifacts/urlhandler/IslandCaller.UrlHandler.exe artifacts/plugin/IslandCaller.UrlHandler.exe
+          if [[ ! -s artifacts/plugin/IslandCaller.UrlHandler.exe ]]; then
+            echo "AOT UrlHandler executable is missing or empty." >&2
+            exit 1
+          fi
           if [[ -z "$(find artifacts/plugin -maxdepth 1 -type f -print -quit)" ]]; then
             echo "Plugin package source is empty." >&2
             exit 1
@@ -74,12 +153,18 @@ jobs:
             cd artifacts/plugin
             zip -r ../IslandCaller.Plugin2.cipx .
           )
+          if ! unzip -Z1 artifacts/IslandCaller.Plugin2.cipx | grep -Fxq 'IslandCaller.UrlHandler.exe'; then
+            echo "IslandCaller.UrlHandler.exe is missing from the cipx archive root." >&2
+            exit 1
+          fi
 
       - name: Create checksums and release notes
         shell: bash
+        env:
+          RELEASE_VERSION: ${{ needs.validate.outputs.tag }}
         run: |
           set -euo pipefail
-          TAG="${{ steps.version.outputs.tag }}"
+          TAG="$RELEASE_VERSION"
           CIPX_FILE="IslandCaller.Plugin2.cipx"
           CIPX_MD5="$(md5sum "artifacts/${CIPX_FILE}" | awk '{print $1}')"
 

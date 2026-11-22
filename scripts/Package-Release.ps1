@@ -21,6 +21,8 @@ $cipxPath = Join-Path $releaseDirectory 'IslandCaller.Plugin2.cipx'
 $releaseNoteSource = Join-Path $repositoryRoot "docs\CHANGELOG\$Version.md"
 $releaseNotePath = Join-Path $releaseDirectory 'release-notes.md'
 $projectPath = Join-Path $repositoryRoot 'IslandCaller.Plugin2\IslandCaller.Plugin2.csproj'
+$urlHandlerProjectPath = Join-Path $repositoryRoot 'IslandCaller.UrlHandler\IslandCaller.UrlHandler.csproj'
+$urlHandlerPublishDirectory = Join-Path $releaseDirectory 'urlhandler-publish'
 
 [xml]$projectDefinition = Get-Content -LiteralPath $projectPath
 $targetFramework = [string]($projectDefinition.Project.PropertyGroup |
@@ -39,12 +41,29 @@ New-Item -ItemType Directory -Path $pluginDirectory -Force | Out-Null
 
 Push-Location $repositoryRoot
 try {
+    $vswherePath = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+    if (-not (Test-Path -LiteralPath $vswherePath -PathType Leaf)) {
+        throw 'NativeAOT requires Visual Studio 2022 or later with the Desktop development with C++ workload.'
+    }
+    $visualStudioInstallation = & $vswherePath -latest -products '*' `
+        -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($visualStudioInstallation)) {
+        throw 'NativeAOT requires the Visual Studio C++ x64/x86 build tools. Install the Desktop development with C++ workload.'
+    }
+
     dotnet restore 'IslandCaller.Plugin2\IslandCaller.Plugin2.csproj'
     if ($LASTEXITCODE -ne 0) { throw 'Failed to restore IslandCaller.Plugin2.' }
 
     dotnet build 'IslandCaller.Plugin2\IslandCaller.Plugin2.csproj' --configuration Release --no-restore --nologo `
         '-p:EnableWindowsTargeting=true' "-p:Version=$Version"
     if ($LASTEXITCODE -ne 0) { throw 'Failed to build IslandCaller.Plugin2.' }
+
+    dotnet restore $urlHandlerProjectPath --runtime win-x64
+    if ($LASTEXITCODE -ne 0) { throw 'Failed to restore IslandCaller.UrlHandler for win-x64.' }
+
+    dotnet publish $urlHandlerProjectPath --configuration Release --runtime win-x64 --self-contained true `
+        --no-restore --nologo "-p:PublishAot=true" "-p:Version=$Version" --output $urlHandlerPublishDirectory
+    if ($LASTEXITCODE -ne 0) { throw 'Failed to publish IslandCaller.UrlHandler for win-x64.' }
 
     $pluginBuildDirectory = Join-Path $repositoryRoot "IslandCaller.Plugin2\bin\Release\$targetFramework"
     if (-not (Test-Path -LiteralPath $pluginBuildDirectory -PathType Container)) {
@@ -56,6 +75,15 @@ try {
         throw "Plugin build output is empty: $pluginBuildDirectory"
     }
     Copy-Item -LiteralPath $pluginBuildFiles.FullName -Destination $pluginDirectory
+
+    $urlHandlerExecutable = Join-Path $urlHandlerPublishDirectory 'IslandCaller.UrlHandler.exe'
+    if (-not (Test-Path -LiteralPath $urlHandlerExecutable -PathType Leaf)) {
+        throw "AOT-published UrlHandler executable not found: $urlHandlerExecutable"
+    }
+    if ((Get-Item -LiteralPath $urlHandlerExecutable).Length -eq 0) {
+        throw "AOT-published UrlHandler executable is empty: $urlHandlerExecutable"
+    }
+    Copy-Item -LiteralPath $urlHandlerExecutable -Destination $pluginDirectory
 }
 finally {
     Pop-Location
@@ -82,6 +110,17 @@ if ($pluginContents.Count -eq 0) {
 $zipPath = Join-Path $releaseDirectory 'IslandCaller.Plugin2.zip'
 Compress-Archive -Path $pluginContents.FullName -DestinationPath $zipPath -CompressionLevel Optimal
 Move-Item -LiteralPath $zipPath -Destination $cipxPath
+
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+$cipxArchive = [System.IO.Compression.ZipFile]::OpenRead($cipxPath)
+try {
+    if (-not ($cipxArchive.Entries.FullName -contains 'IslandCaller.UrlHandler.exe')) {
+        throw 'IslandCaller.UrlHandler.exe is missing from the cipx archive root.'
+    }
+}
+finally {
+    $cipxArchive.Dispose()
+}
 
 $cipxMd5 = (Get-FileHash -LiteralPath $cipxPath -Algorithm MD5).Hash.ToLowerInvariant()
 if (Test-Path -LiteralPath $releaseNoteSource -PathType Leaf) {

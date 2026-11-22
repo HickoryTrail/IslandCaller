@@ -24,7 +24,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="ClassIsland.PluginSdk" Version="2.1.1.1">
+        <PackageReference Include="ClassIsland.PluginSdk" Version="2.1.2">
             <ExcludeAssets>runtime; native</ExcludeAssets>
         </PackageReference>
         <PackageReference Include="SuperAutoIsland.Interface" Version="0.3.9.3-dev.4" GeneratePathProperty="true" />
@@ -52,15 +52,7 @@
          closure instead of bundling host-owned assemblies. -->
     <Target Name="FilterDynamicLoadingDependencies" AfterTargets="ResolvePackageDependenciesForBuild">
         <ItemGroup>
-            <_PluginRuntimeDependency Include="@(ReferenceCopyLocalPaths)"
-                Condition="'%(Filename)%(Extension)' == 'MorerialsAvalonia.dll'
-                       Or '%(Filename)%(Extension)' == 'OmniTTS.Shared.dll'
-                       Or '%(Filename)%(Extension)' == 'Silk.NET.Core.dll'
-                       Or '%(Filename)%(Extension)' == 'Silk.NET.Maths.dll'
-                       Or '%(Filename)%(Extension)' == 'Silk.NET.DXGI.dll'
-                       Or '%(Filename)%(Extension)' == 'Silk.NET.Direct3D.Compilers.dll'
-                       Or '%(Filename)%(Extension)' == 'Silk.NET.Direct3D11.dll'
-                       Or '%(Filename)%(Extension)' == 'SuperAutoIsland.Interface.dll'" />
+            <_PluginRuntimeDependency Include="@(ReferenceCopyLocalPaths)" Condition="'%(Filename)%(Extension)' == 'MorerialsAvalonia.dll'&#xA;                       Or '%(Filename)%(Extension)' == 'OmniTTS.Shared.dll'&#xA;                       Or '%(Filename)%(Extension)' == 'Silk.NET.Core.dll'&#xA;                       Or '%(Filename)%(Extension)' == 'Silk.NET.Maths.dll'&#xA;                       Or '%(Filename)%(Extension)' == 'Silk.NET.DXGI.dll'&#xA;                       Or '%(Filename)%(Extension)' == 'Silk.NET.Direct3D.Compilers.dll'&#xA;                       Or '%(Filename)%(Extension)' == 'Silk.NET.Direct3D11.dll'&#xA;                       Or '%(Filename)%(Extension)' == 'SuperAutoIsland.Interface.dll'" />
             <_PluginRuntimeDependency Include="$(PkgSuperAutoIsland_Interface)\lib\net10.0\SuperAutoIsland.Interface.dll" />
             <ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)" />
             <ReferenceCopyLocalPaths Include="@(_PluginRuntimeDependency)" />

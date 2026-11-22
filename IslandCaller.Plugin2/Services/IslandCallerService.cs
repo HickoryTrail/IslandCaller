@@ -186,6 +186,15 @@ namespace IslandCaller.Services.IslandCallerService
             return ProfileRuntimeService.EnsureLoaded(profileId);
         }
 
+        public List<string> GetRandomStudents(int stunum)
+        {
+            List<string> students = new();
+            for (int i = 0; i < stunum; i++)
+            {
+                students.Add(CoreService.GetRandomStudent());
+            }
+            return students;
+        }
         public async void ShowRandomStudent(int stunum)
         {
             // 点名结果的提醒与结果窗口都依赖 Avalonia UI 对象，只能在 UI 线程上创建与访问，
@@ -208,12 +217,9 @@ namespace IslandCaller.Services.IslandCallerService
             }
             Status.OccupationDisable = false;
             // 获取点名数据
-            List<string> students = new();
-            for (int i = 0; i < stunum; i++)
-            {
-                students.Add(CoreService.GetRandomStudent());
-            }
+            List<string> students = GetRandomStudents(stunum);
 
+            // 处理点名结果
             string output = string.Join("  ", students);
             string speechContent = $"{Settings.Instance.TTS.BeforeText}{output}{Settings.Instance.TTS.AfterText}";
             float duration = stunum * Settings.Instance.Call.BaseTime + Settings.Instance.Call.AdditionalTime; // 计算持续时间

@@ -1,4 +1,4 @@
-﻿using static System.Guid;
+using static System.Guid;
 using System.ComponentModel;
 using IslandCaller.Plugin2;
 
@@ -18,7 +18,7 @@ namespace IslandCaller.Models
         public Version Version
         {
             get;
-        } = new Version(2, 0, 1, 3);
+        } = new Version(2, 1, 0, 4);
 
         public bool BreakDisable
         {

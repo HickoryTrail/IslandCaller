@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using System.Windows;
 using ClassIsland.Core;
 using ClassIsland.Core.Abstractions;
 using ClassIsland.Core.Abstractions.Services;
@@ -11,6 +12,7 @@ using IslandCaller.Controls;
 using IslandCaller.Extensions;
 using IslandCaller.Helpers;
 using IslandCaller.Models;
+using IslandCaller.Plugin2.Services;
 using IslandCaller.Services;
 using IslandCaller.Services.IslandCallerService;
 using IslandCaller.Services.NotificationProvidersNew;
@@ -42,6 +44,7 @@ namespace IslandCaller
             services.AddSingleton<WindowSizeHelper>();
             services.AddSingleton<WindowTopmostHelper>();
             services.AddSingleton<ScreenBrightnessHelper>();
+            services.AddSingleton<IpcLiteService>();
             services.AddSettingsPage<SettingPage>();
             BuildActionMenu();
             services.AddAction<DisableHoverAction>();
@@ -61,7 +64,7 @@ namespace IslandCaller
                     IAppHost.GetService<ProfileRuntimeService>().Initialize();
                     IAppHost.GetService<IslandCallerService>().Initialize();
                     IAppHost.GetService<WindowsManager>().Initialize();
-
+                    _ = IAppHost.GetService<IpcLiteService>().RunAsync();
                     // 注册 SuperAutoIsland 积木（SuperAutoIsland 未安装时自动跳过）。
                     if (IsPluginInstalled("lrs2187.sai"))
                     {
@@ -93,6 +96,7 @@ namespace IslandCaller
             // RemoteCI 插件退出时注销远程扩展，避免残留无效入口。
             AppBase.Current.AppStopping += (_, _) =>
             {
+                IAppHost.GetService<IpcLiteService>().Stop();
                 try
                 {
                     RemoteCiBridge.UnregisterRandomCallExtension(logger);
