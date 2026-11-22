@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "RequestSchema.json",
+  "title": "IslandCaller IpcLite request",
+  "type": "object",
+  "required": ["jsonrpc", "version", "method", "params", "id"],
+  "properties": {
+    "jsonrpc": { "const": "2.0" },
+    "version": { "const": "1.0" },
+    "method": { "const": "getRandomStudent" },
+    "params": {
+      "type": "object",
+      "required": ["clientName", "count", "gender", "notify"],
+      "properties": {
+        "clientName": { "type": "string", "minLength": 1 },
+        "count": { "type": "integer", "minimum": 1 },
+        "gender": { "enum": ["all", "male", "female"] },
+        "notify": { "type": "boolean" }
+      }
+    },
+    "id": { "const": 1 }
+  }
+}

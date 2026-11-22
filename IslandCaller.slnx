@@ -5,4 +5,5 @@
     <Platform Name="x86" />
   </Configurations>
   <Project Path="IslandCaller.Plugin2/IslandCaller.Plugin2.csproj" />
+  <Project Path="IslandCaller.UrlHandler/IslandCaller.UrlHandler.csproj" Id="1543d28d-4989-42b5-a59e-939bd695487e" />
 </Solution>

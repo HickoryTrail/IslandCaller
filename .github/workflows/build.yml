@@ -13,8 +13,8 @@ permissions:
 
 jobs:
   build:
-    name: Restore and build
-    runs-on: ubuntu-latest
+    name: Build and package AOT cipx
+    runs-on: windows-latest
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -22,10 +22,84 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: 11.0.x
 
       - name: Restore dependencies
-        run: dotnet restore IslandCaller.slnx -p:EnableWindowsTargeting=true
+        run: dotnet restore IslandCaller.slnx
 
       - name: Build solution
-        run: dotnet build IslandCaller.slnx --configuration Release --no-restore --nologo -p:EnableWindowsTargeting=true
+        run: dotnet build IslandCaller.slnx --configuration Release --no-restore --nologo
+
+      - name: Check NativeAOT MSVC toolchain
+        shell: pwsh
+        run: |
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+          if (-not (Test-Path -LiteralPath $vswhere -PathType Leaf)) {
+            throw 'NativeAOT requires Visual Studio 2022 or later with the Desktop development with C++ workload.'
+          }
+          $installation = & $vswhere -latest -products '*' `
+            -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($installation)) {
+            throw 'NativeAOT requires the Visual Studio C++ x64/x86 build tools.'
+          }
+
+      - name: Publish UrlHandler AOT executable
+        shell: pwsh
+        run: |
+          dotnet publish IslandCaller.UrlHandler/IslandCaller.UrlHandler.csproj `
+            --configuration Release --runtime win-x64 --self-contained true --nologo `
+            -p:PublishAot=true --output artifacts/urlhandler
+          if ($LASTEXITCODE -ne 0) {
+            throw 'Failed to publish IslandCaller.UrlHandler for win-x64.'
+          }
+
+          $executable = 'artifacts/urlhandler/IslandCaller.UrlHandler.exe'
+          if (-not (Test-Path -LiteralPath $executable -PathType Leaf)) {
+            throw "AOT-published UrlHandler executable not found: $executable"
+          }
+          if ((Get-Item -LiteralPath $executable).Length -eq 0) {
+            throw "AOT-published UrlHandler executable is empty: $executable"
+          }
+
+      - name: Package plugin and AOT executable
+        shell: pwsh
+        run: |
+          $pluginOutput = 'IslandCaller.Plugin2/bin/Release/net10.0-windows10.0.19041.0'
+          if (-not (Test-Path -LiteralPath $pluginOutput -PathType Container)) {
+            throw "Expected plugin build output was not generated: $pluginOutput"
+          }
+
+          $pluginDirectory = 'artifacts/plugin'
+          New-Item -ItemType Directory -Path $pluginDirectory -Force | Out-Null
+          $pluginFiles = @(Get-ChildItem -LiteralPath $pluginOutput -File | Where-Object { $_.Extension -ne '.pdb' })
+          if ($pluginFiles.Count -eq 0) {
+            throw 'Plugin package source is empty.'
+          }
+          Copy-Item -LiteralPath $pluginFiles.FullName -Destination $pluginDirectory
+
+          $urlHandlerExecutable = 'artifacts/urlhandler/IslandCaller.UrlHandler.exe'
+          Copy-Item -LiteralPath $urlHandlerExecutable -Destination $pluginDirectory
+
+          $cipxZip = 'artifacts/IslandCaller.Plugin2.zip'
+          $cipxPath = 'artifacts/IslandCaller.Plugin2.cipx'
+          Compress-Archive -Path (Join-Path $pluginDirectory '*') -DestinationPath $cipxZip -CompressionLevel Optimal
+          Move-Item -LiteralPath $cipxZip -Destination $cipxPath
+
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $archive = [System.IO.Compression.ZipFile]::OpenRead($cipxPath)
+          try {
+            if (-not ($archive.Entries.FullName -contains 'IslandCaller.UrlHandler.exe')) {
+              throw 'IslandCaller.UrlHandler.exe is missing from the cipx archive root.'
+            }
+          }
+          finally {
+            $archive.Dispose()
+          }
+
+      - name: Upload build package
+        uses: actions/upload-artifact@v4
+        with:
+          name: IslandCaller.Plugin2-cipx
+          if-no-files-found: error
+          retention-days: 7
+          path: artifacts/IslandCaller.Plugin2.cipx

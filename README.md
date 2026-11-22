@@ -88,7 +88,7 @@ IslandCaller 是基于 ClassIsland 2.0 插件 SDK开发的开源课堂点名插�
 ### 🔗 自动化与联动
 
 - **ClassIsland 行动**：在自动化中可直接使用“IslandCaller 行动”菜单——**随机点名**、**启用悬浮窗**、**禁用悬浮窗**、**切换档案**（可指定目标档案）；
-- **URI 调用**：支持通过 `classisland://` 协议从快捷方式、其他插件或自动化触发点名（见下文）。
+- **URI 调用**：支持通过 `islandcaller://` 协议从快捷方式、其他插件或自动化直接触发点名（见下文）。
 
 ### 💾 数据迁移
 
@@ -121,17 +121,19 @@ IslandCaller 是基于 ClassIsland 2.0 插件 SDK开发的开源课堂点名插�
 
 ## URI 调用方式（可用于快捷方式/联动）
 
-- 简单抽取（1 人）：
+- 简单抽取 1 人（不按性别筛选）：
 
 ```text
-classisland://plugins/IslandCaller/Simple/1
+islandcaller://call?count=1&gender=all
 ```
 
-- 高级抽取（弹出窗口，GUI 指定人数，1~5 人）：
+- 抽取 3 名男性：
 
 ```text
-classisland://plugins/IslandCaller/Advanced/GUI
+islandcaller://call?count=3&gender=male
 ```
+
+[IpcLite 接入说明](docs/IpcLiteDocs/README.md)
 
 ---
 

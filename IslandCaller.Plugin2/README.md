@@ -85,8 +85,9 @@ IslandCaller 是一个基于 ClassIsland 2.0 插件 SDK 开发的课堂点名插
   - **启用悬浮窗** / **禁用悬浮窗**；
   - **切换档案**：切换到指定名单（可配置目标档案）。
 - **URI 调用**（可用于快捷方式/联动）：
-  - 简单抽取（1 人）：`classisland://plugins/IslandCaller/Simple/1`
-  - 高级抽取（弹出窗口指定 1~5 人）：`classisland://plugins/IslandCaller/Advanced/GUI`
+  - 简单抽取 1 人：`islandcaller://call?count=1&gender=all`
+  - 按性别抽取 3 人：`islandcaller://call?count=3&gender=male`（`gender` 也可设为 `female`）
+  - 接入说明：[IpcLite 接入文档](../docs/IpcLiteDocs/README.md)
 
 ### 数据迁移
 

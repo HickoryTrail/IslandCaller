@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ResponseSchema.json",
+  "title": "IslandCaller IpcLite response",
+  "type": "object",
+  "required": ["jsonrpc", "version", "id"],
+  "properties": {
+    "jsonrpc": { "const": "2.0" },
+    "version": { "const": "1.0" },
+    "id": { "const": 2 },
+    "result": {
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      ]
+    },
+    "error": {
+      "type": "object",
+      "required": ["code", "message"],
+      "properties": {
+        "code": { "type": "integer" },
+        "message": { "type": "string" },
+        "data": { "type": "string" }
+      }
+    }
+  },
+  "oneOf": [
+    { "required": ["result"], "not": { "required": ["error"] } },
+    { "required": ["error"], "not": { "required": ["result"] } }
+  ]
+}
